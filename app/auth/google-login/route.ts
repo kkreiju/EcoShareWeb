@@ -11,12 +11,11 @@ export async function GET() {
         queryParams: {
         access_type: 'offline',
         prompt: 'consent',
+        scope: 'openid email profile',
     },
       redirectTo: 'http://localhost:3000/auth/callback',
     },
   });
-
-  console.log('Google OAuth URL:', data?.url);
 
   if (error) {
     console.error('OAuth error:', error);
