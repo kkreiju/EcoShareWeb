@@ -1,4 +1,6 @@
-// app/auth/google-login/route.ts
+// This file handles the Google OAuth login route for the application.
+// It can handle mobile and desktop requests, redirecting users to the Google login page.
+
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
@@ -13,7 +15,7 @@ export async function GET() {
         prompt: 'consent',
         scope: 'openid email profile',
     },
-      redirectTo: 'http://localhost:3000/auth/callback',
+      redirectTo: process.env.ORIGIN_URL + '/auth/callback',
     },
   });
 
