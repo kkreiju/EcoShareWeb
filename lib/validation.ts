@@ -1,6 +1,16 @@
+// User data type for validation
+export interface UserData {
+  email?: string;
+  password?: string;
+  firstName?: string;
+  middleName?: string | null;
+  lastName?: string;
+  phone?: string;
+}
+
 // Validation utilities for user data
 
-export function validateEmail(email: any) {
+export function validateEmail(email: string) {
   if (!email || typeof email !== 'string') {
     return false
   }
@@ -10,20 +20,20 @@ export function validateEmail(email: any) {
   return emailRegex.test(email.trim().toLowerCase())
 }
 
-export function validatePassword(password: any) {
+export function validatePassword(password: string) {
   // At least 8 characters, contains at least one letter and one number
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/
   return passwordRegex.test(password)
 }
 
-export function validatePhone(phone: any) {
+export function validatePhone(phone: string) {
   // Basic phone validation - accepts various formats
   if (!phone) return true // Phone is optional
   const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
   return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))
 }
 
-export function validateUserData(userData: any) {
+export function validateUserData(userData: UserData) {
   const errors = []
   
   if (!userData.email) {
