@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import Dashboard from "@/components/dashboard/dashboard"
+import Main from "@/components/dashboard/main";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -12,7 +12,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
-        <Dashboard />
+      <Main />
     </div>
   );
 }
