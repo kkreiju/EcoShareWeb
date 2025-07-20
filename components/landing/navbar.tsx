@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import Image from "next/image";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import Link from "next/link";

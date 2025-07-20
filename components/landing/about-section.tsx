@@ -41,8 +41,8 @@ export function AboutSection() {
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                 Since launching in 2020, EcoShare has been committed to
                 transforming how communities handle food waste. With over 10,000
-                eco-conscious users and growing, we're proud to lead the way in
-                sustainable, community-powered solutions.
+                eco-conscious users and growing, we&apos;re proud to lead the
+                way in sustainable, community-powered solutions.
               </p>
             </div>
             <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-1">

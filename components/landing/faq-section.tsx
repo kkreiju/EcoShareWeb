@@ -50,8 +50,9 @@ export function FaqSection() {
             Frequently Asked Questions
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Got questions about EcoShare? We've got you covered. If you don't
-            see your question here, feel free to reach out to our team.
+            Got questions about EcoShare? We&apos;ve got you covered. If you
+            don&apos;t see your question here, feel free to reach out to our
+            team.
           </p>
         </div>
         <div className="max-w-3xl mx-auto">

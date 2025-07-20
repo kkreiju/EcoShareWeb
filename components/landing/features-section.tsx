@@ -12,7 +12,6 @@ import {
   BarChart3,
   Smartphone,
   Clock,
-  Leaf,
 } from "lucide-react";
 
 const features = [

@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/auth/logout-button";
 import Link from "next/link";
 
-export default async function ProtectedLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;

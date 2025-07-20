@@ -41,9 +41,9 @@ export function TestimonialsSection() {
             What Our Community Says
           </h2>
           <p className="text-lg text-muted-foreground sm:text-xl">
-            Don't just take our word for it — here's what real EcoShare users
-            have to say about their experience building a more sustainable
-            world:
+            Don&apos;t just take our word for it — here&apos;s what real
+            EcoShare users have to say about their experience building a more
+            sustainable world:
           </p>
         </div>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -59,7 +59,7 @@ export function TestimonialsSection() {
                   ))}
                 </div>
                 <blockquote className="text-muted-foreground mb-6 leading-relaxed">
-                  "{testimonial.content}"
+                  &ldquo;{testimonial.content}&rdquo;
                 </blockquote>
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-15 w-15">
