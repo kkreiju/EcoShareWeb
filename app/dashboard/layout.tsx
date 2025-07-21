@@ -6,7 +6,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
+  await supabase.auth.getClaims();
 
   return <main className="min-h-screen">{children}</main>;
 }
