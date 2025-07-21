@@ -38,15 +38,21 @@ export async function POST(request: NextRequest) {
             message: "Login successful",
             data: {
                 user: {
-                id: userData?.user_id,
-                email: userData?.user_email,
-                firstName: userData?.user_firstName,
-                middleName: userData?.user_middleName,
-                lastName: userData?.user_lastName,
-                email_verified: !!userData?.user_isVerified,
-                profileURL: userData?.user_profileURL || null,
-                ratings: (userData?.user_ratings || 0).toFixed(1),
-                transactionCount: userData?.user_transactionCount || 0
+                    id: userData?.user_id,
+                    email: userData?.user_email,
+                    firstName: userData?.user_firstName,
+                    middleName: userData?.user_middleName,
+                    lastName: userData?.user_lastName,
+                    emailVerified: !!userData?.user_isVerified,
+                    profileURL: userData?.user_profileURL || null,
+                    ratings: (userData?.user_ratings || 0).toFixed(1),
+                    transactionCount: userData?.user_transactionCount || 0
+                },
+                session: {
+                    accessToken: data.session.access_token,
+                    refreshToken: data.session.refresh_token,
+                    expiresAt: data.session.expires_at,
+                    expiresIn: data.session.expires_in
                 }
             }
             }, { status: 200 })

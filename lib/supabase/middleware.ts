@@ -50,6 +50,7 @@ export async function updateSession(request: NextRequest) {
   if (
     request.nextUrl.pathname !== "/" &&
     !request.nextUrl.pathname.startsWith("/api/mobile-auth") &&
+    !request.nextUrl.pathname.startsWith("/api/session-id") &&
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth")

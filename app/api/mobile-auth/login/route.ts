@@ -54,11 +54,9 @@ export async function POST(request: NextRequest) {
       // Query the User table to check if email exists and is verified
       const { data: userData } = await supabase
         .from('User')
-        .select('user_email, user_isVerified, user_ratings, user_transactionCount, user_profileURL')
+        .select('user_email, user_isVerified, user_firstName, user_middleName, user_lastName, user_ratings, user_transactionCount, user_profileURL')
         .eq('user_email', email)
         .single()
-
-      console.log('Supabase query result:', userData)
 
       // Return success response with auth data
       return NextResponse.json({
@@ -68,17 +66,19 @@ export async function POST(request: NextRequest) {
           user: {
             id: authData.user.id,
             email: authData.user.email,
-            email_verified: !!authData.user.email_confirmed_at,
+            firstName: userData?.user_firstName,
+            middleName: userData?.user_middleName,
+            lastName: userData?.user_lastName,
+            emailVerified: !!userData?.user_isVerified,
             profileURL: userData?.user_profileURL || null,
-            last_sign_in: authData.user.last_sign_in_at,
             ratings: (userData?.user_ratings || 0).toFixed(1),
             transactionCount: userData?.user_transactionCount || 0
           },
           session: {
-            access_token: authData.session.access_token,
-            refresh_token: authData.session.refresh_token,
-            expires_at: authData.session.expires_at,
-            expires_in: authData.session.expires_in
+            accessToken: authData.session.access_token,
+            refreshToken: authData.session.refresh_token,
+            expiresAt: authData.session.expires_at,
+            expiresIn: authData.session.expires_in
           }
         }
       }, { status: 200 })
