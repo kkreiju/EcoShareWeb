@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
         data: {
           first_name: firstName,
           middle_name: middleName,
-          last_name: lastName
+          last_name: lastName,
+          redirectTo: `${process.env.ORIGIN_URL}/auth/sign-up-success`
         }
       }
     })
