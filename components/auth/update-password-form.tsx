@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function UpdatePasswordForm({
   className,
@@ -15,7 +15,59 @@ export function UpdatePasswordForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    // 1. Check for an existing session (mobile or already authenticated)
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (data.session) {
+        setSessionReady(true);
+      } else {
+        // 2. Check for session info in hash fragment (Supabase recovery flow)
+        const hash = window.location.hash.substring(1); // Remove the '#'
+        const params = new URLSearchParams(hash);
+
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+        const expires_at = params.get("expires_at");
+
+        if (access_token && refresh_token && expires_at) {
+          try {
+            await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+            setSessionReady(true);
+          } catch (err) {
+            console.error(err);
+            setError("Failed to establish session. Please try the link again.");
+          }
+          return;
+        }
+
+        // 3. If no session, check for PKCE code in URL (web flow)
+        const url = window.location.href;
+        const hasCode = url.includes("code=");
+        if (hasCode) {
+          supabase.auth.exchangeCodeForSession(url).then(({ error }) => {
+            if (error) {
+              setError(
+                "Invalid or expired link. Please request a new password reset."
+              );
+            } else {
+              setSessionReady(true);
+            }
+          });
+        } else {
+          // 4. No session and no code: show error
+          setError("No active session found. Please log in again.");
+        }
+      }
+    });
+  }, []);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +85,20 @@ export function UpdatePasswordForm({
       setIsLoading(false);
     }
   };
+
+  if (!sessionReady) {
+    return (
+      <div className={cn("w-full max-w-md mx-auto", className)} {...props}>
+        <div className="text-center py-8">
+          {error ? (
+            <p className="text-destructive">{error}</p>
+          ) : (
+            <p>Verifying session...</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("w-full max-w-md mx-auto", className)} {...props}>
