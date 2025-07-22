@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
         // Generate a password reset token
         const { data } = await supabase.auth.resetPasswordForEmail(email,{
-            redirectTo: `${process.env.HOST_URL}/auth/update-password`
+            redirectTo: `${process.env.ORIGIN_URL}/auth/update-password`
         })
 
         if(data){

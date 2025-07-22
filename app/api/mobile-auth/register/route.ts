@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
           first_name: firstName,
           middle_name: middleName,
           last_name: lastName,
-          redirectTo: `${process.env.ORIGIN_URL}/auth/sign-up-success`
-        }
+        },
+        emailRedirectTo: `${process.env.ORIGIN_URL}/dashboard`
       }
     })
 
