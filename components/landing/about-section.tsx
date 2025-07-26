@@ -27,7 +27,7 @@ const values = [
 export function AboutSection() {
   return (
     <section className="py-20 sm:py-32 bg-background-secondary">
-      <div className="section-container">
+      <div className="mx-auto px-4 md:px-12 max-w-7xl">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="space-y-8">
             <div className="space-y-4">

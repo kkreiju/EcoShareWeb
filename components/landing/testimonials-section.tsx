@@ -32,7 +32,7 @@ const testimonials = [
 export function TestimonialsSection() {
   return (
     <section className="py-20 sm:py-32 bg-background">
-      <div className="section-container">
+      <div className="mx-auto px-4 md:px-12 max-w-7xl">
         <div className="text-center space-y-4 mb-16">
           <div className="inline-flex items-center rounded-full border bg-background px-3 py-1 text-sm font-medium">
             💬 Testimonials

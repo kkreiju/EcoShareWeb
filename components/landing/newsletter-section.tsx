@@ -13,7 +13,7 @@ const benefits = [
 export function NewsletterSection() {
   return (
     <section className="py-20 sm:py-32">
-      <div className="section-container">
+      <div className="mx-auto px-4 md:px-12 max-w-7xl">
         <Card className="max-w-4xl mx-auto border-0 shadow-2xl">
           <CardContent className="p-8 sm:p-12">
             <div className="text-center space-y-8">

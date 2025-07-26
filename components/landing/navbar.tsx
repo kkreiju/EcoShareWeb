@@ -44,7 +44,7 @@ export function Navbar() {
           : "bg-transparent"
       }`}
     >
-      <div className="section-container">
+      <div className="mx-auto px-4 md:px-12 max-w-7xl">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <div className="flex items-center space-x-2">
