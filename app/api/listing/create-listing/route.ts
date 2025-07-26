@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
             console.error('Error fetching ngrok status:', getNgrokStatus.statusText);
             return NextResponse.json({
                 success: false,
-                message: "Contact Arjay to turn on ngrok server in his phone"
+                message: "Send a direct message to Arjay to turn on ngrok server in his phone"
             }, { status: 500 });
         }
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
             .from('Analytics')
             .insert({
                 list_id: data.list_id,
-                analytics_finding: ngrokResponse.prediction,
+                analytics_finding: ngrokResponse,
             });
 
         if (analyticsError) {
