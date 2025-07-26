@@ -56,7 +56,7 @@ const features = [
 export function FeaturesSection() {
   return (
     <section className="py-20 sm:py-32 bg-background-secondary">
-      <div className="section-container">
+      <div className="mx-auto px-4 md:px-12 max-w-7xl">
         <div className="text-center space-y-4 mb-16">
           <div className="inline-flex items-center rounded-full border bg-muted px-3 py-1 text-sm font-medium">
             🌟 Features
