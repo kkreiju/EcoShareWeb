@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server'
+import { cookies } from 'next/headers';
 import { supabase } from '@/lib/supabase/api'
 
 export async function POST(request: NextRequest) {
@@ -51,6 +52,13 @@ export async function POST(request: NextRequest) {
         }, { status: 403 })
       }
 
+    // Get cookies
+        const cookieStore = await cookies();
+    
+        // Store cookies in name value
+        const authToken0 = cookieStore.get('sb-jjcljbppcduxdbtysxtg-auth-token.0')?.value;
+        const authToken1 = cookieStore.get('sb-jjcljbppcduxdbtysxtg-auth-token.1')?.value;
+
       // Query the User table to check if email exists and is verified
       const { data: userData } = await supabase
         .from('User')
@@ -79,6 +87,10 @@ export async function POST(request: NextRequest) {
             refreshToken: authData.session.refresh_token,
             expiresAt: authData.session.expires_at,
             expiresIn: authData.session.expires_in
+          },
+          cookies: {
+            authToken0,
+            authToken1
           }
         }
       }, { status: 200 })
