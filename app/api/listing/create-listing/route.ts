@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // Extract validated fields
-        const { user_id, title, type, imageURL,
+        let { user_id, title, type, imageURL,
              description, tags, price, quantity, pickupTimeAvailability,
               instructions, locationName, latitude, longitude } = body;
 
@@ -53,6 +53,30 @@ export async function POST(request: NextRequest) {
                 message: "Send a direct message to Arjay to turn on ngrok server in his phone"
             }, { status: 500 });
         }
+
+        // Convert base64 imageURL to img and upload to supabase storage
+        let imageBuffer: Buffer;
+
+        const base64Data = imageURL.split(',')[1];
+        imageBuffer = Buffer.from(base64Data, 'base64');
+
+        const { data: uploadData, error: uploadError } = await supabase
+            .storage
+            .from('listing')
+            .upload(`${user_id}/${title}${Date.now()}.png`, imageBuffer, {
+                contentType: 'image/png'
+            });
+
+        if (uploadError) {
+            console.error('Error uploading image:', uploadError);
+            return NextResponse.json({
+                success: false,
+                message: "Failed to upload image",
+                error: uploadError.message
+            }, { status: 500 });
+        }
+
+        imageURL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/listing/${uploadData.path}`;
 
         // Insert the listing into the database
         const { data, error } = await supabase
