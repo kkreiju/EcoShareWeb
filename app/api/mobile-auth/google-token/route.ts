@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { supabase } from '@/lib/supabase/api'
+import { cookies } from 'next/headers';
 import { OAuth2Client } from 'google-auth-library';
 
 export async function POST(request: NextRequest) {
@@ -23,6 +24,13 @@ export async function POST(request: NextRequest) {
             provider: 'google',
             token: idToken
         });
+
+        // Get cookies
+            const cookieStore = await cookies();
+        
+            // Store cookies in name value
+            const authToken0 = cookieStore.get('sb-jjcljbppcduxdbtysxtg-auth-token.0')?.value;
+            const authToken1 = cookieStore.get('sb-jjcljbppcduxdbtysxtg-auth-token.1')?.value;
 
         if(data && !error) {
             // Query the User table to check if email exists and is verified
@@ -53,6 +61,10 @@ export async function POST(request: NextRequest) {
                     refreshToken: data.session.refresh_token,
                     expiresAt: data.session.expires_at,
                     expiresIn: data.session.expires_in
+                },
+                cookies: {
+                    authToken0,
+                    authToken1
                 }
             }
             }, { status: 200 })
