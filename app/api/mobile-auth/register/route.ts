@@ -19,6 +19,19 @@ export async function POST(request: NextRequest) {
     
     // Extract validated fields
     const { email, password, firstName, middleName, lastName } = body
+    
+    const { data: existingUser} = await supabase
+      .from('User')
+      .select('user_email')
+      .eq('user_email', email)
+      .single()
+
+    if (existingUser) {
+      return NextResponse.json({
+        success: false,
+        message: "Email already registered"
+      }, { status: 409 })
+    }
 
     console.log('Processing registration for email:', email)
 
