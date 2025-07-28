@@ -25,6 +25,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { createClient } from "@/lib/supabase/client"
 
 // This is sample data.
 const data = {
@@ -157,6 +158,40 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [userData, setUserData] = React.useState(data.user)
+
+  React.useEffect(() => {
+    const supabase = createClient()
+
+    const getUser = async () => {
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser()
+
+        if (user && !error) {
+          // Fetch additional user data from your User table
+          const { data: userData } = await supabase
+            .from("User")
+            .select("user_firstName, user_lastName, user_profileURL")
+            .eq("user_email", user.email)
+            .single()
+
+          setUserData({
+            name: `${userData?.user_firstName ?? ""} ${userData?.user_lastName ?? ""}`.trim() || (user.email ?? ""),
+            email: user.email ?? "",
+            avatar: userData?.user_profileURL ?? "/avatars/default.jpg",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error)
+      }
+    }
+
+    getUser()
+  }, [])
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -167,7 +202,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
