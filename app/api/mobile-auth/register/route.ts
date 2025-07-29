@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
           middle_name: middleName,
           last_name: lastName,
         },
-        emailRedirectTo: `${process.env.ORIGIN_URL}/dashboard`
+        emailRedirectTo: `${process.env.ORIGIN_URL}/user/dashboard`
       }
     })
 

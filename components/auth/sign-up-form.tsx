@@ -38,7 +38,7 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/user/dashboard`,
         },
       });
       if (error) throw error;

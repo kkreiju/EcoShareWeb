@@ -6,6 +6,7 @@ import { Menu } from "lucide-react";
 import Image from "next/image";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import Link from "next/link";
+import { useAuth } from "@/hooks/use-auth";
 
 const navigationItems = [
   { name: "Home", href: "#home" },
@@ -19,6 +20,7 @@ const navigationItems = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -79,11 +81,21 @@ export function Navbar() {
           {/* Desktop CTA Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
             <ThemeSwitcher />
-            <Link href="/auth/login">
-              <Button className="bg-primary hover:bg-secondary text-primary-foreground hover:text-secondary-foreground font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
-                Get Started
-              </Button>
-            </Link>
+            {!loading && (
+              isAuthenticated ? (
+                <Link href="/user/dashboard">
+                  <Button className="bg-primary hover:bg-secondary text-primary-foreground hover:text-secondary-foreground font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/auth/login">
+                  <Button className="bg-primary hover:bg-secondary text-primary-foreground hover:text-secondary-foreground font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                    Get Started
+                  </Button>
+                </Link>
+              )
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -120,11 +132,21 @@ export function Navbar() {
 
                 {/* Mobile CTA Buttons */}
                 <div className="px-4 space-y-2">
-                  <Link href="/auth/login">
-                    <Button className="w-full bg-primary hover:bg-secondary text-primary-foreground hover:text-secondary-foreground font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
-                      Get Started
-                    </Button>
-                  </Link>
+                  {!loading && (
+                    isAuthenticated ? (
+                      <Link href="/user/dashboard">
+                        <Button className="w-full bg-primary hover:bg-secondary text-primary-foreground hover:text-secondary-foreground font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                          Dashboard
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link href="/auth/login">
+                        <Button className="w-full bg-primary hover:bg-secondary text-primary-foreground hover:text-secondary-foreground font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
+                          Get Started
+                        </Button>
+                      </Link>
+                    )
+                  )}
                 </div>
               </div>
             )}
