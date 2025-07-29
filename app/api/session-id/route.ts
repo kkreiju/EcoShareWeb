@@ -46,13 +46,6 @@ async function getSession() {
     // Get the current session
     const { data: { session } } = await supabase.auth.getSession();
 
-    if (!session) {
-        return NextResponse.json({
-            success: false,
-            message: "No active session found"
-        }, { status: 401 });
-    }
-
     // Get cookies
     const cookieStore = await cookies();
 

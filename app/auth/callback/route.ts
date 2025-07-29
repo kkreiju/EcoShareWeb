@@ -6,9 +6,9 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
 
   // if "next" is in param, use it as the redirect URL
-  let next = searchParams.get("next") ?? "/dashboard";
+  let next = searchParams.get("next") ?? "/user/dashboard";
   if (next.startsWith("/")) {
-    next = "/dashboard";
+    next = "/user/dashboard";
   }
 
   if (code) {
