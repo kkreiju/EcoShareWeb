@@ -47,34 +47,43 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  if (
-    request.nextUrl.pathname !== "/" &&
-    !request.nextUrl.pathname.startsWith("/api/mobile-auth") &&
-    !request.nextUrl.pathname.startsWith("/api/session-id") &&
-    !request.nextUrl.pathname.startsWith("/api/ngrok") &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    console.log("MIDDLEWARE: No user found, redirecting to login page");
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    return NextResponse.redirect(url);
-  }
+  // Define protected and public routes
+  const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api");
+  const isHomePage = request.nextUrl.pathname === "/";
+  const isUserRoute = request.nextUrl.pathname.startsWith("/user");
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is.
-  // If you're creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
+  // If user is authenticated
+  if (user) {
+    // Redirect authenticated users away from auth pages and home to dashboard
+    if (isAuthRoute || isHomePage) {
+      console.log(
+        "MIDDLEWARE: Authenticated user accessing auth/home, redirecting to dashboard",
+      );
+      const url = request.nextUrl.clone();
+      url.pathname = "/user/dashboard";
+      return NextResponse.redirect(url);
+    }
+
+    // Allow access to user routes and API routes
+    if (isUserRoute || isApiRoute) {
+      return supabaseResponse;
+    }
+  } else {
+    // User is not authenticated
+    // Allow access to auth routes, API routes, and home page
+    if (isAuthRoute || isApiRoute || isHomePage) {
+      return supabaseResponse;
+    }
+
+    // Redirect unauthenticated users trying to access protected routes
+    if (isUserRoute || (!isAuthRoute && !isApiRoute && !isHomePage)) {
+      console.log("MIDDLEWARE: No user found, redirecting to login page");
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      return NextResponse.redirect(url);
+    }
+  }
 
   return supabaseResponse;
 }
