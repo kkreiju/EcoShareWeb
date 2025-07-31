@@ -1,5 +1,10 @@
-import { Messages } from "@/components/messages/user"
+
+import { MessagingInterface } from "@/components/messages";
 
 export default async function MessagesPage() {
-  return <Messages />
+  return (
+    <div className="h-[calc(100vh-4rem)]">
+      <MessagingInterface />
+    </div>
+  );
 }
