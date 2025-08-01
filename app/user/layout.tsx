@@ -27,18 +27,22 @@ export default async function UserLayout({
                 .eq('user_email', data.user.email)
                 .single();
 
-  data.user.user_metadata = {
-    full_name: userData.data?.user_firstName + ' ' + userData.data?.user_lastName,
-    avatar_url: userData.data?.user_profileURL
-  }
+  // Safely construct full name with more defensive programming
+  const firstName = userData.data?.user_firstName?.trim() || '';
+  const lastName = userData.data?.user_lastName?.trim() || '';
+  const fullName = [firstName, lastName].filter(name => name && name.length > 0).join(' ') || 'User';
+  const avatarUrl = userData.data?.user_profileURL?.trim() || '/avatars/default.jpg';
+
+  // Use static fallback to avoid hydration issues
+  const userDisplayData = {
+    name: fullName,
+    email: data.user.email || '',
+    avatar: avatarUrl
+  };
 
   return (
     <SidebarProvider>
-      <AppSidebar user={{
-        name: data.user.user_metadata?.full_name || 'User',
-        email: data.user.email || '',
-        avatar: data.user.user_metadata?.avatar_url || '/avatars/default.jpg'
-      }} />
+      <AppSidebar user={userDisplayData} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">

@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EmojiPicker } from "@/components/ui/emoji-picker";
 
 export interface Message {
   id: string;
@@ -103,6 +104,10 @@ export function MessageChat({
     }
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setMessageText(prev => prev + emoji);
+  };
+
   const formatMessageTime = (timestamp: Date) => {
     if (isToday(timestamp)) {
       return format(timestamp, "HH:mm");
@@ -175,8 +180,7 @@ export function MessageChat({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem>View Profile</DropdownMenuItem>
-                <DropdownMenuItem>Clear Chat</DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">Block User</DropdownMenuItem>
+                <DropdownMenuItem>Complete Transaction</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -198,7 +202,7 @@ export function MessageChat({
             </div>
             
             {/* Messages for this date */}
-            <div className="space-y-0.5 md:space-y-1">
+            <div className="space-y-4 md:space-y-6">
               {messages.map((message, index) => {
                 const isCurrentUser = message.senderId === currentUserId;
                 const showAvatar = !isCurrentUser && (
@@ -209,12 +213,12 @@ export function MessageChat({
                 return (
                   <div
                     key={message.id}
-                    className={`flex gap-1 md:gap-1.5 mb-2 ${isCurrentUser ? "justify-end" : "justify-start"}`}
+                    className={`flex gap-2 md:gap-3 ${isCurrentUser ? "justify-end" : "justify-start"}`}
                   >
                     {!isCurrentUser && (
-                      <div className="w-5 md:w-6 flex-shrink-0">
+                      <div className="w-6 md:w-8 flex-shrink-0">
                         {showAvatar && (
-                          <Avatar className="h-5 w-5 md:h-6 md:w-6">
+                          <Avatar className="h-6 w-6 md:h-8 md:w-8">
                             <AvatarImage src={conversation.user.avatar} />
                             <AvatarFallback className="text-xs">
                               {conversation.user.name.slice(0, 2).toUpperCase()}
@@ -227,7 +231,7 @@ export function MessageChat({
                     <div className={`max-w-[85%] sm:max-w-[75%] md:max-w-[70%] ${isCurrentUser ? "order-1" : ""}`}>
                       {/* Message bubble */}
                       <div
-                        className={`px-2 py-1 rounded-lg ${
+                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg ${
                           isCurrentUser 
                             ? "bg-primary text-primary-foreground" 
                             : "bg-muted"
@@ -236,7 +240,7 @@ export function MessageChat({
                         <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
                           {message.content}
                         </p>
-                        <div className={`flex items-center justify-end mt-0.5 gap-1 text-xs ${
+                        <div className={`flex items-center justify-end mt-1 gap-1 text-xs ${
                           isCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"
                         }`}>
                           <span>{formatMessageTime(message.timestamp)}</span>
@@ -291,15 +295,17 @@ export function MessageChat({
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="pr-6 md:pr-8 text-sm h-8 md:h-9"
+              className="pr-10 md:pr-12 text-sm h-8 md:h-9"
             />
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute right-0.5 top-1/2 transform -translate-y-1/2 h-5 w-5 md:h-6 md:w-6"
-            >
-              <Smile className="h-3 w-3 md:h-3.5 md:w-3.5" />
-            </Button>
+            <EmojiPicker onEmojiSelect={handleEmojiSelect}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-5 w-5 md:h-6 md:w-6"
+              >
+                <Smile className="h-3 w-3 md:h-3.5 md:w-3.5" />
+              </Button>
+            </EmojiPicker>
           </div>
           
           <Button 
