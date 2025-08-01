@@ -7,6 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Users, ArrowLeft } from "lucide-react";
 
+// Fixed base timestamp to avoid hydration issues
+const BASE_TIME = new Date('2024-08-01T12:00:00.000Z').getTime();
+
 // Mock data - replace with actual API calls
 const mockConversations = [
   {
@@ -18,7 +21,7 @@ const mockConversations = [
     },
     lastMessage: {
       content: "Hi! Is the compost still available?",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 30), // 30 minutes ago
       senderId: "user1",
     },
     unreadCount: 2,
@@ -33,7 +36,7 @@ const mockConversations = [
     },
     lastMessage: {
       content: "Thanks for the vegetables! My garden will love them.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 60 * 2), // 2 hours ago
       senderId: "user2",
     },
     unreadCount: 0,
@@ -48,7 +51,7 @@ const mockConversations = [
     },
     lastMessage: {
       content: "Perfect! I'll pick them up tomorrow morning.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 60 * 24), // 1 day ago
       senderId: "current-user",
     },
     unreadCount: 0,
@@ -62,7 +65,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg1",
       content: "Hello! I saw your listing for organic compost. Is it still available?",
       senderId: "user1",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 60), // 1 hour ago
       type: "text",
       status: "read",
     },
@@ -70,7 +73,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg2",
       content: "Yes, it's still available! It's a mix of kitchen scraps and yard waste, perfect for garden beds.",
       senderId: "current-user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 45), // 45 minutes ago
       type: "text",
       status: "read",
     },
@@ -78,7 +81,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg3",
       content: "That sounds perfect! When would be a good time to pick it up?",
       senderId: "user1",
-      timestamp: new Date(Date.now() - 1000 * 60 * 40), // 40 minutes ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 40), // 40 minutes ago
       type: "text",
       status: "read",
     },
@@ -86,7 +89,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg4",
       content: "I'm available this afternoon after 3 PM or tomorrow morning. What works better for you?",
       senderId: "current-user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 35), // 35 minutes ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 35), // 35 minutes ago
       type: "text",
       status: "read",
     },
@@ -94,7 +97,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg5",
       content: "Hi! Is the compost still available?",
       senderId: "user1",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 30), // 30 minutes ago
       type: "text",
       status: "delivered",
     },
@@ -104,7 +107,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg6",
       content: "Thank you so much for the fresh vegetables!",
       senderId: "user2",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 60 * 3), // 3 hours ago
       type: "text",
       status: "read",
     },
@@ -112,7 +115,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg7",
       content: "You're very welcome! I'm glad they'll be put to good use.",
       senderId: "current-user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2.5), // 2.5 hours ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 60 * 2.5), // 2.5 hours ago
       type: "text",
       status: "read",
     },
@@ -120,7 +123,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg8",
       content: "Thanks for the vegetables! My garden will love them.",
       senderId: "user2",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 60 * 2), // 2 hours ago
       type: "text",
       status: "read",
     },
@@ -130,7 +133,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg9",
       content: "Hi Emma! The tomatoes are ready for pickup whenever you're available.",
       senderId: "current-user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 25), // 25 hours ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 60 * 25), // 25 hours ago
       type: "text",
       status: "read",
     },
@@ -138,7 +141,7 @@ const mockMessages: { [key: string]: Message[] } = {
       id: "msg10",
       content: "Perfect! I'll pick them up tomorrow morning.",
       senderId: "current-user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+      timestamp: new Date(BASE_TIME - 1000 * 60 * 60 * 24), // 1 day ago
       type: "text",
       status: "read",
     },
@@ -150,9 +153,45 @@ interface MessagingInterfaceProps {
 }
 
 export function MessagingInterface({ currentUserId = "current-user" }: MessagingInterfaceProps) {
+  const [mounted, setMounted] = useState(false);
   const [conversations, setConversations] = useState(mockConversations);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<{ [key: string]: Message[] }>(mockMessages);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render anything until mounted to avoid hydration issues
+  if (!mounted) {
+    return (
+      <div className="h-full flex relative">
+        <div className="hidden md:flex w-80 lg:w-96 border-r border-border flex-shrink-0">
+          <div className="w-full p-4">Loading conversations...</div>
+        </div>
+        <div className="flex md:hidden w-full">
+          <div className="w-full p-4">Loading conversations...</div>
+        </div>
+        <div className="hidden md:flex flex-1 flex-col min-w-0">
+          <div className="flex-1 flex items-center justify-center p-4">
+            <div className="text-center space-y-4 max-w-md">
+              <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center">
+                <MessageCircle className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  Welcome to EcoShare Messages
+                </h3>
+                <p className="text-sm text-muted-foreground px-4">
+                  Loading your conversations...
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const selectedConversation = selectedConversationId
     ? {
@@ -160,7 +199,7 @@ export function MessagingInterface({ currentUserId = "current-user" }: Messaging
         user: {
           ...conversations.find(c => c.id === selectedConversationId)!.user,
           isOnline: conversations.find(c => c.id === selectedConversationId)!.isOnline,
-          lastSeen: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago for offline users
+          lastSeen: new Date(BASE_TIME - 1000 * 60 * 5), // 5 minutes ago for offline users
         },
         messages: messages[selectedConversationId] || [],
       }
@@ -182,11 +221,12 @@ export function MessagingInterface({ currentUserId = "current-user" }: Messaging
   const handleSendMessage = (content: string, type: "text" | "image" | "file" = "text") => {
     if (!selectedConversationId) return;
 
+    const now = Date.now(); // Get current timestamp once
     const newMessage: Message = {
-      id: `msg_${Date.now()}`,
+      id: `msg_${now}`,
       content,
       senderId: currentUserId,
-      timestamp: new Date(),
+      timestamp: new Date(now),
       type,
       status: "sent",
     };
@@ -205,7 +245,7 @@ export function MessagingInterface({ currentUserId = "current-user" }: Messaging
               ...conv,
               lastMessage: {
                 content,
-                timestamp: new Date(),
+                timestamp: new Date(now),
                 senderId: currentUserId,
               },
             }

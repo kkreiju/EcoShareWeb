@@ -54,8 +54,8 @@ export function MessageList({
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header */}
-      <div className="p-3 md:p-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-3 md:mb-4">
+      <div className="p-2 md:p-3 border-b border-border">
+        <div className="flex items-center gap-2 mb-2 md:mb-3">
           <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           <h2 className="text-base md:text-lg font-semibold">Messages</h2>
           {conversations.length > 0 && (
@@ -80,8 +80,8 @@ export function MessageList({
       {/* Conversations List */}
       <div className="flex-1 overflow-y-auto">
         {filteredConversations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6 md:p-8">
-            <Users className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground mb-3 md:mb-4" />
+          <div className="flex flex-col items-center justify-center h-full text-center p-4 md:p-6">
+            <Users className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground mb-2 md:mb-3" />
             <h3 className="text-base md:text-lg font-medium text-muted-foreground mb-2">
               {searchQuery ? "No conversations found" : "No messages yet"}
             </h3>
@@ -93,7 +93,7 @@ export function MessageList({
             </p>
           </div>
         ) : (
-          <div className="space-y-1 p-1 md:p-2">
+          <div className="space-y-0.5 p-1">
             {filteredConversations.map((conversation) => (
               <Card
                 key={conversation.id}
@@ -104,25 +104,25 @@ export function MessageList({
                 }`}
                 onClick={() => onSelectConversation(conversation.id)}
               >
-                <CardContent className="p-2 md:p-3">
-                  <div className="flex items-center gap-2 md:gap-3">
+                <CardContent className="p-1.5 md:p-2">
+                  <div className="flex items-center gap-2">
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
-                      <Avatar className="h-10 w-10 md:h-12 md:w-12">
+                      <Avatar className="h-8 w-8 md:h-9 md:w-9">
                         <AvatarImage src={conversation.user.avatar} />
-                        <AvatarFallback className="text-xs md:text-sm">
+                        <AvatarFallback className="text-xs">
                           {conversation.user.name.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       {conversation.isOnline && (
-                        <div className="absolute bottom-0 right-0 h-2.5 w-2.5 md:h-3 md:w-3 bg-green-500 border-2 border-background rounded-full" />
+                        <div className="absolute bottom-0 right-0 h-2 w-2 bg-green-500 border border-background rounded-full" />
                       )}
                     </div>
 
                     {/* Message Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-sm md:text-base font-medium truncate pr-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium truncate pr-2">
                           {conversation.user.name}
                         </h4>
                         <span className="text-xs text-muted-foreground flex-shrink-0">
@@ -133,12 +133,12 @@ export function MessageList({
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <p className="text-xs md:text-sm text-muted-foreground truncate pr-2">
+                        <p className="text-xs text-muted-foreground truncate pr-2">
                           {conversation.lastMessage.senderId === currentUserId && "You: "}
                           {conversation.lastMessage.content}
                         </p>
                         {conversation.unreadCount > 0 && (
-                          <Badge variant="destructive" className="ml-2 h-4 px-1.5 text-xs flex-shrink-0">
+                          <Badge variant="destructive" className="ml-2 h-3.5 px-1 text-xs flex-shrink-0">
                             {conversation.unreadCount}
                           </Badge>
                         )}

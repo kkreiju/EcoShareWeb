@@ -1,12 +1,18 @@
+import { ListingGrid } from '@/components/dashboard/user'
+
 export default async function DashboardPage() {
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-        <div className="bg-muted/50 aspect-video rounded-xl" />
-        <div className="bg-muted/50 aspect-video rounded-xl" />
-        <div className="bg-muted/50 aspect-video rounded-xl" />
+    <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+      {/* Main Content */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Available Listings</h2>
+          <p className="text-sm text-muted-foreground">
+            Showing eco-friendly items near you
+          </p>
+        </div>
+        <ListingGrid />
       </div>
-      <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
     </div>
   )
 }
