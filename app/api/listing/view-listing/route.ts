@@ -16,7 +16,14 @@ export async function GET(req: NextRequest) {
       .from("Listing")
       .select(`
         *,
-        Analytics (*)
+        Analytics (*),
+        User!inner (
+          user_id,
+          user_firstName,
+          user_lastName,
+          user_profileURL,
+          user_ratings
+        )
       `);
 
     // Apply list_type filter
