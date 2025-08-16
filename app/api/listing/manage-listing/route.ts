@@ -41,8 +41,8 @@ export async function GET(req: NextRequest) {
               profileURL:user_profileURL,
               ratings:user_ratings
             )
-          `);
-          
+          `).eq('user_id', userId);
+
     const { data: listings, error: listingsError } = await query;
 
     if (listingsError) {
