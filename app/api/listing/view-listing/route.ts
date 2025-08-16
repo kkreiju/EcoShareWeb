@@ -15,13 +15,27 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from("Listing")
       .select(`
-        *,
+        list_id,
+        title:list_title,
+        type:list_type,
+        price:list_price,
+        description:list_description,
+        imageURL:list_imageURL,
+        tags:list_tags,
+        quantity:list_quantity,
+        status:list_availabilityStatus,
+        postedDate:list_postedDate,
+        pickupTimeAvailability:list_pickupTimeAvailability,
+        instructions:list_pickupInstructions,
+        locationName:list_locationName,
+        latitude:list_latitude,
+        longitude:list_longitude,
         Analytics (*),
         User!inner (
-          user_firstName,
-          user_lastName,
-          user_profileURL,
-          user_ratings
+          firstName:user_firstName,
+          lastName:user_lastName,
+          profileURL:user_profileURL,
+          ratings:user_ratings
         )
       `);
 
@@ -81,6 +95,8 @@ export async function GET(req: NextRequest) {
     if (listingsError) {
       return NextResponse.json({ error: listingsError.message }, { status: 500 });
     }
+
+    
 
     return NextResponse.json({
       data: listings,
