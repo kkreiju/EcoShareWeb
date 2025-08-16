@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
       .from("Listing")
       .select(`
         list_id,
+        user_id,
         title:list_title,
         type:list_type,
         price:list_price,
