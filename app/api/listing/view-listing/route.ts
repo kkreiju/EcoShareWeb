@@ -38,7 +38,8 @@ export async function GET(req: NextRequest) {
           profileURL:user_profileURL,
           ratings:user_ratings
         )
-      `);
+      `)
+      .eq('list_availabilityStatus', 'Active');
 
     // Apply list_type filter
     if (listType && listType !== 'all') {
