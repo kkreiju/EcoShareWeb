@@ -98,12 +98,18 @@ export async function GET(req: NextRequest) {
     const otherUser = usersByIdMap[otherUserId];
     const latestMessage = latestMessagesByConv[conv.conv_id];
 
+    // Check if the current user sent the latest message
+    let lastMessageText = latestMessage?.mess_content || '';
+    if (latestMessage && latestMessage.mess_senderId === userId) {
+      lastMessageText = `You: ${lastMessageText}`;
+    }
+
     console.log(otherUser);
 
     return {
       id: conv.conv_id,
       name: otherUser ? `${otherUser.user_firstName} ${otherUser.user_lastName}` : 'Unknown User',
-      lastMessage: latestMessage?.mess_content || '',
+      lastMessage: lastMessageText,
       timestamp: getRelativeTime(conv.conv_lastMessageAt),
       avatar: otherUser?.user_profileURL || undefined
     };
