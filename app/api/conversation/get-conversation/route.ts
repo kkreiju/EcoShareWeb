@@ -1,6 +1,30 @@
 import { NextResponse, NextRequest } from "next/server";
 import { supabase } from '@/lib/supabase/api';
 
+// Helper function to format timestamp as relative time
+function getRelativeTime(timestamp: string): string {
+  const now = new Date();
+  const messageTime = new Date(timestamp);
+  const diffInMs = now.getTime() - messageTime.getTime();
+  
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  
+  if (diffInMinutes < 1) {
+    return 'now';
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes}m ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours}h ago`;
+  } else if (diffInDays < 7) {
+    return `${diffInDays}d ago`;
+  } else {
+    // For older than a week, show the date
+    return messageTime.toLocaleDateString();
+  }
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get('user_id');
@@ -74,12 +98,14 @@ export async function GET(req: NextRequest) {
     const otherUser = usersByIdMap[otherUserId];
     const latestMessage = latestMessagesByConv[conv.conv_id];
 
+    console.log(otherUser);
+
     return {
       id: conv.conv_id,
       name: otherUser ? `${otherUser.user_firstName} ${otherUser.user_lastName}` : 'Unknown User',
       lastMessage: latestMessage?.mess_content || '',
-      timestamp: conv.conv_lastMessageAt,
-      avatar: otherUser?.user_imageURL || undefined
+      timestamp: getRelativeTime(conv.conv_lastMessageAt),
+      avatar: otherUser?.user_profileURL || undefined
     };
   });
 
