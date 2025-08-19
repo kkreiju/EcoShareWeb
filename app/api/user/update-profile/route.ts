@@ -31,10 +31,10 @@ export async function PUT(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // If profile URL is provided, convert it to base64 and upload to avatars
+        // If profile URL is provided (already base64), upload it to avatars
         if (profileURL) {
             try {
-                // Convert base64 string directly to buffer
+                // Create buffer from the base64 string (no conversion needed)
                 const imageBuffer = Buffer.from(profileURL, 'base64');
 
                 // Upload to supabase storage in avatars bucket
