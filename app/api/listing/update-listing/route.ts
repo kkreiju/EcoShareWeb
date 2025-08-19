@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { supabase } from '@/lib/supabase/api';
 
-export async function PATCH(request: NextRequest) {
+export async function PUT(request: NextRequest) {
     try{
         const body = await request.json();
 
