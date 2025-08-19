@@ -6,7 +6,7 @@ export async function PUT(request: NextRequest) {
         const body = await request.json();
 
         // Extract validated fields
-        let { user_id, email, firstName, middleName, lastName, bio, profileURL } = body;
+        let { user_id, email, contactNumber, firstName, middleName, lastName, bio, profileURL } = body;
 
         // Check if all required fields are provided
         if (!user_id) {
@@ -74,6 +74,7 @@ export async function PUT(request: NextRequest) {
                 user_middleName: middleName ? middleName.charAt(0).toUpperCase() + middleName.slice(1).toLowerCase() : null,
                 user_lastName: lastName ? lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase() : null,
                 user_bio: bio,
+                user_phoneNumber: contactNumber,
                 user_profileURL: profileURL
             })
             .eq('user_id', user_id)
