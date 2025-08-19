@@ -35,7 +35,8 @@ export async function PUT(request: NextRequest) {
         if (profileURL) {
             try {
                 // Create buffer from the base64 string (no conversion needed)
-                const imageBuffer = Buffer.from(profileURL, 'base64');
+                const base64Data = profileURL.split(',')[1];
+                const imageBuffer = Buffer.from(base64Data, 'base64');
 
                 // Upload to supabase storage in avatars bucket
                 const { data: uploadData, error: uploadError } = await supabase
@@ -55,7 +56,7 @@ export async function PUT(request: NextRequest) {
                 }
 
                 // Get the public URL
-                profileURL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${uploadData.path}`;
+                profileURL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatar/${uploadData.path}`;
             } catch (imageError) {
                 console.error('Error processing profile image:', imageError);
                 return NextResponse.json({
