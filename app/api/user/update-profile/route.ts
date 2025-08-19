@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest) {
                         success: false,
                         message: "Failed to upload profile image",
                         error: uploadError.message
-                    }, { status: 500 });
+                    }, { status: 200 });
                 }
 
                 // Get the public URL
@@ -61,7 +61,7 @@ export async function PUT(request: NextRequest) {
                 return NextResponse.json({
                     success: false,
                     message: "Failed to process profile image"
-                }, { status: 500 });
+                }, { status: 200 });
             }
         }
 
@@ -80,7 +80,7 @@ export async function PUT(request: NextRequest) {
             .single();
 
         if (updateError) {
-            return NextResponse.json({data: updatedUser, error: updateError.message }, { status: 500 });
+            return NextResponse.json({data: updatedUser, error: updateError.message }, { status: 200 });
         }
 
         return NextResponse.json({ success: true, message: "User profile updated successfully", data: updatedUser }, { status: 200 });
