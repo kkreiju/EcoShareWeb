@@ -85,7 +85,7 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({data: updatedUser, error: updateError.message }, { status: 200 });
         }
 
-        return NextResponse.json({ success: true, message: "User profile updated successfully", data: updatedUser }, { status: 500 });
+        return NextResponse.json({ success: true, message: "User profile updated successfully", data: updatedUser }, { status: 200 });
     } catch (error) {
         console.error("Error updating user profile:", error);
         return NextResponse.json({ error: "Error updating user profile" }, { status: 500 });
