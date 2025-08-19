@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest) {
                 // Upload to supabase storage in avatars bucket
                 const { data: uploadData, error: uploadError } = await supabase
                     .storage
-                    .from('avatars')
+                    .from('avatar')
                     .upload(`${user_id}/profile_${Date.now()}.png`, imageBuffer, {
                         contentType: 'image/png'
                     });
@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest) {
                         success: false,
                         message: "Failed to upload profile image",
                         error: uploadError.message
-                    }, { status: 200 });
+                    }, { status: 500 });
                 }
 
                 // Get the public URL
@@ -61,7 +61,7 @@ export async function PUT(request: NextRequest) {
                 return NextResponse.json({
                     success: false,
                     message: "Failed to process profile image"
-                }, { status: 200 });
+                }, { status: 500 });
             }
         }
 
@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({data: updatedUser, error: updateError.message }, { status: 200 });
         }
 
-        return NextResponse.json({ success: true, message: "User profile updated successfully", data: updatedUser }, { status: 200 });
+        return NextResponse.json({ success: true, message: "User profile updated successfully", data: updatedUser }, { status: 500 });
     } catch (error) {
         console.error("Error updating user profile:", error);
         return NextResponse.json({ error: "Error updating user profile" }, { status: 500 });
