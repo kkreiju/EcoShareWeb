@@ -12,6 +12,8 @@ export async function getUserNotifications(userId: string) {
         throw new Error(listingsError.message);
     }
 
+    console.log("User as seller: " + listings.length);
+
     // Get transaction of user - User acts as buyer
     const { data: transactions, error: transactionsError } = await supabase
         .from('Transaction')
@@ -21,6 +23,8 @@ export async function getUserNotifications(userId: string) {
     if (transactionsError) {
         throw new Error(transactionsError.message);
     }
+
+    console.log("User as buyer: " + transactions.length);
 
     // Check if listings are in transaction with status "Pending"
     const listIds = listings?.map(listing => listing.list_id) || [];
@@ -35,17 +39,23 @@ export async function getUserNotifications(userId: string) {
         throw new Error(pendingTransactionsError.message);
     }
 
+    console.log("Pending Transactions: " + pendingTransactions.length);
+
     // Get notification of pendingTransactions
     const { data: notifications, error: notificationsError } = await supabase
         .from('Notification')
         .select('*')
         .in('tran_id', pendingTransactions.map(transaction => transaction.tran_id))
-        .ilike('notif_message', '%has requested your listing%')
-        .ilike('notif_message', '%wants to offer item to your listing%');
+        .or(
+            `notif_message.ilike.%has requested your listing%,notif_message.ilike.%wants to offer item to your listing%`
+        );
+
 
     if (notificationsError) {
         throw new Error(notificationsError.message);
     }
+
+    console.log("Notifications: " + notifications.length);
 
     // Check if user are in transactions
     const { data: userTransactions, error: userTransactionsError } = await supabase
@@ -62,9 +72,9 @@ export async function getUserNotifications(userId: string) {
         .from('Notification')
         .select('*')
         .in('tran_id', userTransactions.map(transaction => transaction.tran_id))
-        .ilike('notif_message', '%has accepted your request%')
-        .ilike('notif_message', '%has rejected your request%')
-        .ilike('notif_message', '%transaction is successful%');
+        .or(
+            `notif_message.ilike.%has accepted your request%,notif_message.ilike.%has rejected your request%,notif_message.ilike.%transaction is successful%`
+        );
 
     if (userNotificationsError) {
         throw new Error(userNotificationsError.message);
