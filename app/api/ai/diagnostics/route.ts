@@ -68,10 +68,68 @@ export async function POST(request: NextRequest) {
 
         console.log('Ngrok response:', ngrokResponse);
 
+        let health;
+
+        // Check if ngrokResponse.data.prediction has "Unhealthy" or "Healthy"
+        if (ngrokResponse.prediction.includes("Unhealthy")) {
+            // Remove the word unhealthy
+            ngrokResponse.prediction = ngrokResponse.prediction.replace(" Unhealthy", "");
+            health = "Unhealthy";
+        }
+
+        if (ngrokResponse.prediction.includes("Healthy")) {
+            // Remove the word healthy
+            ngrokResponse.prediction = ngrokResponse.prediction.replace(" Healthy", "");
+            health = "Healthy";
+        }
+
+        // Multiline string
+        let diagnosis = `What nutrients could you suggest with a ${health} ${ngrokResponse.prediction} plant?
+            Response should be in json format, limiting to 20 words or less.
+            Response should be in the following format:
+            {
+                "nutrientNeeds": "nutrient1, nutrient2, nutrient3",
+                "compostSuggestions": "compost1, compost2, compost3"
+            }
+        `;
+
+        const diagnosisResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + process.env.OPENROUTER_API_KEY,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              "model": "deepseek/deepseek-r1-0528-qwen3-8b:free",
+              "stream": false,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": diagnosis
+                }
+              ]
+            })
+          });
+
+          const diagnosisData = await diagnosisResponse.json();
+          let diagnosisMessage = diagnosisData?.choices?.[0]?.message?.content ?? "";
+
+          // Remove ```json ... ```
+          diagnosisMessage = diagnosisMessage.replace(/```json\n?|\n?```/g, "");
+
+          // Now parse
+          let diagnosisObj;
+          try {
+            diagnosisObj = JSON.parse(diagnosisMessage);
+            } catch (e) {
+            console.error("Failed to parse JSON:", e);
+            }
+
         return NextResponse.json({
             success: true,
             message: "Image uploaded successfully",
-            data: ngrokResponse
+            data: ngrokResponse,
+            diagnosis: diagnosisObj
         });
     }
     catch (error) {
