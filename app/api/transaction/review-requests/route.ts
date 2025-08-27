@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
             }, { status: 500 });
         }
 
+        console.log("Active user listings count: ", listings.length);
+
         //Get transaction of user
         const { data: transactions, error: transactionsError } = await supabase
             .from('Transaction')
@@ -43,62 +45,77 @@ export async function POST(req: NextRequest) {
             }, { status: 500 });
         }
 
-        //Get user_profileURL in user using tran_userId
-        const { data: users, error: usersError } = await supabase
+        console.log("Transaction count: ", transactions.length);
+
+        if(transactions.length === 0){
+            return NextResponse.json({
+                success: true,
+                message: "No transactions found",
+                requests: []
+            }, { status: 200 });
+        }
+        else{  
+            //Get user_profileURL in user using tran_userId
+            const { data: users, error: usersError } = await supabase
             .from('User')
             .select('user_id, user_profileURL, user_firstName, user_lastName')
             .in('user_id', transactions.map(transaction => transaction.tran_userId));
 
-        if (usersError) {
+            if (usersError) {
+                return NextResponse.json({
+                    success: false,
+                    message: "An error occurred while processing your request",
+                    error: usersError.message
+                }, { status: 500 });
+            }
+
+            console.log("User url count: ", users.length);
+
+            //Get notification using tran_id
+            const { data: notifications, error: notificationsError } = await supabase
+                .from('Notification')
+                .select('*')
+                .eq('tran_id', transactions.map(transaction => transaction.tran_id));
+
+            if (notificationsError) {
+                return NextResponse.json({
+                    success: false,
+                    message: "An error occurred while processing your request",
+                    error: notificationsError.message
+                }, { status: 500 });
+            }
+
+            console.log("Notification count: ", notifications.length);
+
+            //Create requests in json format with id, tran_userId, user_id, list_id, tran_amount, tran_quantity, tran_status
+            const requests = transactions.map(transaction => {
+                let message = notifications.find(notification => notification.tran_id === transaction.tran_id)?.notif_message;
+                if(message == null){
+                    message = "";
+                }
+                else{
+                    //Split to "." and remove whitespace
+                    message = message.split(".").slice(1).join(".").trim();
+                }
+
+                return {
+                    id: transaction.tran_id,
+                    userName: users.find(user => user.user_id === transaction.tran_userId)?.user_firstName + " " + users.find(user => user.user_id === transaction.tran_userId)?.user_lastName,
+                    user_profileURL: users.find(user => user.user_id === transaction.tran_userId)?.user_profileURL,
+                    listingTitle: listings.find(listing => listing.list_id === transaction.list_id)?.list_title,
+                    listingType: listings.find(listing => listing.list_id === transaction.list_id)?.list_type,
+                    requestDate: transaction.tran_date,
+                    message: message,
+                    status: transaction.tran_status
+                }
+            })
+
             return NextResponse.json({
-                success: false,
-                message: "An error occurred while processing your request",
-                error: usersError.message
-            }, { status: 500 });
+                success: true,
+                message: "Requests retrieved successfully",
+                requests
+            }, { status: 200 });
         }
-
-        //Get notification using tran_id
-        const { data: notifications, error: notificationsError } = await supabase
-            .from('Notification')
-            .select('*')
-            .eq('tran_id', transactions.map(transaction => transaction.tran_id));
-
-        if (notificationsError) {
-            return NextResponse.json({
-                success: false,
-                message: "An error occurred while processing your request",
-                error: notificationsError.message
-            }, { status: 500 });
-        }
-
-        //Create requests in json format with id, tran_userId, user_id, list_id, tran_amount, tran_quantity, tran_status
-        const requests = transactions.map(transaction => {
-            let message = notifications.find(notification => notification.tran_id === transaction.tran_id)?.notif_message;
-            if(message == null){
-                message = "";
-            }
-            else{
-                //Split to "." and remove whitespace
-                message = message.split(".").slice(1).join(".").trim();
-            }
-
-            return {
-                id: transaction.tran_id,
-                userName: users.find(user => user.user_id === transaction.tran_userId)?.user_firstName + " " + users.find(user => user.user_id === transaction.tran_userId)?.user_lastName,
-                user_profileURL: users.find(user => user.user_id === transaction.tran_userId)?.user_profileURL,
-                listingTitle: listings.find(listing => listing.list_id === transaction.list_id)?.list_title,
-                listingType: listings.find(listing => listing.list_id === transaction.list_id)?.list_type,
-                requestDate: transaction.tran_date,
-                message: message,
-                status: transaction.tran_status
-            }
-        })
-
-        return NextResponse.json({
-            success: true,
-            message: "Requests retrieved successfully",
-            requests
-        }, { status: 200 });
     }
     catch(error){
         return NextResponse.json({
