@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         const transaction = {
             list_id,
             tran_userId: user_id,
-            tran_amount: amount.data?.list_price,
+            tran_amount: amount.data?.list_price * quantity,
             tran_quantity: quantity,
             tran_status: "Pending"
         }
