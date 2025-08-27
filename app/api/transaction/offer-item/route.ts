@@ -4,9 +4,10 @@ import { supabase } from '@/lib/supabase/api';
 export async function POST(req: NextRequest) {
     try{
         const body = await req.json();
-        const { list_id, user_id, quantity, message } = body;
+        const { list_id, user_id, quantity } = body;
+        let message = body.message;
 
-        if(!list_id || !user_id || !quantity || !message){
+        if(!list_id || !user_id || !quantity ){
             return NextResponse.json({
                 success: false,
                 message: "Missing required fields"
@@ -103,10 +104,17 @@ export async function POST(req: NextRequest) {
             }, { status: 500 });
         }
 
+        if(message == null){
+            message = "";
+        }
+        else{
+            message = ` ${message}`;
+        }
+
         // Create notification json
         const notification = {
             tran_id: transactionID.tran_id,
-            notif_message: `${userData.user_firstName} ${userData.user_lastName} wants to offer item to your listing: ${listingData.list_title}. ${message}`,
+            notif_message: `${userData.user_firstName} ${userData.user_lastName} wants to offer item to your listing: ${listingData.list_title}.${message}`,
         }
 
         // Insert notification
