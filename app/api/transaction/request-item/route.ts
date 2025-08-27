@@ -4,14 +4,20 @@ import { supabase } from '@/lib/supabase/api';
 export async function POST(req: NextRequest) {
     try{
         const body = await req.json();
-        const { list_id, user_id, amount, quantity, message } = body;
+        const { list_id, user_id, quantity, message } = body;
 
-        if(!list_id || !user_id || !amount || !quantity || !message){
+        if(!list_id || !user_id || !quantity || !message){
             return NextResponse.json({
                 success: false,
                 message: "Missing required fields"
             }, { status: 400 });
         }
+
+        const amount = await supabase
+            .from('Listing')
+            .select('list_price')
+            .eq('list_id', list_id)
+            .single();
 
         // Validate if there are no pending transaction for the listing
         const { data: existingTransaction } = await supabase
