@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
                 return {
                     id: transaction.tran_id,
                     userName: users.find(user => user.user_id === transaction.tran_userId)?.user_firstName + " " + users.find(user => user.user_id === transaction.tran_userId)?.user_lastName,
-                    user_profileURL: users.find(user => user.user_id === transaction.tran_userId)?.user_profileURL,
+                    userAvatar: users.find(user => user.user_id === transaction.tran_userId)?.user_profileURL,
                     listingTitle: listings.find(listing => listing.list_id === transaction.list_id)?.list_title,
                     listingType: listings.find(listing => listing.list_id === transaction.list_id)?.list_type,
                     requestDate: transaction.tran_dateTime,
