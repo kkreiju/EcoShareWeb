@@ -13,60 +13,74 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Listing, ListingFilters } from '@/lib/DataClass'
 
-type CategoryType = 'all' | 'for-sale' | 'free' | 'wanted'
-type SortType = 'newest' | 'oldest' | 'price-low' | 'price-high' | 'most-viewed'
-type ConditionType = 'all' | 'new' | 'like-new' | 'good' | 'fair'
+type CategoryType = NonNullable<ListingFilters['type']> | 'all'
+type PriceRangeType = NonNullable<ListingFilters['price']> | 'all'
 
-interface SearchFilters {
-  query: string
-  category: CategoryType
-  sort: SortType
-  condition: ConditionType
-  priceRange: [number, number]
+type CategoryCount = {
+  id: CategoryType
+  label: string
+  count: number
 }
 
 interface ListingSearchProps {
-  onSearch: (filters: SearchFilters) => void
+  onSearch: (filters: Omit<ListingFilters, 'type' | 'price'> & {
+    query: string
+    category: CategoryType
+    priceRange: PriceRangeType
+  }) => void
+  listings: Listing[]
 }
 
-export function ListingSearch({ onSearch }: ListingSearchProps) {
+export function ListingSearch({ onSearch, listings }: ListingSearchProps) {
   const [query, setQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('all')
-  const [selectedSort, setSelectedSort] = useState<SortType>('newest')
-  const [selectedCondition, setSelectedCondition] = useState<ConditionType>('all')
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500])
+  const [selectedPriceRange, setSelectedPriceRange] = useState<PriceRangeType>('all')
 
-  const categories = [
-    { id: 'all' as CategoryType, label: 'All Items', count: 1247 },
-    { id: 'for-sale' as CategoryType, label: 'For Sale', count: 892 },
-    { id: 'free' as CategoryType, label: 'Free', count: 234 },
-    { id: 'wanted' as CategoryType, label: 'Wanted', count: 121 }
-  ]
+  // Calculate real counts from actual listings data
+  const getCategoryCounts = (): CategoryCount[] => {
+    const freeCount = listings.filter(l => {
+      const type = (l.type ?? '').toString().toLowerCase()
+      const category = (l.category ?? '').toString().toLowerCase()
+      return type === 'free' || category === 'free'
+    }).length
+    
+    const saleCount = listings.filter(l => {
+      const type = (l.type ?? '').toString().toLowerCase()
+      const category = (l.category ?? '').toString().toLowerCase()
+      return type === 'sale' || category === 'sale'
+    }).length
+    
+    const wantedCount = listings.filter(l => {
+      const type = (l.type ?? '').toString().toLowerCase()
+      const category = (l.category ?? '').toString().toLowerCase()
+      return type === 'wanted' || category === 'wanted'
+    }).length
+    
+    return [
+      { id: 'all' as CategoryType, label: 'All Items', count: listings.length },
+      { id: 'free' as CategoryType, label: 'Free', count: freeCount },
+      { id: 'sale' as CategoryType, label: 'Sale', count: saleCount },
+      { id: 'wanted' as CategoryType, label: 'Wanted', count: wantedCount }
+    ]
+  }
 
-  const sortOptions = [
-    { id: 'newest' as SortType, label: 'Newest First' },
-    { id: 'oldest' as SortType, label: 'Oldest First' },
-    { id: 'price-low' as SortType, label: 'Price: Low to High' },
-    { id: 'price-high' as SortType, label: 'Price: High to Low' },
-    { id: 'most-viewed' as SortType, label: 'Most Viewed' }
-  ]
+  const categories = getCategoryCounts()
 
-  const conditions = [
-    { id: 'all' as ConditionType, label: 'All Conditions' },
-    { id: 'new' as ConditionType, label: 'New' },
-    { id: 'like-new' as ConditionType, label: 'Like New' },
-    { id: 'good' as ConditionType, label: 'Good' },
-    { id: 'fair' as ConditionType, label: 'Fair' }
+  const priceRanges = [
+    { id: 'all' as PriceRangeType, label: 'All Prices' },
+    { id: 'under25' as PriceRangeType, label: 'Under P25' },
+    { id: '25-50' as PriceRangeType, label: 'P25-P50' },
+    { id: '50-100' as PriceRangeType, label: 'P50-P100' },
+    { id: 'over100' as PriceRangeType, label: 'Over P100' }
   ]
 
   const handleSearch = () => {
-    const filters: SearchFilters = {
+    const filters = {
       query,
       category: selectedCategory,
-      sort: selectedSort,
-      condition: selectedCondition,
-      priceRange
+      priceRange: selectedPriceRange
     }
     onSearch(filters)
   }
@@ -76,12 +90,10 @@ export function ListingSearch({ onSearch }: ListingSearchProps) {
     setQuery(value)
     // Auto-search on input change
     setTimeout(() => {
-      const filters: SearchFilters = {
+      const filters = {
         query: value,
         category: selectedCategory,
-        sort: selectedSort,
-        condition: selectedCondition,
-        priceRange
+        priceRange: selectedPriceRange
       }
       onSearch(filters)
     }, 300)
@@ -89,11 +101,19 @@ export function ListingSearch({ onSearch }: ListingSearchProps) {
 
   const handleCategoryChange = (category: CategoryType) => {
     setSelectedCategory(category)
-    const filters: SearchFilters = {
+    const filters = {
       query,
       category,
-      sort: selectedSort,
-      condition: selectedCondition,
+      priceRange: selectedPriceRange
+    }
+    onSearch(filters)
+  }
+
+  const handlePriceRangeChange = (priceRange: PriceRangeType) => {
+    setSelectedPriceRange(priceRange)
+    const filters = {
+      query,
+      category: selectedCategory,
       priceRange
     }
     onSearch(filters)
@@ -102,12 +122,12 @@ export function ListingSearch({ onSearch }: ListingSearchProps) {
   const getCategoryBadgeColor = (category: CategoryType) => {
     if (selectedCategory === category) {
       switch (category) {
-        case 'for-sale':
-          return 'bg-green-600 text-white hover:bg-green-700'
         case 'free':
-          return 'bg-blue-600 text-white hover:bg-blue-700'
+          return 'bg-green-600 text-white hover:bg-green-700'
+        case 'sale':
+          return 'bg-red-600 text-white hover:bg-red-700'
         case 'wanted':
-          return 'bg-purple-600 text-white hover:bg-purple-700'
+          return 'bg-yellow-600 text-white hover:bg-yellow-700'
         default:
           return 'bg-gray-600 text-white hover:bg-gray-700'
       }
@@ -118,33 +138,31 @@ export function ListingSearch({ onSearch }: ListingSearchProps) {
   const getActiveFiltersCount = () => {
     let count = 0
     if (selectedCategory !== 'all') count++
-    if (selectedSort !== 'newest') count++
-    if (selectedCondition !== 'all') count++
-    if (priceRange[0] !== 0 || priceRange[1] !== 500) count++
+    if (selectedPriceRange !== 'all') count++
     return count
   }
 
   return (
     <div className="space-y-4">
       {/* Search Bar */}
-      <div className="flex gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <div className="relative w-full sm:flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             type="text"
             placeholder="Search for items, sellers, or keywords..."
             value={query}
             onChange={handleInputChange}
-            className="pl-10 pr-4 h-11 bg-background"
+            className="pl-10 pr-4 h-11 bg-background w-full"
           />
         </div>
         
         {/* Advanced Filters Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="h-11 px-4 relative">
+            <Button variant="outline" className="h-11 px-4 relative w-full sm:w-auto justify-center">
               <SlidersHorizontal className="w-4 h-4 mr-2" />
-              Filters
+              Price Filter
               {getActiveFiltersCount() > 0 && (
                 <Badge
                   variant="destructive"
@@ -155,97 +173,30 @@ export function ListingSearch({ onSearch }: ListingSearchProps) {
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Advanced Filters</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuLabel>Price Range</DropdownMenuLabel>
             <DropdownMenuSeparator />
             
-            {/* Sort Options */}
+            {/* Price Range Filter */}
             <div className="p-2">
-              <label className="text-sm font-medium mb-2 block">Sort By</label>
-              <div className="grid grid-cols-1 gap-1">
-                {sortOptions.map((option) => (
-                  <Button
-                    key={option.id}
-                    variant={selectedSort === option.id ? "default" : "ghost"}
-                    size="sm"
-                    className="justify-start text-xs h-8"
-                    onClick={() => {
-                      setSelectedSort(option.id)
-                      handleSearch()
-                    }}
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <DropdownMenuSeparator />
-
-            {/* Condition Filter */}
-            <div className="p-2">
-              <label className="text-sm font-medium mb-2 block">Condition</label>
-              <div className="grid grid-cols-2 gap-1">
-                {conditions.map((condition) => (
-                  <Button
-                    key={condition.id}
-                    variant={selectedCondition === condition.id ? "default" : "ghost"}
-                    size="sm"
-                    className="justify-start text-xs h-8"
-                    onClick={() => {
-                      setSelectedCondition(condition.id)
-                      handleSearch()
-                    }}
-                  >
-                    {condition.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <DropdownMenuSeparator />
-
-            {/* Price Range */}
-            <div className="p-2">
-              <label className="text-sm font-medium mb-2 block">
-                Price Range: ${priceRange[0]} - ${priceRange[1]}
-              </label>
               <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Min"
-                    value={priceRange[0]}
-                    onChange={(e) => {
-                      const newRange: [number, number] = [parseInt(e.target.value) || 0, priceRange[1]]
-                      setPriceRange(newRange)
-                    }}
-                    className="h-8 text-xs"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Max"
-                    value={priceRange[1]}
-                    onChange={(e) => {
-                      const newRange: [number, number] = [priceRange[0], parseInt(e.target.value) || 500]
-                      setPriceRange(newRange)
-                    }}
-                    className="h-8 text-xs"
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  onClick={handleSearch}
-                  className="w-full h-8 text-xs"
-                >
-                  Apply Price Filter
-                </Button>
+                {priceRanges.map((range) => (
+                  <Button
+                    key={range.id}
+                    variant={selectedPriceRange === range.id ? "default" : "ghost"}
+                    size="sm"
+                    className="w-full justify-start text-sm h-10"
+                    onClick={() => handlePriceRangeChange(range.id)}
+                  >
+                    {range.label}
+                  </Button>
+                ))}
               </div>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button onClick={handleSearch} className="h-11 px-6">
+        <Button onClick={handleSearch} className="h-11 px-6 w-full sm:w-auto justify-center">
           <Search className="w-4 h-4 mr-2" />
           Search
         </Button>
@@ -253,7 +204,7 @@ export function ListingSearch({ onSearch }: ListingSearchProps) {
 
       {/* Category Filter Badges */}
       <div className="flex flex-wrap gap-2">
-        <span className="text-sm font-medium text-muted-foreground flex items-center">
+        <span className="text-sm font-medium text-muted-foreground flex items-center w-full sm:w-auto">
           <Filter className="w-4 h-4 mr-1" />
           Categories:
         </span>
@@ -287,42 +238,11 @@ export function ListingSearch({ onSearch }: ListingSearchProps) {
               </button>
             </Badge>
           )}
-          {selectedSort !== 'newest' && (
+          {selectedPriceRange !== 'all' && (
             <Badge variant="secondary" className="text-xs">
-              Sort: {sortOptions.find(s => s.id === selectedSort)?.label}
+              Price: {priceRanges.find(p => p.id === selectedPriceRange)?.label}
               <button
-                onClick={() => {
-                  setSelectedSort('newest')
-                  handleSearch()
-                }}
-                className="ml-1 hover:text-destructive"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
-          {selectedCondition !== 'all' && (
-            <Badge variant="secondary" className="text-xs">
-              Condition: {conditions.find(c => c.id === selectedCondition)?.label}
-              <button
-                onClick={() => {
-                  setSelectedCondition('all')
-                  handleSearch()
-                }}
-                className="ml-1 hover:text-destructive"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
-          {(priceRange[0] !== 0 || priceRange[1] !== 500) && (
-            <Badge variant="secondary" className="text-xs">
-              Price: ${priceRange[0]}-${priceRange[1]}
-              <button
-                onClick={() => {
-                  setPriceRange([0, 500])
-                  handleSearch()
-                }}
+                onClick={() => handlePriceRangeChange('all')}
                 className="ml-1 hover:text-destructive"
               >
                 ×

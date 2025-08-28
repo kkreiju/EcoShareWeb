@@ -12,74 +12,40 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Slider } from '@/components/ui/slider'
+import type { ListingFilters } from '@/lib/DataClass'
+
+// Use DataClass compatible price range types
+type PriceRangeType = NonNullable<ListingFilters['price']>
 
 interface ListingFiltersProps {
-  onFilterChange: (
-    category: string,
-    condition: string,
-    priceRange: [number, number]
-  ) => void
-  selectedCategory: string
-  selectedCondition: string
-  priceRange: [number, number]
+  onFilterChange: (priceRange: PriceRangeType | 'all') => void
+  selectedPriceRange: PriceRangeType | 'all'
 }
 
-const categories = [
-  'all',
-  'Electronics',
-  'Fashion',
-  'Home & Garden',
-  'Kitchen & Dining',
-  'Sports & Outdoors',
-  'Books & Media',
-  'Health & Beauty',
-  'Toys & Games',
-  'Other'
-]
-
-const conditions = [
-  'all',
-  'new',
-  'like-new',
-  'good',
-  'fair'
+const priceRanges = [
+  { value: 'all', label: 'All Prices' },
+  { value: 'under25', label: 'Under P25' },
+  { value: '25-50', label: 'P25-P50' },
+  { value: '50-100', label: 'P50-P100' },
+  { value: 'over100', label: 'Over P100' }
 ]
 
 export function ListingFilters({
   onFilterChange,
-  selectedCategory,
-  selectedCondition,
-  priceRange
+  selectedPriceRange
 }: ListingFiltersProps) {
-  const [tempPriceRange, setTempPriceRange] = useState(priceRange)
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleCategoryChange = (category: string) => {
-    onFilterChange(category, selectedCondition, priceRange)
-  }
-
-  const handleConditionChange = (condition: string) => {
-    onFilterChange(selectedCategory, condition, priceRange)
-  }
-
-  const handlePriceChange = (values: number[]) => {
-    const newRange: [number, number] = [values[0], values[1]]
-    setTempPriceRange(newRange)
-    onFilterChange(selectedCategory, selectedCondition, newRange)
+  const handlePriceRangeChange = (priceRange: PriceRangeType | 'all') => {
+    onFilterChange(priceRange)
   }
 
   const getActiveFiltersCount = () => {
-    let count = 0
-    if (selectedCategory !== 'all') count++
-    if (selectedCondition !== 'all') count++
-    if (priceRange[0] !== 0 || priceRange[1] !== 200) count++
-    return count
+    return selectedPriceRange !== 'all' ? 1 : 0
   }
 
   const clearAllFilters = () => {
-    onFilterChange('all', 'all', [0, 200])
-    setTempPriceRange([0, 200])
+    onFilterChange('all' as const)
   }
 
   return (
@@ -88,7 +54,7 @@ export function ListingFilters({
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="relative">
             <Filter className="w-4 h-4 mr-2" />
-            Filters
+            Price Filter
             <ChevronDown className="w-4 h-4 ml-2" />
             {getActiveFiltersCount() > 0 && (
               <Badge
@@ -100,9 +66,9 @@ export function ListingFilters({
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel className="flex items-center justify-between">
-            Filters
+            Price Range
             {getActiveFiltersCount() > 0 && (
               <Button
                 variant="ghost"
@@ -116,67 +82,20 @@ export function ListingFilters({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           
-          {/* Category Filter */}
-          <div className="p-2">
-            <label className="text-sm font-medium mb-2 block">Category</label>
-            <div className="grid grid-cols-2 gap-1">
-              {categories.map((category) => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "ghost"}
-                  size="sm"
-                  className="justify-start text-xs h-8"
-                  onClick={() => handleCategoryChange(category)}
-                >
-                  {category === 'all' ? 'All Categories' : category}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <DropdownMenuSeparator />
-
-          {/* Condition Filter */}
-          <div className="p-2">
-            <label className="text-sm font-medium mb-2 block">Condition</label>
-            <div className="grid grid-cols-2 gap-1">
-              {conditions.map((condition) => (
-                <Button
-                  key={condition}
-                  variant={selectedCondition === condition ? "default" : "ghost"}
-                  size="sm"
-                  className="justify-start text-xs h-8"
-                  onClick={() => handleConditionChange(condition)}
-                >
-                  {condition === 'all' ? 'All Conditions' : condition.replace('-', ' ')}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <DropdownMenuSeparator />
-
           {/* Price Range Filter */}
           <div className="p-2">
-            <label className="text-sm font-medium mb-2 block">
-              Price Range: ${tempPriceRange[0]} - ${tempPriceRange[1]}
-            </label>
-            <div className="px-2">
-              <Slider
-                value={tempPriceRange}
-                onValueChange={(values: number[]) => {
-                  setTempPriceRange([values[0], values[1]])
-                }}
-                onValueCommit={handlePriceChange}
-                max={200}
-                min={0}
-                step={5}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>$0</span>
-                <span>$200+</span>
-              </div>
+            <div className="space-y-2">
+              {priceRanges.map((range) => (
+                <Button
+                  key={range.value}
+                  variant={selectedPriceRange === range.value ? "default" : "ghost"}
+                  size="sm"
+                  className="w-full justify-start text-sm h-10"
+                  onClick={() => handlePriceRangeChange(range.value as PriceRangeType | 'all')}
+                >
+                  {range.label}
+                </Button>
+              ))}
             </div>
           </div>
         </DropdownMenuContent>
@@ -185,33 +104,11 @@ export function ListingFilters({
       {/* Active filters display */}
       {getActiveFiltersCount() > 0 && (
         <div className="flex items-center gap-1">
-          {selectedCategory !== 'all' && (
+          {selectedPriceRange !== 'all' && (
             <Badge variant="secondary" className="text-xs">
-              {selectedCategory}
+              {priceRanges.find(r => r.value === selectedPriceRange)?.label}
               <button
-                onClick={() => handleCategoryChange('all')}
-                className="ml-1 hover:text-destructive"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
-          {selectedCondition !== 'all' && (
-            <Badge variant="secondary" className="text-xs">
-              {selectedCondition.replace('-', ' ')}
-              <button
-                onClick={() => handleConditionChange('all')}
-                className="ml-1 hover:text-destructive"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
-          {(priceRange[0] !== 0 || priceRange[1] !== 200) && (
-            <Badge variant="secondary" className="text-xs">
-              ${priceRange[0]}-${priceRange[1]}
-              <button
-                onClick={() => handlePriceChange([0, 200])}
+                onClick={() => handlePriceRangeChange('all' as const)}
                 className="ml-1 hover:text-destructive"
               >
                 ×

@@ -6,9 +6,9 @@ export default async function DashboardPage() {
       {/* Main Content */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Available Listings</h2>
+          <h2 className="text-xl font-semibold">Browse Listings</h2>
           <p className="text-sm text-muted-foreground">
-            Showing eco-friendly items near you
+            Find sustainable items near you
           </p>
         </div>
         <ListingGrid />

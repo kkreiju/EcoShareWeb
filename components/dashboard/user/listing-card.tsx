@@ -1,205 +1,119 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { useRouter } from 'next/navigation'
+import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Heart, MapPin, Star, Eye, MessageCircle } from 'lucide-react'
-
-interface Listing {
-  id: string
-  title: string
-  description: string
-  price: number
-  category: string
-  condition: 'new' | 'like-new' | 'good' | 'fair'
-  location: string
-  images: string[]
-  owner: {
-    name: string
-    avatar?: string
-    rating: number
-  }
-  createdAt: string
-  isAvailable: boolean
-  tags: string[]
-}
+import { MapPin, Star } from 'lucide-react'
+import { Listing } from '@/lib/DataClass'
 
 interface ListingCardProps {
-  listing: Listing
+	listing: Listing
+}
+
+function getTypeBadgeFromListing(listing: Listing) {
+	const raw = (listing.type ?? listing.category ?? '').toString().toLowerCase()
+	switch (raw) {
+		case 'free':
+			return { label: 'Free', className: 'bg-green-600 text-white' }
+		case 'sale':
+			return { label: 'Sale', className: 'bg-red-600 text-white' }
+		case 'wanted':
+			return { label: 'Wanted', className: 'bg-yellow-500 text-white' }
+		default:
+			return { label: 'Listing', className: 'bg-muted text-foreground' }
+	}
 }
 
 export function ListingCard({ listing }: ListingCardProps) {
-  const [isFavorited, setIsFavorited] = useState(false)
-  const [imageError, setImageError] = useState(false)
+	const router = useRouter()
+	const typeBadge = getTypeBadgeFromListing(listing)
+	const normalizedType = (listing.type ?? listing.category ?? '').toString().toLowerCase()
+	
+	// Helper to get user display name
+	const getUserName = () => {
+		if (listing.User) {
+			const { firstName, lastName } = listing.User
+			return `${firstName || ''} ${lastName || ''}`.trim() || 'Unknown User'
+		}
+		return listing.owner?.name || 'Unknown User'
+	}
+	
+	// Helper to get user avatar
+	const getUserAvatar = () => {
+		return listing.User?.profileURL || listing.owner?.avatar || undefined
+	}
+	
+	// Helper to get user rating
+	const getUserRating = () => {
+		if (listing.User?.ratings) {
+			return parseFloat(listing.User.ratings) || 0
+		}
+		return listing.rating || 0
+	}
 
-  const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case 'new':
-        return 'bg-green-100 text-green-800 hover:bg-green-200'
-      case 'like-new':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-      case 'good':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-      case 'fair':
-        return 'bg-orange-100 text-orange-800 hover:bg-orange-200'
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-    }
-  }
+	const handleClick = () => {
+		router.push(`/user/item/${listing.list_id}`)
+	}
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    })
-  }
+	return (
+		<Card 
+			className="overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/40 p-0 cursor-pointer hover:shadow-md"
+			onClick={handleClick}
+		>
+			{/* Media */}
+			<div className="relative h-40 w-full">
+				{listing.imageURL || (listing.images && listing.images[0]) ? (
+					<img
+						src={listing.imageURL || listing.images?.[0]}
+						alt={listing.title}
+						className="h-full w-full object-cover rounded-t-xl"
+					/>
+				) : (
+					<div className="flex h-full w-full items-center justify-center bg-muted/40 rounded-t-xl">
+						<div className="h-10 w-10 rounded-md bg-muted" />
+					</div>
+				)}
+				<div className="absolute left-3 top-3">
+					<Badge className={typeBadge.className}>{typeBadge.label}</Badge>
+				</div>
+			</div>
 
-  return (
-    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <CardHeader className="p-0 relative">
-        <div className="aspect-[4/3] overflow-hidden bg-muted/50">
-          {listing.images[0] && !imageError ? (
-            <img
-              src={listing.images[0]}
-              alt={listing.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-100 to-blue-100">
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-white/50 flex items-center justify-center">
-                  <img
-                    src="/icons/ic_leaf.png"
-                    alt="EcoShare"
-                    className="w-6 h-6"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">No image</p>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Status badges */}
-        <div className="absolute top-2 left-2 flex gap-1">
-          <Badge className={getConditionColor(listing.condition)}>
-            {listing.condition.replace('-', ' ')}
-          </Badge>
-          {!listing.isAvailable && (
-            <Badge variant="secondary" className="bg-red-100 text-red-800">
-              Sold
-            </Badge>
-          )}
-        </div>
-
-        {/* Favorite button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 hover:bg-white transition-colors"
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsFavorited(!isFavorited)
-          }}
-        >
-          <Heart
-            className={`w-3 h-3 transition-colors ${
-              isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-600'
-            }`}
-          />
-        </Button>
-
-        {/* Price tag */}
-        <div className="absolute bottom-2 right-2">
-          <Badge className="bg-white text-gray-900 shadow-md font-semibold text-sm">
-            ${listing.price}
-          </Badge>
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-3">
-        <div className="space-y-2">
-          <div>
-            <h3 className="font-semibold text-base line-clamp-1 group-hover:text-primary transition-colors">
-              {listing.title}
-            </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-              {listing.description}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <MapPin className="w-3 h-3" />
-            <span>{listing.location}</span>
-            <span>•</span>
-            <span>{formatDate(listing.createdAt)}</span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Avatar className="w-5 h-5">
-                <AvatarImage src={listing.owner.avatar} alt={listing.owner.name} />
-                <AvatarFallback className="text-xs">
-                  {listing.owner.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-xs font-medium">{listing.owner.name}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs font-medium">{listing.owner.rating}</span>
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-1">
-            {listing.tags.slice(0, 2).map((tag) => (
-              <Badge
-                key={tag}
-                variant="outline"
-                className="text-xs py-0 px-1 bg-muted/50"
-              >
-                {tag}
-              </Badge>
-            ))}
-            {listing.tags.length > 2 && (
-              <Badge variant="outline" className="text-xs py-0 px-1 bg-muted/50">
-                +{listing.tags.length - 2}
-              </Badge>
-            )}
-          </div>
-        </div>
-      </CardContent>
-
-      <CardFooter className="p-3 pt-0 flex gap-2">
-        <Button
-          className="flex-1 h-8 text-xs"
-          disabled={!listing.isAvailable}
-          onClick={() => {
-            // Handle view details
-            console.log('View details for:', listing.id)
-          }}
-        >
-          <Eye className="w-3 h-3 mr-1" />
-          {listing.isAvailable ? 'View Details' : 'Sold Out'}
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
-          onClick={(e) => {
-            e.stopPropagation()
-            // Handle message
-            console.log('Message owner for:', listing.id)
-          }}
-        >
-          <MessageCircle className="w-3 h-3" />
-        </Button>
-      </CardFooter>
-    </Card>
-  )
+			{/* Body */}
+			<div className="space-y-2 p-3">
+				<div className="flex items-start justify-between gap-3">
+					<h3 className="line-clamp-1 text-base font-semibold">{listing.title}</h3>
+					{normalizedType === 'sale' && listing.price && (
+						<Badge className="bg-white text-gray-900 shadow">₱{listing.price}</Badge>
+					)}
+				</div>
+				{/* Reserve height for up to 2 lines to keep cards even */}
+				<p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">{listing.description || '\u00A0'}</p>
+				<div className="flex items-center justify-between pt-1 min-h-[2rem]">
+					<div className="flex items-center gap-2 flex-1 min-w-0">
+						<Avatar className="h-6 w-6 flex-shrink-0">
+							<AvatarImage src={getUserAvatar()} alt={getUserName()} />
+							<AvatarFallback className="text-[10px]">
+								{getUserName()
+									.split(' ')
+									.map((n) => n[0])
+									.join('')}
+							</AvatarFallback>
+						</Avatar>
+						<span className="text-xs font-medium truncate">{getUserName()}</span>
+					</div>
+					<div className="flex items-center gap-2 flex-shrink-0">
+						<span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground max-w-20">
+							<MapPin className="h-3 w-3 flex-shrink-0" /> 
+							<span className="truncate">{listing.locationName || listing.location}</span>
+						</span>
+						<span className="inline-flex items-center gap-1 text-xs">
+							<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+							{getUserRating().toFixed(1)}
+						</span>
+					</div>
+				</div>
+			</div>
+		</Card>
+	)
 }
