@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, Filter, SlidersHorizontal } from 'lucide-react'
+import { useState, useCallback, useMemo } from 'react'
+import { Search, Filter, SlidersHorizontal, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,129 +18,128 @@ import { Listing, ListingFilters } from '@/lib/DataClass'
 type CategoryType = NonNullable<ListingFilters['type']> | 'all'
 type PriceRangeType = NonNullable<ListingFilters['price']> | 'all'
 
-type CategoryCount = {
+interface CategoryCount {
   id: CategoryType
   label: string
   count: number
 }
 
+interface SearchFilters extends Omit<ListingFilters, 'type' | 'price'> {
+  query: string
+  category: CategoryType
+  priceRange: PriceRangeType
+}
+
 interface ListingSearchProps {
-  onSearch: (filters: Omit<ListingFilters, 'type' | 'price'> & {
-    query: string
-    category: CategoryType
-    priceRange: PriceRangeType
-  }) => void
+  onSearch: (filters: SearchFilters) => void
   listings: Listing[]
 }
+
+// Constants for consistent filtering
+const CATEGORY_CONFIG: Record<CategoryType, { label: string; colorClass: string }> = {
+  'all': { label: 'All Items', colorClass: 'bg-gray-600 text-white hover:bg-gray-700' },
+  'free': { label: 'Free', colorClass: 'bg-green-600 text-white hover:bg-green-700' },
+  'sale': { label: 'Sale', colorClass: 'bg-red-600 text-white hover:bg-red-700' },
+  'wanted': { label: 'Wanted', colorClass: 'bg-yellow-600 text-white hover:bg-yellow-700' }
+}
+
+const PRICE_RANGES: Array<{ id: PriceRangeType; label: string }> = [
+  { id: 'all', label: 'All Prices' },
+  { id: 'under25', label: 'Under ₱25' },
+  { id: '25-50', label: '₱25-₱50' },
+  { id: '50-100', label: '₱50-₱100' },
+  { id: 'over100', label: 'Over ₱100' }
+]
 
 export function ListingSearch({ onSearch, listings }: ListingSearchProps) {
   const [query, setQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('all')
   const [selectedPriceRange, setSelectedPriceRange] = useState<PriceRangeType>('all')
 
-  // Calculate real counts from actual listings data
-  const getCategoryCounts = (): CategoryCount[] => {
-    const freeCount = listings.filter(l => {
-      const type = (l.type ?? '').toString().toLowerCase()
-      const category = (l.category ?? '').toString().toLowerCase()
-      return type === 'free' || category === 'free'
-    }).length
-    
-    const saleCount = listings.filter(l => {
-      const type = (l.type ?? '').toString().toLowerCase()
-      const category = (l.category ?? '').toString().toLowerCase()
-      return type === 'sale' || category === 'sale'
-    }).length
-    
-    const wantedCount = listings.filter(l => {
-      const type = (l.type ?? '').toString().toLowerCase()
-      const category = (l.category ?? '').toString().toLowerCase()
-      return type === 'wanted' || category === 'wanted'
-    }).length
-    
+  // Memoized category counts calculation
+  const categories = useMemo((): CategoryCount[] => {
+    const getTypeCount = (targetType: string) => 
+      listings.filter(listing => {
+        const type = (listing.type || '').toString().toLowerCase()
+        return type === targetType
+      }).length
+
     return [
-      { id: 'all' as CategoryType, label: 'All Items', count: listings.length },
-      { id: 'free' as CategoryType, label: 'Free', count: freeCount },
-      { id: 'sale' as CategoryType, label: 'Sale', count: saleCount },
-      { id: 'wanted' as CategoryType, label: 'Wanted', count: wantedCount }
+      { id: 'all', label: CATEGORY_CONFIG.all.label, count: listings.length },
+      { id: 'free', label: CATEGORY_CONFIG.free.label, count: getTypeCount('free') },
+      { id: 'sale', label: CATEGORY_CONFIG.sale.label, count: getTypeCount('sale') },
+      { id: 'wanted', label: CATEGORY_CONFIG.wanted.label, count: getTypeCount('wanted') }
     ]
-  }
+  }, [listings])
 
-  const categories = getCategoryCounts()
+  // Debounced search to avoid excessive API calls
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
 
-  const priceRanges = [
-    { id: 'all' as PriceRangeType, label: 'All Prices' },
-    { id: 'under25' as PriceRangeType, label: 'Under P25' },
-    { id: '25-50' as PriceRangeType, label: 'P25-P50' },
-    { id: '50-100' as PriceRangeType, label: 'P50-P100' },
-    { id: 'over100' as PriceRangeType, label: 'Over P100' }
-  ]
-
-  const handleSearch = () => {
-    const filters = {
+  // Centralized filter update function
+  const updateFilters = useCallback((updates: Partial<SearchFilters>) => {
+    const filters: SearchFilters = {
       query,
       category: selectedCategory,
-      priceRange: selectedPriceRange
+      priceRange: selectedPriceRange,
+      ...updates
     }
     onSearch(filters)
-  }
+  }, [query, selectedCategory, selectedPriceRange, onSearch])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setQuery(value)
-    // Auto-search on input change
-    setTimeout(() => {
-      const filters = {
-        query: value,
-        category: selectedCategory,
-        priceRange: selectedPriceRange
-      }
-      onSearch(filters)
+    
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
+    
+    // Debounced search
+    const timeout = setTimeout(() => {
+      updateFilters({ query: value })
     }, 300)
-  }
+    
+    setSearchTimeout(timeout)
+  }, [searchTimeout, updateFilters])
 
-  const handleCategoryChange = (category: CategoryType) => {
+  const handleCategoryChange = useCallback((category: CategoryType) => {
     setSelectedCategory(category)
-    const filters = {
-      query,
-      category,
-      priceRange: selectedPriceRange
-    }
-    onSearch(filters)
-  }
+    updateFilters({ category })
+  }, [updateFilters])
 
-  const handlePriceRangeChange = (priceRange: PriceRangeType) => {
+  const handlePriceRangeChange = useCallback((priceRange: PriceRangeType) => {
     setSelectedPriceRange(priceRange)
-    const filters = {
-      query,
-      category: selectedCategory,
-      priceRange
-    }
-    onSearch(filters)
-  }
+    updateFilters({ priceRange })
+  }, [updateFilters])
 
-  const getCategoryBadgeColor = (category: CategoryType) => {
+  const handleSearch = useCallback(() => {
+    updateFilters({})
+  }, [updateFilters])
+
+  // Get badge styling based on selection state
+  const getCategoryBadgeColor = useCallback((category: CategoryType) => {
     if (selectedCategory === category) {
-      switch (category) {
-        case 'free':
-          return 'bg-green-600 text-white hover:bg-green-700'
-        case 'sale':
-          return 'bg-red-600 text-white hover:bg-red-700'
-        case 'wanted':
-          return 'bg-yellow-600 text-white hover:bg-yellow-700'
-        default:
-          return 'bg-gray-600 text-white hover:bg-gray-700'
-      }
+      return CATEGORY_CONFIG[category].colorClass
     }
     return 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
-  }
+  }, [selectedCategory])
 
-  const getActiveFiltersCount = () => {
+  // Count active filters
+  const activeFiltersCount = useMemo(() => {
     let count = 0
     if (selectedCategory !== 'all') count++
     if (selectedPriceRange !== 'all') count++
     return count
-  }
+  }, [selectedCategory, selectedPriceRange])
+
+  // Clear all filters
+  const clearAllFilters = useCallback(() => {
+    setQuery('')
+    setSelectedCategory('all')
+    setSelectedPriceRange('all')
+    updateFilters({ query: '', category: 'all', priceRange: 'all' })
+  }, [updateFilters])
 
   return (
     <div className="space-y-4">
@@ -163,12 +162,12 @@ export function ListingSearch({ onSearch, listings }: ListingSearchProps) {
             <Button variant="outline" className="h-11 px-4 relative w-full sm:w-auto justify-center">
               <SlidersHorizontal className="w-4 h-4 mr-2" />
               Price Filter
-              {getActiveFiltersCount() > 0 && (
+              {activeFiltersCount > 0 && (
                 <Badge
                   variant="destructive"
                   className="absolute -top-2 -right-2 w-5 h-5 p-0 flex items-center justify-center text-xs"
                 >
-                  {getActiveFiltersCount()}
+                  {activeFiltersCount}
                 </Badge>
               )}
             </Button>
@@ -180,7 +179,7 @@ export function ListingSearch({ onSearch, listings }: ListingSearchProps) {
             {/* Price Range Filter */}
             <div className="p-2">
               <div className="space-y-2">
-                {priceRanges.map((range) => (
+                {PRICE_RANGES.map((range) => (
                   <Button
                     key={range.id}
                     variant={selectedPriceRange === range.id ? "default" : "ghost"}
@@ -196,7 +195,11 @@ export function ListingSearch({ onSearch, listings }: ListingSearchProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button onClick={handleSearch} className="h-11 px-6 w-full sm:w-auto justify-center">
+        <Button 
+          onClick={handleSearch} 
+          className="h-11 px-6 w-full sm:w-auto justify-center"
+          disabled={!query.trim() && selectedCategory === 'all' && selectedPriceRange === 'all'}
+        >
           <Search className="w-4 h-4 mr-2" />
           Search
         </Button>
@@ -224,31 +227,46 @@ export function ListingSearch({ onSearch, listings }: ListingSearchProps) {
       </div>
 
       {/* Active Filters Display */}
-      {getActiveFiltersCount() > 0 && (
-        <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border">
+      {activeFiltersCount > 0 && (
+        <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/30 rounded-lg border">
           <span className="text-sm font-medium text-muted-foreground">Active filters:</span>
+          
           {selectedCategory !== 'all' && (
-            <Badge variant="secondary" className="text-xs">
-              Category: {categories.find(c => c.id === selectedCategory)?.label}
-              <button
+            <Badge variant="secondary" className="text-xs flex items-center gap-1">
+              Category: {CATEGORY_CONFIG[selectedCategory].label}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-0 w-4 h-4 hover:text-destructive"
                 onClick={() => handleCategoryChange('all')}
-                className="ml-1 hover:text-destructive"
               >
-                ×
-              </button>
+                <X className="h-3 w-3" />
+              </Button>
             </Badge>
           )}
+          
           {selectedPriceRange !== 'all' && (
-            <Badge variant="secondary" className="text-xs">
-              Price: {priceRanges.find(p => p.id === selectedPriceRange)?.label}
-              <button
+            <Badge variant="secondary" className="text-xs flex items-center gap-1">
+              Price: {PRICE_RANGES.find(p => p.id === selectedPriceRange)?.label}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-0 w-4 h-4 hover:text-destructive"
                 onClick={() => handlePriceRangeChange('all')}
-                className="ml-1 hover:text-destructive"
               >
-                ×
-              </button>
+                <X className="h-3 w-3" />
+              </Button>
             </Badge>
           )}
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs text-muted-foreground hover:text-destructive ml-auto"
+            onClick={clearAllFilters}
+          >
+            Clear all
+          </Button>
         </div>
       )}
     </div>

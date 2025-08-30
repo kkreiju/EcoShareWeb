@@ -1,80 +1,84 @@
 'use client'
 
-import { useState } from 'react'
-import { Filter, ChevronDown } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
+import { Filter, ChevronDown, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { ListingFilters } from '@/lib/DataClass'
 
-// Use DataClass compatible price range types
-type PriceRangeType = NonNullable<ListingFilters['price']>
+type PriceRangeType = NonNullable<ListingFilters['price']> | 'all'
 
 interface ListingFiltersProps {
-  onFilterChange: (priceRange: PriceRangeType | 'all') => void
-  selectedPriceRange: PriceRangeType | 'all'
+  onFilterChange: (priceRange: PriceRangeType) => void
+  selectedPriceRange: PriceRangeType
 }
 
-const priceRanges = [
+// Price range configuration - consistent with API standards
+const PRICE_RANGES: Array<{ value: PriceRangeType; label: string }> = [
   { value: 'all', label: 'All Prices' },
-  { value: 'under25', label: 'Under P25' },
-  { value: '25-50', label: 'P25-P50' },
-  { value: '50-100', label: 'P50-P100' },
-  { value: 'over100', label: 'Over P100' }
+  { value: 'under25', label: 'Under ₱25' },
+  { value: '25-50', label: '₱25-₱50' },
+  { value: '50-100', label: '₱50-₱100' },
+  { value: 'over100', label: 'Over ₱100' }
 ]
 
 export function ListingFilters({
   onFilterChange,
   selectedPriceRange
 }: ListingFiltersProps) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const handlePriceRangeChange = (priceRange: PriceRangeType | 'all') => {
+  // Optimized handlers with useCallback
+  const handlePriceRangeChange = useCallback((priceRange: PriceRangeType) => {
     onFilterChange(priceRange)
-  }
+  }, [onFilterChange])
 
-  const getActiveFiltersCount = () => {
+  const clearAllFilters = useCallback(() => {
+    onFilterChange('all')
+  }, [onFilterChange])
+
+  // Memoized calculations
+  const activeFiltersCount = useMemo(() => {
     return selectedPriceRange !== 'all' ? 1 : 0
-  }
+  }, [selectedPriceRange])
 
-  const clearAllFilters = () => {
-    onFilterChange('all' as const)
-  }
+  const selectedPriceLabel = useMemo(() => {
+    return PRICE_RANGES.find(r => r.value === selectedPriceRange)?.label || 'All Prices'
+  }, [selectedPriceRange])
 
   return (
     <div className="flex items-center gap-2">
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="relative">
+          <Button variant="outline" className="relative h-10 px-4">
             <Filter className="w-4 h-4 mr-2" />
-            Price Filter
+            {selectedPriceRange === 'all' ? 'Price Filter' : selectedPriceLabel}
             <ChevronDown className="w-4 h-4 ml-2" />
-            {getActiveFiltersCount() > 0 && (
+            {activeFiltersCount > 0 && (
               <Badge
                 variant="destructive"
                 className="absolute -top-2 -right-2 w-5 h-5 p-0 flex items-center justify-center text-xs"
               >
-                {getActiveFiltersCount()}
+                {activeFiltersCount}
               </Badge>
             )}
           </Button>
         </DropdownMenuTrigger>
+        
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel className="flex items-center justify-between">
             Price Range
-            {getActiveFiltersCount() > 0 && (
+            {activeFiltersCount > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={clearAllFilters}
-                className="h-auto p-1 text-xs"
+                className="p-1 text-xs h-auto"
               >
                 Clear all
               </Button>
@@ -82,40 +86,35 @@ export function ListingFilters({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           
-          {/* Price Range Filter */}
-          <div className="p-2">
-            <div className="space-y-2">
-              {priceRanges.map((range) => (
-                <Button
-                  key={range.value}
-                  variant={selectedPriceRange === range.value ? "default" : "ghost"}
-                  size="sm"
-                  className="w-full justify-start text-sm h-10"
-                  onClick={() => handlePriceRangeChange(range.value as PriceRangeType | 'all')}
-                >
-                  {range.label}
-                </Button>
-              ))}
-            </div>
+          <div className="p-2 space-y-1">
+            {PRICE_RANGES.map((range) => (
+              <Button
+                key={range.value}
+                variant={selectedPriceRange === range.value ? "default" : "ghost"}
+                size="sm"
+                className="w-full justify-start text-sm h-9"
+                onClick={() => handlePriceRangeChange(range.value)}
+              >
+                {range.label}
+              </Button>
+            ))}
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
 
       {/* Active filters display */}
-      {getActiveFiltersCount() > 0 && (
-        <div className="flex items-center gap-1">
-          {selectedPriceRange !== 'all' && (
-            <Badge variant="secondary" className="text-xs">
-              {priceRanges.find(r => r.value === selectedPriceRange)?.label}
-              <button
-                onClick={() => handlePriceRangeChange('all' as const)}
-                className="ml-1 hover:text-destructive"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
-        </div>
+      {activeFiltersCount > 0 && (
+        <Badge variant="secondary" className="text-xs flex items-center gap-1">
+          {selectedPriceLabel}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-0 w-4 h-4 hover:text-destructive"
+            onClick={() => handlePriceRangeChange('all')}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </Badge>
       )}
     </div>
   )

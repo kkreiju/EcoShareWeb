@@ -1,272 +1,216 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { ListingCard } from './listing-card'
-import { ListingSearch } from './listing-search'
-import { ListingSkeleton } from './listing-skeleton'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Listing, ListingFilters, ListingsResponse } from '@/lib/DataClass'
+import { useState, useEffect, useCallback } from "react";
+import { ListingCard } from "./listing-card";
+import { ListingSearch } from "./listing-search";
+import { ListingSkeleton } from "./listing-skeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Listing, ListingFilters, ListingsResponse } from "@/lib/DataClass";
 
-type CategoryType = NonNullable<ListingFilters['type']> | 'all'
-type PriceRangeType = NonNullable<ListingFilters['price']> | 'all'
+type CategoryType = NonNullable<ListingFilters["type"]> | "all";
+type PriceRangeType = NonNullable<ListingFilters["price"]> | "all";
+type SortType = "recent" | "nearby";
 
-// Use DataClass SearchFilters but extend for client-side filtering
-type SearchFilters = Omit<ListingFilters, 'type' | 'price'> & {
-  query: string
-  category: CategoryType
-  priceRange: PriceRangeType
+interface SearchFilters extends Omit<ListingFilters, "type" | "price"> {
+  query: string;
+  category: CategoryType;
+  priceRange: PriceRangeType;
 }
 
-// Function to fetch listings from API
+// Fetch listings from API
 async function fetchListings(filters: {
-  list_type?: string
-  list_price?: string
-  sort_by?: string
-  search?: string
+  list_type?: string;
+  list_price?: string;
+  sort_by?: string;
 }): Promise<ListingsResponse> {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL
-  const params = new URLSearchParams()
-  
-  if (filters.list_type && filters.list_type !== 'all') {
-    params.append('list_type', filters.list_type)
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "https://api-ecoshare.vercel.app";
+  const params = new URLSearchParams();
+
+  if (filters.list_type && filters.list_type !== "all") {
+    params.append("list_type", filters.list_type);
   }
-  if (filters.list_price && filters.list_price !== 'all') {
-    params.append('list_price', filters.list_price)
+  if (filters.list_price && filters.list_price !== "all") {
+    params.append("list_price", filters.list_price);
   }
   if (filters.sort_by) {
-    params.append('sort_by', filters.sort_by)
+    params.append("sort_by", filters.sort_by);
   }
-  // Note: The API doesn't support search yet, so we'll filter client-side for now
-  
-  const url = apiUrl 
-    ? `${apiUrl}/api/listing/view-listing?${params.toString()}` 
-    : `/api/listing/view-listing?${params.toString()}`
-  const response = await fetch(url)
+
+  const url = `${API_BASE_URL}/api/listing/view-listing?${params.toString()}`;
+  const response = await fetch(url);
+
   if (!response.ok) {
-    throw new Error('Failed to fetch listings')
+    throw new Error(`Failed to fetch listings: ${response.status}`);
   }
-  
-  return response.json()
+
+  return response.json();
 }
 
-function getPriceRangeBounds(range: PriceRangeType): [number, number] {
-  switch (range) {
-    case 'under25':
-      return [0, 25]
-    case '25-50':
-      return [25, 50]
-    case '50-100':
-      return [50, 100]
-    case 'over100':
-      return [100, Number.MAX_SAFE_INTEGER]
-    default:
-      return [0, Number.MAX_SAFE_INTEGER]
-  }
-}
+// Price range bounds mapping
+const PRICE_RANGES: Record<PriceRangeType, [number, number]> = {
+  under25: [0, 25],
+  "25-50": [25, 50],
+  "50-100": [50, 100],
+  over100: [100, Number.MAX_SAFE_INTEGER],
+  all: [0, Number.MAX_SAFE_INTEGER],
+};
+
+// Category mapping for consistent filtering
+const CATEGORY_MAP: Record<CategoryType, string> = {
+  all: "",
+  sale: "sale",
+  free: "free",
+  wanted: "wanted",
+};
 
 export function ListingGrid() {
-  const [listings, setListings] = useState<Listing[]>([])
-  const [filteredListings, setFilteredListings] = useState<Listing[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<'recent' | 'nearby'>('recent')
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<SortType>("recent");
   const [currentFilters, setCurrentFilters] = useState<SearchFilters>({
-    query: '',
-    category: 'all',
-    priceRange: 'all'
-  })
+    query: "",
+    category: "all",
+    priceRange: "all",
+  });
 
   // Load initial data
   useEffect(() => {
-    loadListings()
-  }, [])
+    loadListings();
+  }, []);
 
-  // Reload data when tab changes or filters change
+  // Apply filters when data or filters change
   useEffect(() => {
     if (listings.length > 0) {
-      applyFiltersAndSorting()
+      applyFilters();
     }
-  }, [tab, listings, currentFilters])
+  }, [listings, currentFilters, tab]);
 
-  const loadListings = async () => {
+  const loadListings = useCallback(async () => {
     try {
-      setIsLoading(true)
-      setError(null)
-      
+      setIsLoading(true);
+      setError(null);
+
       const response = await fetchListings({
-        sort_by: tab === 'recent' ? 'newest' : 'newest' // Both use newest for now
-      })
-      
-      setListings(response.data)
-      setFilteredListings(response.data)
+        sort_by: "newest",
+      });
+
+      if (response.data) {
+        setListings(response.data);
+      } else {
+        setListings([]);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load listings')
-      console.error('Error loading listings:', err)
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load listings";
+      setError(errorMessage);
+      console.error("Error loading listings:", err);
+      setListings([]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  }, []);
 
-  const applyTabSorting = (items: Listing[], tabValue: 'recent' | 'nearby') => {
-    const sorted = [...items]
-    if (tabValue === 'recent') {
-      sorted.sort((a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime())
-    } else {
-      // Simple proxy for "nearby": sort by location alphabetically
-      sorted.sort((a, b) => a.locationName.localeCompare(b.locationName))
-    }
-    return sorted
-  }
+  // Apply client-side sorting based on tab selection
+  const applySorting = useCallback(
+    (items: Listing[], sortType: SortType): Listing[] => {
+      const sorted = [...items];
 
-  const applyFiltersAndSorting = () => {
-    let filtered = listings
-
-    // Filter by search query (client-side for now)
-    if (currentFilters.query) {
-      filtered = filtered.filter(
-        listing => {
-          const tagsArray = Array.isArray(listing.tags)
-            ? listing.tags
-            : typeof listing.tags === 'string'
-              ? [listing.tags]
-              : []
-
-          return (
-            listing.title.toLowerCase().includes(currentFilters.query.toLowerCase()) ||
-            listing.description.toLowerCase().includes(currentFilters.query.toLowerCase()) ||
-            tagsArray.some(tag => tag.toLowerCase().includes(currentFilters.query.toLowerCase())) ||
-            (listing.User && `${listing.User.firstName} ${listing.User.lastName}`.toLowerCase().includes(currentFilters.query.toLowerCase()))
-          )
-        }
-      )
-    }
-
-    // Filter by listing type (client-side for now)
-    if (currentFilters.category !== 'all') {
-      const categoryMap: Record<CategoryType, string> = {
-        'all': '',
-        'sale': 'sale',
-        'free': 'free', 
-        'wanted': 'wanted'
+      switch (sortType) {
+        case "recent":
+          return sorted.sort(
+            (a, b) =>
+              new Date(b.postedDate).getTime() -
+              new Date(a.postedDate).getTime()
+          );
+        case "nearby":
+          return sorted.sort((a, b) =>
+            a.locationName.localeCompare(b.locationName)
+          );
+        default:
+          return sorted;
       }
-      filtered = filtered.filter(listing => {
-        // Check both type and category fields for compatibility
-        const listingType = (listing.type || '').toString().toLowerCase()
-        const listingCategory = (listing.category || '').toString().toLowerCase()
-        const targetType = categoryMap[currentFilters.category]
-        
-        return listingType === targetType || listingCategory === targetType
-      })
+    },
+    []
+  );
+
+  // Centralized filtering and sorting logic
+  const applyFilters = useCallback(() => {
+    let filtered = [...listings];
+
+    // Search query filter
+    if (currentFilters.query.trim()) {
+      const searchTerm = currentFilters.query.toLowerCase();
+      filtered = filtered.filter((listing) => {
+        const tagsArray = Array.isArray(listing.tags)
+          ? listing.tags
+          : typeof listing.tags === "string"
+          ? [listing.tags]
+          : [];
+
+        const searchableFields = [
+          listing.title,
+          listing.description,
+          ...tagsArray,
+          listing.User
+            ? `${listing.User.firstName} ${listing.User.lastName}`
+            : "",
+        ].map((field) => field.toLowerCase());
+
+        return searchableFields.some((field) => field.includes(searchTerm));
+      });
     }
 
-    // Filter by price range (client-side for now)
-    const [minPrice, maxPrice] = getPriceRangeBounds(currentFilters.priceRange)
-    filtered = filtered.filter(listing => {
-      const price = listing.price || 0
-      return price >= minPrice && price <= maxPrice
-    })
-
-    // Apply tab-based sorting
-    filtered = applyTabSorting(filtered, tab)
-
-    setFilteredListings(filtered)
-  }
-
-  const handleSearch = async (filters: SearchFilters) => {
-    setCurrentFilters(filters)
-    setIsLoading(true)
-    
-    try {
-      // Apply filters directly with the new filter values
-      let filtered = listings
-
-      // Filter by search query (client-side for now)
-      if (filters.query) {
-        filtered = filtered.filter(
-          listing => {
-            const tagsArray = Array.isArray(listing.tags)
-              ? listing.tags
-              : typeof listing.tags === 'string'
-                ? [listing.tags]
-                : []
-
-            return (
-              listing.title.toLowerCase().includes(filters.query.toLowerCase()) ||
-              listing.description.toLowerCase().includes(filters.query.toLowerCase()) ||
-              tagsArray.some(tag => tag.toLowerCase().includes(filters.query.toLowerCase())) ||
-              (listing.User && `${listing.User.firstName} ${listing.User.lastName}`.toLowerCase().includes(filters.query.toLowerCase()))
-            )
-          }
-        )
-      }
-
-      // Filter by listing type (client-side for now)
-      if (filters.category !== 'all') {
-        const categoryMap: Record<CategoryType, string> = {
-          'all': '',
-          'sale': 'sale',
-          'free': 'free', 
-          'wanted': 'wanted'
-        }
-        filtered = filtered.filter(listing => {
-          // Check both type and category fields for compatibility
-          const listingType = (listing.type || '').toString().toLowerCase()
-          const listingCategory = (listing.category || '').toString().toLowerCase()
-          const targetType = categoryMap[filters.category]
-          
-          return listingType === targetType || listingCategory === targetType
-        })
-      }
-
-      // Filter by price range (client-side for now)
-      const [minPrice, maxPrice] = getPriceRangeBounds(filters.priceRange)
-      filtered = filtered.filter(listing => {
-        const price = listing.price || 0
-        return price >= minPrice && price <= maxPrice
-      })
-
-      // Apply tab-based sorting
-      filtered = applyTabSorting(filtered, tab)
-
-      setFilteredListings(filtered)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed')
-      console.error('Error during search:', err)
-    } finally {
-      setIsLoading(false)
+    // Category filter
+    if (currentFilters.category !== "all") {
+      const targetType = CATEGORY_MAP[currentFilters.category];
+      filtered = filtered.filter((listing) => {
+        const listingType = (listing.type || "").toString().toLowerCase();
+        return listingType === targetType;
+      });
     }
-  }
+
+    // Price range filter
+    if (currentFilters.priceRange !== "all") {
+      const [minPrice, maxPrice] = PRICE_RANGES[currentFilters.priceRange];
+      filtered = filtered.filter((listing) => {
+        const price = listing.price || 0;
+        return price >= minPrice && price <= maxPrice;
+      });
+    }
+
+    // Apply sorting
+    const sorted = applySorting(filtered, tab);
+    setFilteredListings(sorted);
+  }, [listings, currentFilters, tab, applySorting]);
+
+  // Handle search filter updates
+  const handleSearch = useCallback((filters: SearchFilters) => {
+    setCurrentFilters(filters);
+  }, []);
 
   return (
     <div className="space-y-6">
       <ListingSearch onSearch={handleSearch} listings={listings} />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'recent' | 'nearby')}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "recent" | "nearby")}>
         <TabsList>
           <TabsTrigger value="recent">Recent</TabsTrigger>
           <TabsTrigger value="nearby">Nearby</TabsTrigger>
         </TabsList>
         <TabsContent value="recent">
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-            {isLoading
-              ? Array.from({ length: 12 }).map((_, i) => (
-                  <ListingSkeleton key={i} />
-                ))
-              : applyTabSorting(filteredListings, 'recent').map(listing => (
-                  <ListingCard key={listing.list_id} listing={listing} />
-                ))}
-          </div>
+          <ListingGridContent
+            isLoading={isLoading}
+            listings={filteredListings}
+          />
         </TabsContent>
         <TabsContent value="nearby">
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-            {isLoading
-              ? Array.from({ length: 12 }).map((_, i) => (
-                  <ListingSkeleton key={i} />
-                ))
-              : applyTabSorting(filteredListings, 'nearby').map(listing => (
-                  <ListingCard key={listing.list_id} listing={listing} />
-                ))}
-          </div>
+          <ListingGridContent
+            isLoading={isLoading}
+            listings={filteredListings}
+          />
         </TabsContent>
       </Tabs>
 
@@ -290,9 +234,7 @@ export function ListingGrid() {
           <h3 className="text-lg font-semibold text-foreground mb-2">
             Error Loading Listings
           </h3>
-          <p className="text-muted-foreground mb-4">
-            {error}
-          </p>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <button
             onClick={loadListings}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
@@ -328,5 +270,26 @@ export function ListingGrid() {
         </div>
       )}
     </div>
-  )
+  );
+}
+
+// Extracted grid content component to reduce duplication
+function ListingGridContent({
+  isLoading,
+  listings,
+}: {
+  isLoading: boolean;
+  listings: Listing[];
+}) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+      {isLoading
+        ? Array.from({ length: 12 }).map((_, i) => (
+            <ListingSkeleton key={`skeleton-${i}`} />
+          ))
+        : listings.map((listing) => (
+            <ListingCard key={listing.list_id} listing={listing} />
+          ))}
+    </div>
+  );
 }
