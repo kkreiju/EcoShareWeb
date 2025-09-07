@@ -1,15 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
+  async rewrites() {
+    return [
       {
-        protocol: "https",
-        hostname: "ferf1mheo22r9ira.public.blob.vercel-storage.com",
-        port: "",
-        pathname: "/**",
+        source: "/api/:path*",
+        destination: `https://api-ecoshare.vercel.app/api/:path*`,
       },
-    ],
+    ];
   },
 };
 

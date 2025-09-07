@@ -81,8 +81,8 @@ export function Navbar() {
           {/* Desktop CTA Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
             <ThemeSwitcher />
-            {!loading && (
-              isAuthenticated ? (
+            {!loading &&
+              (isAuthenticated ? (
                 <Link href="/user/dashboard">
                   <Button className="bg-primary hover:bg-secondary text-primary-foreground hover:text-secondary-foreground font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
                     Dashboard
@@ -94,8 +94,7 @@ export function Navbar() {
                     Get Started
                   </Button>
                 </Link>
-              )
-            )}
+              ))}
           </div>
 
           {/* Mobile Menu Button */}
@@ -132,8 +131,8 @@ export function Navbar() {
 
                 {/* Mobile CTA Buttons */}
                 <div className="px-4 space-y-2">
-                  {!loading && (
-                    isAuthenticated ? (
+                  {!loading &&
+                    (isAuthenticated ? (
                       <Link href="/user/dashboard">
                         <Button className="w-full bg-primary hover:bg-secondary text-primary-foreground hover:text-secondary-foreground font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
                           Dashboard
@@ -145,8 +144,7 @@ export function Navbar() {
                           Get Started
                         </Button>
                       </Link>
-                    )
-                  )}
+                    ))}
                 </div>
               </div>
             )}

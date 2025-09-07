@@ -1,10 +1,7 @@
-
-import { MessagingInterface } from "@/components/messages";
-
 export default async function MessagesPage() {
   return (
-    <div className="h-[calc(100vh-4rem)]">
-      <MessagingInterface />
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      {/* Page content removed */}
     </div>
   );
 }

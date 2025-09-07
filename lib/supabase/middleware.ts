@@ -25,17 +25,17 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
+            request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            supabaseResponse.cookies.set(name, value, options)
           );
         },
       },
-    },
+    }
   );
 
   // Do not run code between createServerClient and
@@ -58,7 +58,7 @@ export async function updateSession(request: NextRequest) {
     // Redirect authenticated users away from auth pages and home to dashboard
     if (isAuthRoute || isHomePage) {
       console.log(
-        "MIDDLEWARE: Authenticated user accessing auth/home, redirecting to dashboard",
+        "MIDDLEWARE: Authenticated user accessing auth/home, redirecting to dashboard"
       );
       const url = request.nextUrl.clone();
       url.pathname = "/user/dashboard";

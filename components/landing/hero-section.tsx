@@ -5,8 +5,8 @@ import Image from "next/image";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-16 lg:pt-20 bg-background">
-      <div className="mx-auto px-4 md:px-12 max-w-7xl py-20 sm:py-32">
+    <section className="relative overflow-hidden bg-background min-h-screen flex items-center justify-center">
+      <div className="w-full max-w-7xl px-4 md:px-12">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="flex flex-col space-y-8">
             <div className="space-y-4">
@@ -24,7 +24,7 @@ export function HeroSection() {
               </p>
             </div>
             <div className="flex flex-col gap-4 sm:flex-row">
-            <Button
+              <Button
                 size="lg"
                 className="text-lg bg-primary hover:bg-secondary text-primary-foreground hover:text-secondary-foreground px-6 py-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
               >

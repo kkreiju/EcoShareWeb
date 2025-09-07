@@ -1,6 +1,5 @@
 // This file handles the Google OAuth login route for the application.
 // It can handle mobile and desktop requests, redirecting users to the Google login page.
-
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 

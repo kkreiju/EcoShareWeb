@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { type LucideIcon } from "lucide-react"
-import { usePathname } from "next/navigation"
+import { type LucideIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import {
   SidebarGroup,
@@ -9,19 +9,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 export function NavMainAdmin({
   items,
 }: {
   items: {
-    title: string
-    url: string
-    icon?: LucideIcon
-    isActive?: boolean
-  }[]
+    title: string;
+    url: string;
+    icon?: LucideIcon;
+    isActive?: boolean;
+  }[];
 }) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <SidebarGroup>
@@ -29,7 +29,11 @@ export function NavMainAdmin({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild tooltip={item.title} isActive={pathname === item.url}>
+            <SidebarMenuButton
+              asChild
+              tooltip={item.title}
+              isActive={pathname === item.url}
+            >
               <a href={item.url}>
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
@@ -39,5 +43,5 @@ export function NavMainAdmin({
         ))}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

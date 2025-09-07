@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { usePathname } from 'next/navigation'
+import { usePathname } from "next/navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,30 +8,28 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+} from "@/components/ui/breadcrumb";
 
 const routeNames: Record<string, string> = {
-  '/admin/dashboard': 'Dashboard',
-  '/admin/users': 'Users',
-  '/admin/reports': 'Reports',
-  '/admin/analytics': 'Analytics',
-  '/admin/settings': 'Settings',
-}
+  "/admin/dashboard": "Dashboard",
+  "/admin/users": "Users",
+  "/admin/reports": "Reports",
+  "/admin/analytics": "Analytics",
+  "/admin/settings": "Settings",
+};
 
 export function DynamicBreadcrumbAdmin() {
-  const pathname = usePathname()
-  
-  const currentPageName = routeNames[pathname] || 'Page'
-  
+  const pathname = usePathname();
+
+  const currentPageName = routeNames[pathname] || "Page";
+
   return (
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem className="hidden md:block">
-          <BreadcrumbLink href="/admin/dashboard">
-            Home
-          </BreadcrumbLink>
+          <BreadcrumbLink href="/admin/dashboard">Home</BreadcrumbLink>
         </BreadcrumbItem>
-        {pathname !== '/admin/dashboard' && (
+        {pathname !== "/admin/dashboard" && (
           <>
             <BreadcrumbSeparator className="hidden md:block" />
             <BreadcrumbItem>
@@ -41,5 +39,5 @@ export function DynamicBreadcrumbAdmin() {
         )}
       </BreadcrumbList>
     </Breadcrumb>
-  )
+  );
 }

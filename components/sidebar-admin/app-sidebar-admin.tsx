@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   AudioWaveform,
   BarChart3,
@@ -11,18 +11,18 @@ import {
   Settings,
   Shield,
   Users,
-} from "lucide-react"
+} from "lucide-react";
 
-import { NavMainAdmin } from "@/components/sidebar-admin/nav-main-admin"
-import { NavUserAdmin } from "@/components/sidebar-admin/nav-user-admin"
-import { TeamSwitcherAdmin } from "@/components/sidebar-admin/team-switcher-admin"
+import { NavMainAdmin } from "./nav-main-admin";
+import { NavUserAdmin } from "./nav-user-admin";
+import { TeamSwitcherAdmin } from "./team-switcher-admin";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 // Admin sidebar data
 const data = {
@@ -75,11 +75,16 @@ const data = {
       icon: Settings,
     },
   ],
-}
+};
 
-export function AppSidebarAdmin({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user?: { name: string; email: string; avatar: string } }) {
+export function AppSidebarAdmin({
+  user,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  user?: { name: string; email: string; avatar: string };
+}) {
   const userData = user || data.user;
-  
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -93,5 +98,5 @@ export function AppSidebarAdmin({ user, ...props }: React.ComponentProps<typeof 
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

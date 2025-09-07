@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import type { User } from '@supabase/supabase-js';
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 interface AuthState {
   user: User | null;
@@ -21,14 +21,16 @@ export function useAuth(): AuthState {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         setAuthState({
           user: session?.user ?? null,
           loading: false,
           isAuthenticated: !!session?.user,
         });
       } catch (error) {
-        console.error('Error getting session:', error);
+        console.error("Error getting session:", error);
         setAuthState({
           user: null,
           loading: false,

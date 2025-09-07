@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   AudioWaveform,
   Bell,
@@ -10,18 +10,18 @@ import {
   List,
   MessageCircle,
   Search,
-} from "lucide-react"
+} from "lucide-react";
 
-import { NavMain } from "@/components/sidebar/nav-main"
-import { NavUser } from "@/components/sidebar/nav-user"
-import { TeamSwitcher } from "@/components/sidebar/team-switcher"
+import { NavMain } from "./nav-main";
+import { NavUser } from "./nav-user";
+import { TeamSwitcher } from "./team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 // This is sample data.
 const data = {
@@ -74,11 +74,16 @@ const data = {
       icon: Bell,
     },
   ],
-}
+};
 
-export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user?: { name: string; email: string; avatar: string } }) {
+export function AppSidebar({
+  user,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  user?: { name: string; email: string; avatar: string };
+}) {
   const userData = user || data.user;
-  
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -92,5 +97,5 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }
