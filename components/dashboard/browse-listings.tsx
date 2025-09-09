@@ -13,6 +13,7 @@ import { ListingDialog } from "./listing-dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RefreshCw, AlertCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase/api";
 
 interface BrowseListingsProps {
   className?: string;
@@ -30,11 +31,59 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const [userData, setUserData] = useState<any>(null);
+  const [userDataLoading, setUserDataLoading] = useState(true);
   const { user } = useAuth();
+
+  // Fetch user data when user changes
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setUserDataLoading(true);
+
+      if (!user?.email) {
+        setUserData(null);
+        setUserDataLoading(false);
+        return;
+      }
+
+      try {
+        console.log("Fetching user data for email:", user.email);
+        const { data, error } = await supabase
+          .from("User")
+          .select("user_id")
+          .eq("user_email", user.email)
+          .single();
+
+        if (error) {
+          console.warn("User data fetch error:", error);
+          setUserData(null);
+        } else {
+          console.log("User data fetched:", data);
+          setUserData(data);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch user data:", err);
+        setUserData(null);
+      } finally {
+        setUserDataLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user?.email]);
 
   // Check if current user owns the listing
   const isOwner = (listing: Listing) => {
-    return user?.id === listing.user_id;
+    // If still loading or no user data, return false
+    if (userDataLoading || !userData) {
+      console.log("Still loading user data or no user data available, returning false for ownership");
+      return false;
+    }
+
+    console.log("user", user?.id);
+    console.log("userData", userData);
+    console.log("is " + userData.user_id + " === " + listing.user_id + " ? " + (userData.user_id === listing.user_id));
+    return userData.user_id === listing.user_id;
   };
 
   const fetchListings = useCallback(async () => {

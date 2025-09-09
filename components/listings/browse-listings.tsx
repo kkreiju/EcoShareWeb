@@ -16,6 +16,7 @@ import { ReviewRequestsModal } from "./review-requests-modal";
 import { EditListingForm } from "./edit-listing";
 import { ListingDialog } from "../dashboard/listing-dialog";
 import { RefreshCw, AlertCircle, Plus, MessageSquare } from "lucide-react";
+import { supabase } from "@/lib/supabase/api";
 
 interface BrowseListingsProps {
   className?: string;
@@ -35,11 +36,63 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [isListingDialogOpen, setIsListingDialogOpen] = useState(false);
   const [selectedListingForDialog, setSelectedListingForDialog] = useState<Listing | null>(null);
 
+  const [userData, setUserData] = useState<any>(null);
+  const [userDataLoading, setUserDataLoading] = useState(true);
   const { user } = useAuth();
+
+  // Fetch user data when user changes
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setUserDataLoading(true);
+
+      if (!user?.email) {
+        setUserData(null);
+        setUserDataLoading(false);
+        return;
+      }
+
+      try {
+        console.log("Fetching user data for email:", user.email);
+        const { data, error } = await supabase
+          .from("User")
+          .select("user_id")
+          .eq("user_email", user.email)
+          .single();
+
+        if (error) {
+          console.warn("User data fetch error:", error);
+          setUserData(null);
+        } else {
+          console.log("User data fetched:", data);
+          setUserData(data);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch user data:", err);
+        setUserData(null);
+      } finally {
+        setUserDataLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user?.email]);
 
   // Check if current user owns the listing
   const isOwner = (listing: Listing) => {
-    return user?.id === listing.user_id;
+    // If still loading, return false (don't show as owner yet)
+    if (userDataLoading) {
+      console.log("Still loading user data, returning false for ownership");
+      return false;
+    }
+
+    // If no user data after loading, user doesn't own this listing
+    if (!userData) {
+      console.log("No user data available, returning false for ownership");
+      return false;
+    }
+    
+    console.log("is " + userData.user_id + " === " + listing.user_id + " ? " + (userData.user_id === listing.user_id));
+    return userData.user_id === listing.user_id;
   };
 
   const fetchListings = useCallback(async () => {
