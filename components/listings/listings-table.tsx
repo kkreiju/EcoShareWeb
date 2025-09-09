@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MapPin, Calendar, Package, MessageCircle, Trash2, Eye, EyeOff } from "lucide-react";
 
@@ -44,7 +43,6 @@ export function ListingsTable({
             <TableHead className="w-24">Price</TableHead>
             <TableHead>Location</TableHead>
             <TableHead className="w-24">Posted</TableHead>
-            <TableHead>Owner</TableHead>
             <TableHead className="w-32">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -105,20 +103,6 @@ export function ListingsTable({
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Calendar className="w-3 h-3" />
                   {formatDate(listing.postedDate)}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Avatar className="w-6 h-6">
-                    <AvatarImage src={listing.User?.profileURL} />
-                    <AvatarFallback className="text-xs">
-                      {listing.User?.firstName?.[0]}
-                      {listing.User?.lastName?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="text-sm text-muted-foreground truncate max-w-24">
-                    {listing.User?.firstName} {listing.User?.lastName}
-                  </div>
                 </div>
               </TableCell>
               <TableCell>

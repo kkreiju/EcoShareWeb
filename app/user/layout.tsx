@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { DynamicBreadcrumb } from "@/components/ui/dynamic-breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Chatbot } from "@/components/chatbot/Chatbot";
 
 export default async function UserLayout({
   children,
@@ -57,6 +58,7 @@ export default async function UserLayout({
           </div>
         </header>
         {children}
+        <Chatbot />
       </SidebarInset>
     </SidebarProvider>
   );

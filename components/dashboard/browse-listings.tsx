@@ -238,12 +238,12 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     <>
       <div className={`space-y-6 ${className}`}>
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
               Browse Listings
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
               Find sustainable items shared by your community
             </p>
           </div>
@@ -254,12 +254,12 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
               size="sm"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="border-border"
+              className="border-border w-full sm:w-auto justify-center sm:justify-start"
             >
               <RefreshCw
-                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                className={`h-4 w-4 mr-2 flex-shrink-0 ${isLoading ? "animate-spin" : ""}`}
               />
-              Refresh
+              <span className="truncate">Refresh</span>
             </Button>
           </div>
         </div>
@@ -276,7 +276,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           {searchQuery && !isLoading && (
             <div className="text-sm text-muted-foreground">
               Found {totalCount} result{totalCount !== 1 ? "s" : ""} for "
-              {searchQuery}"
+              <span className="truncate inline-block max-w-32 sm:max-w-none">{searchQuery}</span>"
             </div>
           )}
         </div>
@@ -296,14 +296,14 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         {/* Error State */}
         {error && (
           <Alert className="border-destructive/50 text-destructive dark:border-destructive dark:text-destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {error}
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="flex-1">{error}</span>
               <Button
                 variant="link"
                 size="sm"
                 onClick={handleRefresh}
-                className="ml-2 p-0 h-auto hover:text-destructive"
+                className="p-0 h-auto hover:text-destructive self-start sm:self-center"
               >
                 Try again
               </Button>
@@ -321,7 +321,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         ) : listings.length === 0 ? (
           <EmptyState onRefresh={handleRefresh} />
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {listings.map((listing) => (
               <ListingCard
                 key={listing.list_id}
@@ -346,8 +346,8 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
 
         {/* Load More - Future Enhancement */}
         {listings.length > 0 && listings.length < totalCount && (
-          <div className="text-center pt-8">
-            <Button variant="outline" className="border-border">
+          <div className="text-center pt-6 sm:pt-8">
+            <Button variant="outline" className="border-border w-full sm:w-auto">
               Load More Listings
             </Button>
           </div>

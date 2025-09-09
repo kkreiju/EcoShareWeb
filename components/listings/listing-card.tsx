@@ -3,14 +3,16 @@
 import { Listing } from "@/lib/DataClass";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Package, Star, MessageCircle, Trash2, Eye, EyeOff } from "lucide-react";
+import { MapPin, Clock, Package, MessageCircle, Trash2, Eye, EyeOff, Eye as ViewIcon, Edit, Share2 } from "lucide-react";
 
 interface ListingCardProps {
   listing: Listing;
   onDelete?: (listing: Listing) => void;
   onToggleVisibility?: (listing: Listing) => void;
+  onViewDetails?: (listing: Listing) => void;
+  onEditListing?: (listing: Listing) => void;
+  onShare?: (listing: Listing) => void;
   isOwner?: boolean;
 }
 
@@ -18,6 +20,9 @@ export function ListingCard({
   listing,
   onDelete,
   onToggleVisibility,
+  onViewDetails,
+  onEditListing,
+  onShare,
   isOwner = false,
 }: ListingCardProps) {
   const getTypeColor = (type: string) => {
@@ -27,6 +32,21 @@ export function ListingCard({
       case "wanted":
         return "bg-yellow-500 text-white border-yellow-500 dark:bg-yellow-600 dark:text-white dark:border-yellow-600";
       case "sale":
+        return "bg-red-500 text-white border-red-500 dark:bg-red-600 dark:text-white dark:border-red-600";
+      default:
+        return "bg-muted text-muted-foreground border-border";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return "bg-green-500 text-white border-green-500 dark:bg-green-600 dark:text-white dark:border-green-600";
+      case "inactive":
+        return "bg-gray-500 text-white border-gray-500 dark:bg-gray-600 dark:text-white dark:border-gray-600";
+      case "sold":
+        return "bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:text-white dark:border-blue-600";
+      case "unavailable":
         return "bg-red-500 text-white border-red-500 dark:bg-red-600 dark:text-white dark:border-red-600";
       default:
         return "bg-muted text-muted-foreground border-border";
@@ -68,7 +88,10 @@ export function ListingCard({
   const tags = parseTags(listing.tags);
 
   return (
-    <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 py-0">
+    <Card
+      className="group overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 py-0 cursor-pointer"
+      onClick={() => onViewDetails?.(listing)}
+    >
       <div className="relative">
         <div className="aspect-video overflow-hidden">
           <img
@@ -89,6 +112,15 @@ export function ListingCard({
           )} font-medium`}
         >
           {listing.type}
+        </Badge>
+
+        {/* Status badge */}
+        <Badge
+          className={`absolute top-3 right-3 ${getStatusColor(
+            listing.status
+          )} font-medium`}
+        >
+          {listing.status}
         </Badge>
       </div>
 
@@ -151,27 +183,6 @@ export function ListingCard({
           </div>
         </div>
 
-        {/* User Info */}
-        <div className="flex items-center gap-2 pt-2 border-t border-border">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={listing.User?.profileURL} />
-            <AvatarFallback className="text-xs bg-muted">
-              {listing.User?.firstName?.[0]}
-              {listing.User?.lastName?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-card-foreground truncate">
-              {listing.User?.firstName} {listing.User?.lastName}
-            </p>
-            <div className="flex items-center gap-1">
-              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs text-muted-foreground">
-                {listing.User?.ratings || 0} rating
-              </span>
-            </div>
-          </div>
-        </div>
 
         {/* Action Buttons */}
         {isOwner && (
@@ -179,7 +190,11 @@ export function ListingCard({
             <Button
               variant="outline"
               size="sm"
-              className="border-border hover:bg-muted/50 flex-1"
+              className={
+                listing.status === "Active"
+                  ? "border-gray-500 text-gray-500 hover:bg-gray-50 hover:text-gray-600 flex-1"
+                  : "border-green-500 text-green-500 hover:bg-green-50 hover:text-green-600 flex-1"
+              }
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleVisibility?.(listing);
@@ -202,6 +217,47 @@ export function ListingCard({
             </Button>
           </div>
         )}
+
+        {/* Main Action Buttons */}
+        <div className="flex gap-2 pt-3 border-t border-border/50">
+          <Button
+            variant="default"
+            size="sm"
+            className="flex-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails?.(listing);
+            }}
+          >
+            <ViewIcon className="h-4 w-4 mr-2" />
+            View Details
+          </Button>
+
+          {isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditListing?.(listing);
+              }}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-purple-500 text-purple-500 hover:bg-purple-50 hover:text-purple-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              onShare?.(listing);
+            }}
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

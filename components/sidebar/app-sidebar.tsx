@@ -54,14 +54,14 @@ const data = {
       icon: Home,
     },
     {
-      title: "Messages",
-      url: "/user/messages",
-      icon: MessageCircle,
-    },
-    {
       title: "Listings",
       url: "/user/listings",
       icon: List,
+    },
+    {
+      title: "Messages",
+      url: "/user/messages",
+      icon: MessageCircle,
     },
     {
       title: "Notifications",

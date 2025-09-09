@@ -11,7 +11,11 @@ import { EmptyState } from "./empty-state";
 import { ListingsTable } from "./listings-table";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { RefreshCw, AlertCircle } from "lucide-react";
+import { AddListingDialog } from "./add-listing-dialog";
+import { ReviewRequestsModal } from "./review-requests-modal";
+import { EditListingForm } from "./edit-listing";
+import { ListingDialog } from "../dashboard/listing-dialog";
+import { RefreshCw, AlertCircle, Plus, MessageSquare } from "lucide-react";
 
 interface BrowseListingsProps {
   className?: string;
@@ -25,6 +29,11 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [isListingDialogOpen, setIsListingDialogOpen] = useState(false);
+  const [selectedListingForDialog, setSelectedListingForDialog] = useState<Listing | null>(null);
 
   const { user } = useAuth();
 
@@ -163,6 +172,11 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     fetchListings();
   };
 
+
+  const handleReviewRequests = () => {
+    setIsReviewModalOpen(true);
+  };
+
   const handleDeleteListing = (listing: Listing) => {
     // Only allow delete if user is the owner
     if (isOwner(listing)) {
@@ -177,6 +191,36 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       // TODO: Implement toggle visibility functionality
       console.log("Toggle visibility for listing:", listing.list_id);
     }
+  };
+
+  const handleEditListing = (listing: Listing) => {
+    // Only allow edit if user is the owner
+    if (isOwner(listing)) {
+      setSelectedListing(listing);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleSaveEdit = (formData: any) => {
+    // TODO: Implement save functionality - call API to update listing
+    console.log("Save edited listing:", formData);
+    console.log("Original listing ID:", selectedListing?.list_id);
+
+    // For now, just close the modal and refresh listings
+    setIsEditModalOpen(false);
+    setSelectedListing(null);
+    fetchListings(); // Refresh the listings to show updated data
+  };
+
+  const handleViewDetails = (listing: Listing) => {
+    setSelectedListingForDialog(listing);
+    setIsListingDialogOpen(true);
+  };
+
+  const handleContact = (listing: Listing) => {
+    // TODO: Implement contact functionality
+    console.log("Contact listing owner:", listing.list_id);
+    // This could open a chat modal or navigate to a messaging page
   };
 
   const formatPrice = (price: number, type: string) => {
@@ -227,29 +271,52 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     <>
       <div className={`space-y-6 ${className}`}>
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Browse Listings
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+              Manage Listings
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Find sustainable items shared by your community
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
+              Manage your eco-friendly items and services
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="border-border"
-            >
-              <RefreshCw
-                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <AddListingDialog>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-primary hover:bg-primary/90 w-full sm:w-auto justify-center sm:justify-start"
+              >
+                <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Add Listing</span>
+              </Button>
+            </AddListingDialog>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReviewRequests}
+                className="border-border flex-1 sm:flex-initial justify-center sm:justify-start"
+              >
+                <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate hidden sm:inline">Review Requests</span>
+                <span className="truncate sm:hidden">Requests</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading}
+                className="border-border flex-1 sm:flex-initial justify-center sm:justify-start"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 flex-shrink-0 ${isLoading ? "animate-spin" : ""}`}
+                />
+                <span className="truncate hidden sm:inline">Refresh</span>
+                <span className="truncate sm:hidden">Sync</span>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -265,7 +332,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           {searchQuery && !isLoading && (
             <div className="text-sm text-muted-foreground">
               Found {totalCount} result{totalCount !== 1 ? "s" : ""} for "
-              {searchQuery}"
+              <span className="truncate inline-block max-w-32 sm:max-w-none">{searchQuery}</span>"
             </div>
           )}
         </div>
@@ -283,14 +350,14 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         {/* Error State */}
         {error && (
           <Alert className="border-destructive/50 text-destructive dark:border-destructive dark:text-destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {error}
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="flex-1">{error}</span>
               <Button
                 variant="link"
                 size="sm"
                 onClick={handleRefresh}
-                className="ml-2 p-0 h-auto hover:text-destructive"
+                className="p-0 h-auto hover:text-destructive self-start sm:self-center"
               >
                 Try again
               </Button>
@@ -308,13 +375,15 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         ) : listings.length === 0 ? (
           <EmptyState onRefresh={handleRefresh} />
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {listings.map((listing) => (
               <ListingCard
                 key={listing.list_id}
                 listing={listing}
                 onDelete={handleDeleteListing}
                 onToggleVisibility={handleToggleVisibility}
+                onEditListing={handleEditListing}
+                onViewDetails={handleViewDetails}
                 isOwner={isOwner(listing)}
               />
             ))}
@@ -333,14 +402,36 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
 
         {/* Load More - Future Enhancement */}
         {listings.length > 0 && listings.length < totalCount && (
-          <div className="text-center pt-8">
-            <Button variant="outline" className="border-border">
+          <div className="text-center pt-6 sm:pt-8">
+            <Button variant="outline" className="border-border w-full sm:w-auto">
               Load More Listings
             </Button>
           </div>
         )}
       </div>
 
+      <ReviewRequestsModal
+        isOpen={isReviewModalOpen}
+        onOpenChange={setIsReviewModalOpen}
+      />
+
+      <EditListingForm
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        listing={selectedListing}
+        onSave={handleSaveEdit}
+      />
+
+      <ListingDialog
+        listing={selectedListingForDialog}
+        isOpen={isListingDialogOpen}
+        onOpenChange={setIsListingDialogOpen}
+        onContact={handleContact}
+        isOwner={isOwner}
+        formatPrice={formatPrice}
+        formatDate={formatDate}
+        getTypeColor={getTypeColor}
+      />
     </>
   );
 }
