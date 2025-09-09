@@ -3,12 +3,6 @@ import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 import Link from "next/link";
 
 const footerLinks = {
-  explore: [
-    { name: "Features", href: "#" },
-    { name: "How It Works", href: "#" },
-    { name: "Plant Nutrient Tools", href: "#" },
-    { name: "Community Stories", href: "#" },
-  ],
   about: [
     { name: "Our Mission", href: "#" },
     { name: "Blog", href: "#" },
@@ -63,21 +57,6 @@ export function Footer() {
             </div>
           </div>
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:col-span-3">
-            <div>
-              <h4 className="font-semibold mb-4">Explore</h4>
-              <ul className="space-y-3">
-                {footerLinks.explore.map((link) => (
-                  <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
             <div>
               <h4 className="font-semibold mb-4">About Us</h4>
               <ul className="space-y-3">

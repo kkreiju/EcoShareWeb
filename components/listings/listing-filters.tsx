@@ -23,9 +23,6 @@ import {
   SlidersHorizontal,
   Grid3X3,
   List,
-  DollarSign,
-  Clock,
-  MapPin,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -36,8 +33,6 @@ interface ListingFiltersComponentProps {
   isLoading?: boolean;
   viewMode?: "grid" | "list";
   onViewModeChange?: (mode: "grid" | "list") => void;
-  tabMode?: "recent" | "nearby";
-  onTabModeChange?: (mode: "recent" | "nearby") => void;
 }
 
 export function ListingFiltersComponent({
@@ -47,15 +42,13 @@ export function ListingFiltersComponent({
   isLoading = false,
   viewMode = "grid",
   onViewModeChange,
-  tabMode = "recent",
-  onTabModeChange,
 }: ListingFiltersComponentProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const updateFilter = (key: keyof ListingFilters, value: string) => {
+  const updateFilter = (key: keyof ListingFilters, value: string | null) => {
     const newFilters = {
       ...filters,
-      [key]: value === "all" ? undefined : value,
+      [key]: value === "all" || value === null ? undefined : value,
     };
     onFiltersChange(newFilters);
   };
@@ -103,17 +96,6 @@ export function ListingFiltersComponent({
                 <X className="w-3 h-3 ml-1" />
               </Badge>
             )}
-            {filters.price && filters.price !== "all" && (
-              <Badge
-                variant="secondary"
-                className="text-xs px-2 py-1 cursor-pointer hover:bg-secondary/80"
-                onClick={() => updateFilter("price", "all")}
-              >
-                <DollarSign className="w-3 h-3 mr-1" />
-                {filters.price}
-                <X className="w-3 h-3 ml-1" />
-              </Badge>
-            )}
             {filters.availabilityStatus &&
               filters.availabilityStatus !== "all" && (
                 <Badge
@@ -125,13 +107,17 @@ export function ListingFiltersComponent({
                   <X className="w-3 h-3 ml-1" />
                 </Badge>
               )}
-            {filters.sort_by && (
+            {filters.sort_by && filters.sort_by !== null && (
               <Badge
                 variant="secondary"
                 className="text-xs px-2 py-1 cursor-pointer hover:bg-secondary/80"
-                onClick={() => updateFilter("sort_by", "")}
+                onClick={() => updateFilter("sort_by", null)}
               >
-                Sort: {filters.sort_by}
+                <Filter className="w-3 h-3 mr-1" />
+                {filters.sort_by === "newest" && "Newest First"}
+                {filters.sort_by === "oldest" && "Oldest First"}
+                {filters.sort_by === "price_high" && "Price: High to Low"}
+                {filters.sort_by === "price_low" && "Price: Low to High"}
                 <X className="w-3 h-3 ml-1" />
               </Badge>
             )}
@@ -141,6 +127,46 @@ export function ListingFiltersComponent({
 
       {/* Filter Options */}
       <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium text-foreground mb-2 block">
+            Sort By
+          </label>
+          <Select
+            value={filters.sort_by || undefined}
+            onValueChange={(value) => value ? updateFilter("sort_by", value) : updateFilter("sort_by", null)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Default sorting" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                  Newest First
+                </div>
+              </SelectItem>
+              <SelectItem value="oldest">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                  Oldest First
+                </div>
+              </SelectItem>
+              <SelectItem value="price_high">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                  Price: High to Low
+                </div>
+              </SelectItem>
+              <SelectItem value="price_low">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                  Price: Low to High
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">
             Category
@@ -181,26 +207,6 @@ export function ListingFiltersComponent({
           </Select>
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
-            Price Range
-          </label>
-          <Select
-            value={filters.price || "all"}
-            onValueChange={(value) => updateFilter("price", value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All prices" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Prices</SelectItem>
-              <SelectItem value="under25">Under ₱25</SelectItem>
-              <SelectItem value="25-50">₱25 - ₱50</SelectItem>
-              <SelectItem value="50-100">₱50 - ₱100</SelectItem>
-              <SelectItem value="over100">Over ₱100</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
     </div>
   );
@@ -233,29 +239,6 @@ export function ListingFiltersComponent({
 
       {/* Right Side - Controls */}
       <div className="flex items-center gap-2">
-        {/* Tab Mode Toggle */}
-        {onTabModeChange && (
-          <div className="flex items-center border border-border rounded-md p-0.5 mr-2">
-            <Button
-              variant={tabMode === "recent" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => onTabModeChange("recent")}
-              className="h-8 px-2 md:px-3 gap-1"
-            >
-              <Clock className="w-4 h-4" />
-              <span className="hidden md:inline">Recent</span>
-            </Button>
-            <Button
-              variant={tabMode === "nearby" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => onTabModeChange("nearby")}
-              className="h-8 px-2 md:px-3 gap-1"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="hidden md:inline">Nearby</span>
-            </Button>
-          </div>
-        )}
 
         {/* View Mode Toggle */}
         {onViewModeChange && (

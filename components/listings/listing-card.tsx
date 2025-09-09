@@ -5,19 +5,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Package, Star, MessageCircle } from "lucide-react";
+import { MapPin, Clock, Package, Star, MessageCircle, Trash2, Eye, EyeOff } from "lucide-react";
 
 interface ListingCardProps {
   listing: Listing;
-  onContact?: (listing: Listing) => void;
-  onViewDetails?: (listing: Listing) => void;
+  onDelete?: (listing: Listing) => void;
+  onToggleVisibility?: (listing: Listing) => void;
   isOwner?: boolean;
 }
 
 export function ListingCard({
   listing,
-  onContact,
-  onViewDetails,
+  onDelete,
+  onToggleVisibility,
   isOwner = false,
 }: ListingCardProps) {
   const getTypeColor = (type: string) => {
@@ -174,32 +174,34 @@ export function ListingCard({
         </div>
 
         {/* Action Buttons */}
-        <div className={`flex gap-2 pt-2 ${isOwner ? "justify-center" : ""}`}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-border hover:bg-muted/50 flex-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewDetails?.(listing);
-            }}
-          >
-            View Details
-          </Button>
-          {!isOwner && (
+        {isOwner && (
+          <div className="flex gap-2 pt-2">
             <Button
+              variant="outline"
               size="sm"
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              className="border-border hover:bg-muted/50 flex-1"
               onClick={(e) => {
                 e.stopPropagation();
-                onContact?.(listing);
+                onToggleVisibility?.(listing);
               }}
             >
-              <MessageCircle className="h-4 w-4 mr-1" />
-              {listing.type === "Wanted" ? "Offer Item" : "Request Item"}
+              <Eye className="h-4 w-4 mr-1" />
+              {listing.status === "Active" ? "Hide" : "Show"}
             </Button>
-          )}
-        </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 flex-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.(listing);
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

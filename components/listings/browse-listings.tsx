@@ -9,7 +9,6 @@ import { SearchBar } from "./search-bar";
 import { LoadingSkeleton, TableSkeleton } from "./loading-skeleton";
 import { EmptyState } from "./empty-state";
 import { ListingsTable } from "./listings-table";
-import { ListingDialog } from "./listing-dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RefreshCw, AlertCircle } from "lucide-react";
@@ -26,9 +25,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [tabMode, setTabMode] = useState<"recent" | "nearby">("recent");
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const { user } = useAuth();
 
@@ -53,7 +49,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         params.append("status", filters.availabilityStatus);
       }
 
-      if (filters.sort_by) {
+      if (filters.sort_by && filters.sort_by !== null) {
         params.append("sort_by", filters.sort_by);
       }
 
@@ -81,35 +77,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       let filteredData = data.data || [];
       let filteredCount = data.total_count || 0;
 
-      // Apply client-side price filtering if needed
-      if (filters.price && filters.price !== "all") {
-        // Filter by price range
-        filteredData = filteredData.filter((item) => {
-          if (
-            item.price === null ||
-            item.price === undefined ||
-            item.price === 0
-          ) {
-            // Free items - only show in "Under ₱25" range
-            return filters.price === "under25";
-          }
-
-          switch (filters.price) {
-            case "under25":
-              return item.price > 0 && item.price < 25;
-            case "25-50":
-              return item.price >= 25 && item.price < 50;
-            case "50-100":
-              return item.price >= 50 && item.price < 100;
-            case "over100":
-              return item.price >= 100;
-            default:
-              return true;
-          }
-        });
-
-        filteredCount = filteredData.length;
-      }
 
       // Apply client-side search filtering if needed
       if (searchQuery.trim()) {
@@ -149,6 +116,24 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         filteredCount = filteredData.length;
       }
 
+      // Apply client-side sorting if needed
+      if (filters.sort_by && filters.sort_by !== null) {
+        filteredData = filteredData.sort((a, b) => {
+          switch (filters.sort_by) {
+            case "newest":
+              return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
+            case "oldest":
+              return new Date(a.postedDate).getTime() - new Date(b.postedDate).getTime();
+            case "price_high":
+              return (b.price || 0) - (a.price || 0);
+            case "price_low":
+              return (a.price || 0) - (b.price || 0);
+            default:
+              return 0;
+          }
+        });
+      }
+
       setListings(filteredData);
       setTotalCount(filteredCount);
     } catch (err) {
@@ -178,16 +163,20 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     fetchListings();
   };
 
-  const handleContactListing = (listing: Listing) => {
-    // Only allow contact if user is not the owner
-    if (!isOwner(listing)) {
-      // TODO: Implement contact functionality
+  const handleDeleteListing = (listing: Listing) => {
+    // Only allow delete if user is the owner
+    if (isOwner(listing)) {
+      // TODO: Implement delete functionality
+      console.log("Delete listing:", listing.list_id);
     }
   };
 
-  const handleViewDetails = (listing: Listing) => {
-    setSelectedListing(listing);
-    setIsDialogOpen(true);
+  const handleToggleVisibility = (listing: Listing) => {
+    // Only allow toggle visibility if user is the owner
+    if (isOwner(listing)) {
+      // TODO: Implement toggle visibility functionality
+      console.log("Toggle visibility for listing:", listing.list_id);
+    }
   };
 
   const formatPrice = (price: number, type: string) => {
@@ -289,8 +278,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           isLoading={isLoading}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          tabMode={tabMode}
-          onTabModeChange={setTabMode}
         />
 
         {/* Error State */}
@@ -326,8 +313,8 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
               <ListingCard
                 key={listing.list_id}
                 listing={listing}
-                onContact={handleContactListing}
-                onViewDetails={handleViewDetails}
+                onDelete={handleDeleteListing}
+                onToggleVisibility={handleToggleVisibility}
                 isOwner={isOwner(listing)}
               />
             ))}
@@ -335,8 +322,8 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         ) : (
           <ListingsTable
             listings={listings}
-            onContact={handleContactListing}
-            onViewDetails={handleViewDetails}
+            onDelete={handleDeleteListing}
+            onToggleVisibility={handleToggleVisibility}
             isOwner={isOwner}
             formatPrice={formatPrice}
             formatDate={formatDate}
@@ -354,16 +341,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         )}
       </div>
 
-      <ListingDialog
-        listing={selectedListing}
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onContact={handleContactListing}
-        isOwner={isOwner}
-        formatPrice={formatPrice}
-        formatDate={formatDate}
-        getTypeColor={getTypeColor}
-      />
     </>
   );
 }

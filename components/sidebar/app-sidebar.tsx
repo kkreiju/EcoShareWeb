@@ -54,18 +54,13 @@ const data = {
       icon: Home,
     },
     {
-      title: "Explore",
-      url: "/user/explore",
-      icon: Search,
-    },
-    {
       title: "Messages",
       url: "/user/messages",
       icon: MessageCircle,
     },
     {
-      title: "Listing",
-      url: "/user/listing",
+      title: "Listings",
+      url: "/user/listings",
       icon: List,
     },
     {

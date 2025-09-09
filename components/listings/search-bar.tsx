@@ -14,7 +14,6 @@ interface SearchBarProps {
   showSuggestions?: boolean;
 }
 
-
 export function SearchBar({
   value,
   onChange,
@@ -32,8 +31,6 @@ export function SearchBar({
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
-
-  // Removed debounced search - only search on explicit action
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -177,7 +174,6 @@ export function SearchBar({
                 ))}
               </div>
             )}
-
           </div>
         )}
       </div>

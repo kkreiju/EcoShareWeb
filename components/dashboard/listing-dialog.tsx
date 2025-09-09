@@ -11,7 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MapPin, Calendar, Star, MessageCircle } from "lucide-react";
+import { MapPin, Calendar, Star, MessageCircle, AlertCircle, Clock } from "lucide-react";
+import { ChartPieLabel } from "./nutrient-analytics";
 
 interface ListingDialogProps {
   listing: Listing | null;
@@ -36,6 +37,22 @@ export function ListingDialog({
 }: ListingDialogProps) {
   if (!listing) return null;
 
+  const parseTags = (tagsString: string | string[] | undefined): string[] => {
+    if (Array.isArray(tagsString)) {
+      return tagsString;
+    }
+    if (typeof tagsString === "string") {
+      try {
+        return JSON.parse(tagsString) || [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  const tags = parseTags(listing.tags);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
@@ -44,7 +61,7 @@ export function ListingDialog({
       >
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-foreground">
-            Listing Details
+            Item Details
           </DialogTitle>
           <DialogDescription>
             View complete information about this listing
@@ -78,13 +95,11 @@ export function ListingDialog({
                     {listing.title}
                   </h2>
                   <div className="flex items-center gap-2 mb-4">
-                    {listing.type === "Sale" && (
-                      <Badge
-                        className={`text-sm ${getTypeColor(listing.type)}`}
-                      >
-                        {listing.type}
-                      </Badge>
-                    )}
+                    <Badge
+                      className={`text-sm ${getTypeColor(listing.type)}`}
+                    >
+                      {listing.type}
+                    </Badge>
                     {listing.quantity > 0 && (
                       <Badge variant="secondary" className="text-xs">
                         {listing.quantity} available
@@ -103,7 +118,7 @@ export function ListingDialog({
 
               {/* Description */}
               <div>
-                <h3 className="font-semibold text-foreground mb-2">
+                <h3 className="font-semibold text-foreground mb-2 uppercase">
                   Description
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
@@ -111,14 +126,29 @@ export function ListingDialog({
                 </p>
               </div>
 
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag, index) => (
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="text-xs px-2 py-1 border-primary/20 text-primary hover:bg-primary/5"
+                    >
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
               {/* Quick Info Grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-foreground text-sm">
+                    <div className="font-medium text-foreground text-sm uppercase">
                       Location
                     </div>
                     <div className="text-sm text-muted-foreground break-words">
@@ -128,11 +158,11 @@ export function ListingDialog({
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-foreground text-sm">
+                    <div className="font-medium text-foreground text-sm uppercase">
                       Posted
                     </div>
                     <div className="text-sm text-muted-foreground">
@@ -162,6 +192,43 @@ export function ListingDialog({
                   </div>
                 </div>
               </div>
+
+              {/* Pickup Information */}
+              <div className="space-y-4">
+                {/* Pickup Availability */}
+                {listing.pickupTimeAvailability && (
+                  <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-4 h-4 text-white" />
+                  </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-foreground text-sm uppercase">
+                        Pickup Available
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {listing.pickupTimeAvailability}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pickup Instructions */}
+                {listing.instructions && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-violet-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <AlertCircle className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-foreground text-sm uppercase">
+                        Instructions
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {listing.instructions}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -169,9 +236,9 @@ export function ListingDialog({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Google Maps Location */}
             {listing.latitude && listing.longitude && (
-              <div className="lg:col-span-2">
-                <h3 className="font-semibold text-foreground mb-3">
-                  Location Map
+              <div>
+                <h3 className="font-semibold text-foreground mb-3 uppercase">
+                  Location
                 </h3>
                 <div className="w-full h-48 rounded-lg overflow-hidden border border-border relative">
                   <iframe
@@ -184,17 +251,23 @@ export function ListingDialog({
                     referrerPolicy="no-referrer-when-downgrade"
                     title={`Location of ${listing.locationName}`}
                   ></iframe>
-                  {/* Location Pin Indicator */}
-                  <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg border border-border">
-                    <div className="flex items-center gap-2">
+                  {/* Get Directions Button */}
+                  <div className="absolute top-2 right-2">
+                    <button
+                      onClick={() => {
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${listing.latitude},${listing.longitude}`;
+                        window.open(url, '_blank');
+                      }}
+                      className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg border border-border hover:bg-background/80 hover:border-red-300 transition-all duration-200 cursor-pointer w-full"
+                    >
                       <MapPin
-                        className="w-4 h-4 text-red-500"
+                        className="w-4 h-4 text-red-500 flex-shrink-0"
                         fill="currentColor"
                       />
-                      <span className="text-xs font-medium text-foreground">
-                        Item Location
+                      <span className="text-xs font-medium text-foreground whitespace-nowrap">
+                        Get Directions
                       </span>
-                    </div>
+                    </button>
                   </div>
                 </div>
                 <div className="mt-2 text-xs text-muted-foreground">
@@ -204,32 +277,14 @@ export function ListingDialog({
               </div>
             )}
 
-            {/* Pickup Availability & Owner Info */}
-            <div className="space-y-4">
-              {/* Pickup Availability */}
-              {listing.pickupTimeAvailability && (
-                <div>
-                  <h4 className="font-semibold text-foreground mb-2">
-                    Pickup Availability
-                  </h4>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-xs font-medium text-foreground">
-                        Available for pickup
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {listing.pickupTimeAvailability}
-                    </p>
-                  </div>
-                </div>
-              )}
+            {/* Nutrient Analytics */}
+            <ChartPieLabel />
 
-              {/* Owner Info */}
+            {/* Owner Info */}
+            <div className="space-y-4">
               <div>
-                <h4 className="font-semibold text-foreground mb-2">
-                  Listed by
+                <h4 className="font-semibold text-foreground mb-2 uppercase">
+                  Posted by
                 </h4>
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
@@ -248,71 +303,36 @@ export function ListingDialog({
                       {listing.User?.ratings || 0} rating
                     </div>
                   </div>
-                  {!isOwner(listing) && (
+                </div>
+                {!isOwner(listing) && (
+                  <div className="mt-4 space-y-3">
                     <Button
                       size="sm"
                       onClick={() => onContact(listing)}
-                      className="bg-primary hover:bg-primary/90"
+                      className="bg-primary hover:bg-primary/90 w-full"
                     >
                       <MessageCircle className="w-3 h-3 mr-1" />
-                      Contact
+                      {listing.type === "Wanted" ? "Offer Item" : "Request Item"}
                     </Button>
-                  )}
-                </div>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        // TODO: Implement report functionality
+                        console.log("Report item:", listing.list_id);
+                      }}
+                      className="bg-red-500 hover:bg-red-600 text-white w-full"
+                    >
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      Report Item
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Instructions and Tags Row */}
-          {(listing.instructions ||
-            (listing.tags &&
-              Array.isArray(listing.tags) &&
-              listing.tags.length > 0)) && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t border-border pt-6">
-              {/* Instructions */}
-              {listing.instructions && (
-                <div>
-                  <h4 className="font-semibold text-foreground mb-2">
-                    Pickup Instructions
-                  </h4>
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">
-                      {listing.instructions}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Tags */}
-              {listing.tags &&
-                Array.isArray(listing.tags) &&
-                listing.tags.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-2">
-                      Item Tags
-                    </h4>
-                    <div className="bg-muted/30 rounded-lg p-4">
-                      <div className="flex flex-wrap gap-2">
-                        {listing.tags.map((tag, index) => (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="text-xs px-2 py-1 border-primary/20 text-primary hover:bg-primary/5"
-                          >
-                            #{tag}
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        {listing.tags.length} tag
-                        {listing.tags.length !== 1 ? "s" : ""} • Click tags to
-                        search similar items
-                      </div>
-                    </div>
-                  </div>
-                )}
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>

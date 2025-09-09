@@ -12,8 +12,7 @@ import {
 
 const routeNames: Record<string, string> = {
   "/user/dashboard": "Dashboard",
-  "/user/explore": "Explore",
-  "/user/listing": "Listing",
+  "/user/listings": "Listings",
   "/user/messages": "Messages",
   "/user/notifications": "Notifications",
 };
