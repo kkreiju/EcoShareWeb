@@ -100,7 +100,7 @@ export function ListingCard({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = "/images/stock_veges.jpg"; // Fallback image
+              target.src = "/images/food-waste.jpg"; // Fallback image
             }}
           />
         </div>

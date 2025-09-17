@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-background min-h-screen flex items-center justify-center">
+    <section className="relative overflow-hidden bg-background min-h-screen flex items-center justify-center pt-16 lg:pt-20">
       <div className="w-full max-w-7xl px-4 md:px-12">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="flex flex-col space-y-8">
@@ -66,7 +66,7 @@ export function HeroSection() {
           <div className="relative">
             <div className="absolute inset-0 blur-3xl bg-primary opacity-10"></div>
             <Image
-              src="/images/stock_veges.jpg"
+              src="/images/food-waste.jpg"
               alt="Sustainable Food Sharing"
               width={800}
               height={600}

@@ -60,7 +60,7 @@ export function ListingsTable({
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = "/images/stock_veges.jpg";
+                      target.src = "/images/food-waste.jpg";
                     }}
                   />
                 </div>

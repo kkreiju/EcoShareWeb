@@ -24,10 +24,10 @@ import {
   Grid3X3,
   List,
   DollarSign,
-  Clock,
   MapPin,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface ListingFiltersComponentProps {
   filters: ListingFilters;
@@ -36,8 +36,6 @@ interface ListingFiltersComponentProps {
   isLoading?: boolean;
   viewMode?: "grid" | "list";
   onViewModeChange?: (mode: "grid" | "list") => void;
-  tabMode?: "recent" | "nearby";
-  onTabModeChange?: (mode: "recent" | "nearby") => void;
 }
 
 export function ListingFiltersComponent({
@@ -47,10 +45,9 @@ export function ListingFiltersComponent({
   isLoading = false,
   viewMode = "grid",
   onViewModeChange,
-  tabMode = "recent",
-  onTabModeChange,
 }: ListingFiltersComponentProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   const updateFilter = (key: keyof ListingFilters, value: string) => {
     const newFilters = {
@@ -233,29 +230,6 @@ export function ListingFiltersComponent({
 
       {/* Right Side - Controls */}
       <div className="flex items-center gap-2">
-        {/* Tab Mode Toggle */}
-        {onTabModeChange && (
-          <div className="flex items-center border border-border rounded-md p-0.5 mr-2">
-            <Button
-              variant={tabMode === "recent" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => onTabModeChange("recent")}
-              className="h-8 px-2 md:px-3 gap-1"
-            >
-              <Clock className="w-4 h-4" />
-              <span className="hidden md:inline">Recent</span>
-            </Button>
-            <Button
-              variant={tabMode === "nearby" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => onTabModeChange("nearby")}
-              className="h-8 px-2 md:px-3 gap-1"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="hidden md:inline">Nearby</span>
-            </Button>
-          </div>
-        )}
 
         {/* View Mode Toggle */}
         {onViewModeChange && (
@@ -333,6 +307,31 @@ export function ListingFiltersComponent({
               </div>
             </SheetContent>
           </Sheet>
+        </div>
+
+        {/* Mobile Nearby Button */}
+        <div className="md:hidden">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="relative"
+            onClick={() => router.push("/user/nearby-listings")}
+          >
+            <MapPin className="w-4 h-4 text-red-500" />
+          </Button>
+        </div>
+
+        {/* Desktop Nearby Button */}
+        <div className="hidden md:block">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="relative"
+            onClick={() => router.push("/user/nearby-listings")}
+          >
+            <MapPin className="w-4 h-4 text-red-500" />
+            Nearby Listings
+          </Button>
         </div>
       </div>
     </div>

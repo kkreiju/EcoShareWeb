@@ -77,7 +77,7 @@ export function ListingCard({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = "/images/stock_veges.jpg"; // Fallback image
+              target.src = "/images/food-waste.jpg"; // Fallback image
             }}
           />
         </div>
@@ -92,7 +92,8 @@ export function ListingCard({
         </Badge>
       </div>
 
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="p-4 flex flex-col h-full">
+        <div className="flex-1 space-y-3">
         {/* Title and Price */}
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-lg text-card-foreground line-clamp-2 leading-tight">
@@ -112,28 +113,30 @@ export function ListingCard({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-          {listing.description}
-        </p>
+        <div className="h-10 flex items-start">
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {listing.description}
+          </p>
+        </div>
 
         {/* Tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {tags.slice(0, 3).map((tag, index) => (
+          <div className="flex gap-1 overflow-hidden">
+            {tags.slice(0, 2).map((tag, index) => (
               <Badge
                 key={index}
                 variant="secondary"
-                className="text-xs bg-muted text-muted-foreground hover:bg-muted/80"
+                className="text-xs bg-muted text-muted-foreground hover:bg-muted/80 whitespace-nowrap"
               >
                 {tag}
               </Badge>
             ))}
-            {tags.length > 3 && (
+            {tags.length > 2 && (
               <Badge
                 variant="secondary"
-                className="text-xs bg-muted text-muted-foreground"
+                className="text-xs bg-muted text-muted-foreground whitespace-nowrap"
               >
-                +{tags.length - 3}
+                +{tags.length - 2}
               </Badge>
             )}
           </div>
@@ -171,6 +174,7 @@ export function ListingCard({
               </span>
             </div>
           </div>
+        </div>
         </div>
 
         {/* Action Buttons */}

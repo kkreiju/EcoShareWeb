@@ -27,27 +27,35 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [tabMode, setTabMode] = useState<"recent" | "nearby">("recent");
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const [userData, setUserData] = useState<any>(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
+  const [cachedUserEmail, setCachedUserEmail] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Fetch user data when user changes
+
+  // Fetch user data when user changes, with caching to prevent data loss
   useEffect(() => {
     const fetchUserData = async () => {
-      setUserDataLoading(true);
-
+      // If user.email is undefined but we have cached data, keep current state
       if (!user?.email) {
-        setUserData(null);
+        if (!cachedUserEmail && !userData) {
+          setUserDataLoading(false);
+        }
+        return;
+      }
+
+      // If email hasn't changed and we already have data, skip fetch
+      if (user.email === cachedUserEmail && userData) {
         setUserDataLoading(false);
         return;
       }
 
+      setUserDataLoading(true);
+
       try {
-        console.log("Fetching user data for email:", user.email);
         const { data, error } = await supabase
           .from("User")
           .select("user_id")
@@ -55,35 +63,48 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           .single();
 
         if (error) {
-          console.warn("User data fetch error:", error);
-          setUserData(null);
+          // Don't clear existing data on error
+          if (!userData) {
+            setUserData(null);
+          }
         } else {
-          console.log("User data fetched:", data);
           setUserData(data);
+          setCachedUserEmail(user.email);
         }
       } catch (err) {
-        console.warn("Failed to fetch user data:", err);
-        setUserData(null);
+        // Don't clear existing data on error
+        if (!userData) {
+          setUserData(null);
+        }
       } finally {
         setUserDataLoading(false);
       }
     };
 
     fetchUserData();
-  }, [user?.email]);
+  }, [user?.email, cachedUserEmail, userData]);
 
   // Check if current user owns the listing
   const isOwner = (listing: Listing) => {
-    // If still loading or no user data, return false
-    if (userDataLoading || !userData) {
-      console.log("Still loading user data or no user data available, returning false for ownership");
+    // If still loading, return false
+    if (userDataLoading) {
       return false;
     }
 
-    console.log("user", user?.id);
-    console.log("userData", userData);
-    console.log("is " + userData.user_id + " === " + listing.user_id + " ? " + (userData.user_id === listing.user_id));
-    return userData.user_id === listing.user_id;
+    // If no user data and no cached email, return false
+    if (!userData && !cachedUserEmail) {
+      return false;
+    }
+
+    // If we have user data, use it for ownership check
+    if (userData) {
+      const currentUserId = String(userData.user_id);
+      const listingUserId = String(listing.user_id);
+      return currentUserId === listingUserId;
+    }
+
+    // Conservative fallback: return false if no userData but have cached email
+    return false;
   };
 
   const fetchListings = useCallback(async () => {
@@ -201,7 +222,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       setListings(filteredData);
       setTotalCount(filteredCount);
     } catch (err) {
-      console.error("❌ Error fetching listings:", err);
+      console.error("Error fetching listings:", err);
       setError(err instanceof Error ? err.message : "Failed to load listings");
       setListings([]);
       setTotalCount(0);
@@ -231,6 +252,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     // Only allow contact if user is not the owner
     if (!isOwner(listing)) {
       // TODO: Implement contact functionality
+      console.log("Contact listing:", listing.title);
     }
   };
 
@@ -338,8 +360,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           isLoading={isLoading}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          tabMode={tabMode}
-          onTabModeChange={setTabMode}
         />
 
         {/* Error State */}
@@ -370,7 +390,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         ) : listings.length === 0 ? (
           <EmptyState onRefresh={handleRefresh} />
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
             {listings.map((listing) => (
               <ListingCard
                 key={listing.list_id}
