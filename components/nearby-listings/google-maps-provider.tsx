@@ -30,16 +30,13 @@ export function GoogleMapsProvider({ children, apiKey }: GoogleMapsProviderProps
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if Google Maps is already loaded
     if (window.google && window.google.maps) {
       setIsLoaded(true);
       return;
     }
 
-    // Check if script is already being loaded
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (existingScript) {
-      // Wait for existing script to load
       const checkGoogleLoaded = () => {
         if (window.google && window.google.maps) {
           setIsLoaded(true);
@@ -51,26 +48,16 @@ export function GoogleMapsProvider({ children, apiKey }: GoogleMapsProviderProps
       return;
     }
 
-    // Load Google Maps script
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;
     script.defer = true;
     script.id = "google-maps-script";
 
-    script.onload = () => {
-      setIsLoaded(true);
-    };
-
-    script.onerror = () => {
-      setLoadError("Failed to load Google Maps");
-    };
+    script.onload = () => setIsLoaded(true);
+    script.onerror = () => setLoadError("Failed to load Google Maps");
 
     document.head.appendChild(script);
-
-    return () => {
-      // Don't remove script on unmount to prevent multiple loads
-    };
   }, [apiKey]);
 
   return (

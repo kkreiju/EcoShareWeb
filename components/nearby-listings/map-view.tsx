@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Loader2, Navigation, Plus, Minus } from "lucide-react";
+import { MapPin, Loader2, Navigation } from "lucide-react";
 import { useGoogleMaps } from "./google-maps-provider";
 import { FloatingListingsSidebar } from "./floating-listings-sidebar";
 import { Listing } from "@/lib/DataClass";
@@ -13,10 +13,10 @@ interface MapViewProps {
   listings: Listing[];
   isLoading: boolean;
   userLocation?: { lat: number; lng: number } | null;
+  mapCenter?: { lat: number; lng: number } | null;
   onMarkerClick?: (listingId: string) => void;
   onLocationChange?: (location: { lat: number; lng: number }) => void;
   formatDistance?: (listing: Listing) => string;
-  // Panel props
   isPanelVisible?: boolean;
   onTogglePanel?: () => void;
   selectedListingId?: string | null;
@@ -26,14 +26,14 @@ interface MapViewProps {
   isOwner?: (listing: Listing) => boolean;
 }
 
-export function MapView({ 
-  listings, 
-  isLoading: dataLoading, 
-  userLocation: propUserLocation, 
-  onMarkerClick, 
+export function MapView({
+  listings,
+  isLoading: dataLoading,
+  userLocation: propUserLocation,
+  mapCenter,
+  onMarkerClick,
   onLocationChange,
   formatDistance,
-  // Panel props
   isPanelVisible = false,
   onTogglePanel,
   selectedListingId,
@@ -54,7 +54,6 @@ export function MapView({
     }
   }, [isLoaded, map]);
 
-  // Update markers when listings change
   useEffect(() => {
     if (map && listings) {
       clearMarkers();
@@ -62,7 +61,6 @@ export function MapView({
     }
   }, [map, listings]);
 
-  // Update user location when prop changes
   useEffect(() => {
     if (propUserLocation) {
       setUserLocation(propUserLocation);
@@ -73,10 +71,17 @@ export function MapView({
     }
   }, [propUserLocation, map]);
 
+  // Center map when mapCenter changes (when user clicks on sidebar item)
+  useEffect(() => {
+    if (mapCenter && map) {
+      map.setCenter(mapCenter);
+      map.setZoom(16); // Slightly zoomed in to focus on the selected marker
+    }
+  }, [mapCenter, map]);
+
   const initializeMap = () => {
     if (!mapRef.current || !window.google) return;
 
-    // Default to Philippines (Manila area)
     const defaultCenter = { lat: 14.5995, lng: 120.9842 };
 
     const mapInstance = new window.google.maps.Map(mapRef.current, {
@@ -85,19 +90,16 @@ export function MapView({
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
-      zoomControl: false, // We'll add custom controls
-      styles: [
-        {
-          featureType: "poi",
-          elementType: "labels",
-          stylers: [{ visibility: "off" }]
-        }
-      ]
+      zoomControl: false,
+      styles: [{
+        featureType: "poi",
+        elementType: "labels",
+        stylers: [{ visibility: "off" }]
+      }]
     });
 
     setMap(mapInstance);
 
-    // Try to get user's current location if not provided
     if (!userLocation && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -112,14 +114,13 @@ export function MapView({
           updateUserLocationMarker(userPos);
         },
         (error) => {
-          console.log("Could not get user location:", error);
+          console.error("Location access failed:", error);
         }
       );
     } else if (userLocation) {
       updateUserLocationMarker(userLocation);
     }
 
-    // Add markers for nearby listings
     if (listings && listings.length > 0) {
       addListingMarkers(mapInstance);
     }
@@ -127,7 +128,6 @@ export function MapView({
 
   const clearMarkers = () => {
     markers.forEach(marker => {
-      marker.infoWindow?.close();
       marker.setMap(null);
     });
     setMarkers([]);
@@ -136,14 +136,10 @@ export function MapView({
   const updateUserLocationMarker = (location: { lat: number; lng: number }) => {
     if (!map || !window.google) return;
 
-    // Remove existing user marker if any
     markers.forEach(marker => {
-      if (marker.title === "Your Location") {
-        marker.setMap(null);
-      }
+      if (marker.title === "Your Location") marker.setMap(null);
     });
 
-    // Add user location marker
     new window.google.maps.Marker({
       position: location,
       map: map,
@@ -151,8 +147,7 @@ export function MapView({
       icon: {
         url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="8" fill="#3B82F6" stroke="#FFFFFF" stroke-width="2"/>
-            <circle cx="12" cy="12" r="3" fill="#FFFFFF"/>
+            <circle cx="12" cy="12" r="10" fill="#2563EB" stroke="#FFFFFF" stroke-width="2"/>
           </svg>
         `),
         scaledSize: new window.google.maps.Size(24, 24),
@@ -166,7 +161,6 @@ export function MapView({
     const newMarkers: any[] = [];
 
     listings.forEach((listing) => {
-      // Skip listings without coordinates
       if (!listing.latitude || !listing.longitude) return;
 
       const getMarkerColor = (type: string) => {
@@ -190,48 +184,28 @@ export function MapView({
         title: listing.title,
         icon: {
           url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16 4C11.582 4 8 7.582 8 12c0 6 8 16 8 16s8-10 8-16c0-4.418-3.582-8-8-8z" fill="${getMarkerColor(listing.type)}" stroke="#FFFFFF" stroke-width="2"/>
-              <circle cx="16" cy="12" r="4" fill="#FFFFFF"/>
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32 8C23.164 8 16 15.164 16 24c0 12 16 32 16 32s16-20 16-32c0-8.836-7.164-16-16-16z" fill="${getMarkerColor(listing.type)}" stroke="#FFFFFF" stroke-width="4"/>
+              <circle cx="32" cy="24" r="13" fill="#FFFFFF" fill-opacity="0.9"/>
+              <text x="32" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="${getMarkerColor(listing.type)}">
+                ${listing.type.charAt(0).toUpperCase()}
+              </text>
             </svg>
           `),
-          scaledSize: new window.google.maps.Size(32, 32),
-          anchor: new window.google.maps.Point(16, 32),
+          scaledSize: new window.google.maps.Size(64, 64),
+          anchor: new window.google.maps.Point(32, 64),
         }
       });
 
-      // Create info window with real data
-      const distance = formatDistance ? formatDistance(listing) : "Distance unknown";
-      const infoWindow = new window.google.maps.InfoWindow({
-        content: `
-          <div class="p-3 min-w-[220px]">
-            <h4 class="font-semibold text-sm mb-2">${listing.title}</h4>
-            <div class="flex items-center justify-between mb-2">
-              <span class="inline-block px-2 py-1 text-xs rounded-full text-white" style="background-color: ${getMarkerColor(listing.type)}">
-                ${listing.type}
-              </span>
-              <span class="text-sm font-medium">
-                ${formatPrice(listing.price, listing.type)}
-              </span>
-            </div>
-            <p class="text-xs text-gray-600 mb-2">${listing.description.substring(0, 100)}${listing.description.length > 100 ? '...' : ''}</p>
-            <div class="flex items-center justify-between text-xs text-gray-500">
-              <span>${listing.locationName}</span>
-              <span>${distance}</span>
-            </div>
-          </div>
-        `
-      });
-
       marker.addListener('click', () => {
-        // Close all other info windows
-        newMarkers.forEach(m => m.infoWindow?.close());
-        
-        infoWindow.open(mapInstance, marker);
         onMarkerClick?.(listing.list_id);
+        // Center map on the clicked marker
+        if (mapInstance && listing.latitude && listing.longitude) {
+          mapInstance.setCenter({ lat: listing.latitude, lng: listing.longitude });
+          mapInstance.setZoom(16); // Slightly zoomed in to focus on the marker
+        }
       });
 
-      marker.infoWindow = infoWindow;
       newMarkers.push(marker);
     });
 
@@ -254,29 +228,15 @@ export function MapView({
           updateUserLocationMarker(userPos);
         },
         (error) => {
-          console.error("Error getting location:", error);
+          console.error("Location error:", error);
         }
       );
     }
   };
 
-  const zoomIn = () => {
-    if (map) {
-      map.setZoom(map.getZoom() + 1);
-    }
-  };
-
-  const zoomOut = () => {
-    if (map) {
-      map.setZoom(map.getZoom() - 1);
-    }
-  };
-
   return (
     <div className="relative h-full w-full bg-muted/20 rounded-lg border border-border overflow-hidden">
-      {/* Map Container */}
       <div ref={mapRef} className="h-full w-full relative">
-        {/* Loading/Error States */}
         {(!isLoaded || loadError) && (
           <div className="absolute inset-0 bg-muted/80 rounded-lg flex items-center justify-center z-10">
             <div className="text-center">
@@ -293,7 +253,7 @@ export function MapView({
                     Loading Map...
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Initializing nearby listings map view
+                    Initializing map view
                   </p>
                 </>
               )}
@@ -303,64 +263,40 @@ export function MapView({
 
       </div>
 
-      {/* Custom Map Controls */}
       {isLoaded && !loadError && (
         <>
-          {/* Zoom Controls */}
-          <div className="absolute bottom-4 left-4 flex flex-col gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-10 h-10 p-0 bg-background/95 backdrop-blur border-border shadow-md"
-              onClick={zoomIn}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-10 h-10 p-0 bg-background/95 backdrop-blur border-border shadow-md"
-              onClick={zoomOut}
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* User Location Button */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="absolute top-4 left-4 bg-background/95 backdrop-blur border-border shadow-md"
+            className="absolute top-22 right-4 bg-white border border-gray-200 shadow-md rounded-md px-3 py-2 text-gray-700 hover:bg-gray-50"
             onClick={centerOnUser}
           >
-            <Navigation className="h-4 w-4 mr-2" />
+            <Navigation className="h-4 w-4" />
             My Location
           </Button>
 
-          {/* Legend */}
-          <div className="absolute top-4 right-4 bg-background/95 backdrop-blur border border-border rounded-md p-3 shadow-md">
-            <h4 className="text-xs font-medium mb-2 text-foreground">Legend</h4>
+          <div className="absolute top-4 right-4 bg-white border border-gray-200 rounded-md p-3 shadow-md">
+            <h4 className="text-xs font-medium mb-2 text-gray-900">Legend</h4>
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-xs text-muted-foreground">Free</span>
+                <span className="text-xs text-gray-700">Free</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span className="text-xs text-muted-foreground">Sale</span>
+                <span className="text-xs text-gray-700">Sale</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <span className="text-xs text-muted-foreground">Wanted</span>
+                <span className="text-xs text-gray-700">Wanted</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-xs text-muted-foreground">Location</span>
+                <span className="text-xs text-gray-700">Location</span>
               </div>
             </div>
           </div>
 
-          {/* Floating Listings Sidebar */}
           <FloatingListingsSidebar
             listings={listings}
             isLoading={dataLoading}

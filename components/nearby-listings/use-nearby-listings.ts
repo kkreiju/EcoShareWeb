@@ -22,13 +22,10 @@ export function useNearbyListings({
   
   const { user } = useAuth();
 
-  // Fetch user data for ownership checking
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user?.email) {
-        if (!cachedUserEmail && !userData) {
-          setUserDataLoading(false);
-        }
+        if (!cachedUserEmail && !userData) setUserDataLoading(false);
         return;
       }
 
@@ -46,18 +43,13 @@ export function useNearbyListings({
           .eq("user_email", user.email)
           .single();
 
-        if (error) {
-          if (!userData) {
-            setUserData(null);
-          }
-        } else {
+        if (error && !userData) setUserData(null);
+        else if (!error) {
           setUserData(data);
           setCachedUserEmail(user.email);
         }
       } catch (err) {
-        if (!userData) {
-          setUserData(null);
-        }
+        if (!userData) setUserData(null);
       } finally {
         setUserDataLoading(false);
       }
@@ -66,23 +58,9 @@ export function useNearbyListings({
     fetchUserData();
   }, [user?.email, cachedUserEmail, userData]);
 
-  // Check if current user owns the listing
   const isOwner = (listing: Listing) => {
-    if (userDataLoading) {
-      return false;
-    }
-
-    if (!userData && !cachedUserEmail) {
-      return false;
-    }
-
-    if (userData) {
-      const currentUserId = String(userData.user_id);
-      const listingUserId = String(listing.user_id);
-      return currentUserId === listingUserId;
-    }
-
-    return false;
+    if (userDataLoading || !userData) return false;
+    return String(userData.user_id) === String(listing.user_id);
   };
 
   const fetchNearbyListings = useCallback(async () => {
@@ -90,15 +68,11 @@ export function useNearbyListings({
       setIsLoading(true);
       setError(null);
 
-      // Build query parameters - get active listings sorted by newest
       const params = new URLSearchParams();
       params.append("status", "Active");
       params.append("sort_by", "newest");
 
-      const url = `/api/listing/view-listing?${params.toString()}`;
-
-      const response = await fetch(url, {
-        method: "GET",
+      const response = await fetch(`/api/listing/view-listing?${params}`, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -107,48 +81,27 @@ export function useNearbyListings({
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          `HTTP ${response.status}: ${response.statusText}. ${errorText}`
-        );
+        throw new Error(`HTTP ${response.status}: ${response.statusText}. ${errorText}`);
       }
 
       const data: ListingsResponse = await response.json();
       let filteredData = data.data || [];
 
-      // Apply location-based filtering if user location is available
       if (userLocation) {
-        // Filter to only include listings with coordinates
-        filteredData = filteredData.filter((listing) => {
-          return listing.latitude && listing.longitude;
-        });
-
-        // Sort by distance
+        filteredData = filteredData.filter(listing => listing.latitude && listing.longitude);
         filteredData.sort((a, b) => {
-          const distanceA = calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
-            a.latitude,
-            a.longitude
-          );
-          const distanceB = calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
-            b.latitude,
-            b.longitude
-          );
+          const distanceA = calculateDistance(userLocation.lat, userLocation.lng, a.latitude, a.longitude);
+          const distanceB = calculateDistance(userLocation.lat, userLocation.lng, b.latitude, b.longitude);
           return distanceA - distanceB;
         });
       } else {
-        // If no user location, just filter to listings with coordinates
-        filteredData = filteredData.filter((listing) => {
-          return listing.latitude && listing.longitude;
-        });
+        filteredData = filteredData.filter(listing => listing.latitude && listing.longitude);
       }
 
       setListings(filteredData);
       setTotalCount(filteredData.length);
     } catch (err) {
-      console.error("Error fetching nearby listings:", err);
+      console.error("Failed to load listings:", err);
       setError(err instanceof Error ? err.message : "Failed to load nearby listings");
       setListings([]);
       setTotalCount(0);
@@ -161,22 +114,17 @@ export function useNearbyListings({
     fetchNearbyListings();
   }, [fetchNearbyListings]);
 
-  // Calculate distance between two coordinates using Haversine formula
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-    const R = 6371; // Earth's radius in kilometers
+    const R = 6371; // Earth's radius in km
     const dLat = toRad(lat2 - lat1);
     const dLng = toRad(lng2 - lng1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
-  const toRad = (value: number): number => {
-    return (value * Math.PI) / 180;
-  };
+  const toRad = (value: number): number => (value * Math.PI) / 180;
 
   const formatDistance = (listing: Listing): string => {
     if (!userLocation || !listing.latitude || !listing.longitude) {

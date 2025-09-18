@@ -1,10 +1,6 @@
-import { AppSidebarAdmin } from "@/components/sidebar-admin/app-sidebar-admin";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { DynamicBreadcrumbAdmin } from "@/components/ui/dynamic-breadcrumb-admin";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { AdminLayoutWrapper } from "@/components/layout/admin-layout-wrapper";
 
 export default async function AdminLayout({
   children,
@@ -30,28 +26,15 @@ export default async function AdminLayout({
   // }
 
   return (
-    <SidebarProvider>
-      <AppSidebarAdmin
-        user={{
-          name:
-            data.user.user_metadata?.full_name || data.user.email || "Admin",
-          email: data.user.email || "",
-          avatar: data.user.user_metadata?.avatar_url || "/avatars/admin.jpg",
-        }}
-      />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <DynamicBreadcrumbAdmin />
-          </div>
-        </header>
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <AdminLayoutWrapper
+      user={{
+        name:
+          data.user.user_metadata?.full_name || data.user.email || "Admin",
+        email: data.user.email || "",
+        avatar: data.user.user_metadata?.avatar_url || "/avatars/admin.jpg",
+      }}
+    >
+      {children}
+    </AdminLayoutWrapper>
   );
 }

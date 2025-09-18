@@ -9,7 +9,6 @@ import { SearchBar } from "./search-bar";
 import { LoadingSkeleton, TableSkeleton } from "./loading-skeleton";
 import { EmptyState } from "./empty-state";
 import { ListingsTable } from "./listings-table";
-import { ListingDialog } from "./listing-dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RefreshCw, AlertCircle } from "lucide-react";
@@ -27,8 +26,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const [userData, setUserData] = useState<any>(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
@@ -257,8 +254,8 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   };
 
   const handleViewDetails = (listing: Listing) => {
-    setSelectedListing(listing);
-    setIsDialogOpen(true);
+    // Navigate to listing details page
+    window.location.href = `/user/listing/${listing.list_id}`;
   };
 
   const formatPrice = (price: number, type: string) => {
@@ -423,16 +420,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         )}
       </div>
 
-      <ListingDialog
-        listing={selectedListing}
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onContact={handleContactListing}
-        isOwner={isOwner}
-        formatPrice={formatPrice}
-        formatDate={formatDate}
-        getTypeColor={getTypeColor}
-      />
     </>
   );
 }

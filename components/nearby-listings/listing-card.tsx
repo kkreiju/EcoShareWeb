@@ -56,7 +56,6 @@ export function ListingCard({
       )}
       onClick={handleCardClick}
     >
-      {/* Image and Type Badge */}
       <div className="relative mb-3">
         <div className="aspect-video w-full bg-gray-100 rounded-lg overflow-hidden">
           <img
@@ -79,18 +78,13 @@ export function ListingCard({
           variant="ghost"
           size="sm"
           className="absolute top-2 right-2 h-7 w-7 p-0 bg-white/80 backdrop-blur-sm hover:bg-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log("Toggle favorite:", listing.list_id);
-          }}
+          onClick={(e) => e.stopPropagation()}
         >
           <Heart className="h-3.5 w-3.5" />
         </Button>
       </div>
 
-      {/* Content */}
       <div className="space-y-2">
-        {/* Title and Price */}
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-medium text-gray-900 text-sm line-clamp-2 flex-1">
             {listing.title}
@@ -139,7 +133,6 @@ export function ListingCard({
           </div>
         )}
 
-        {/* User Info */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center">
@@ -149,44 +142,37 @@ export function ListingCard({
             </div>
             <div className="min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate">
-                {listing.User ? 
-                  `${listing.User.firstName || ''} ${listing.User.lastName || ''}`.trim() || 'User' 
+                {listing.User?.firstName || listing.User?.lastName
+                  ? `${listing.User.firstName || ''} ${listing.User.lastName || ''}`.trim()
                   : 'User'
                 }
               </p>
-              {listing.User?.ratings && parseFloat(listing.User.ratings) > 0 && (
+              {listing.User?.ratings && Number(listing.User.ratings) > 0 && (
                 <div className="flex items-center gap-0.5">
                   <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
                   <span className="text-xs text-gray-500">
-                    {parseFloat(listing.User.ratings).toFixed(1)}
+                    {Number(listing.User.ratings).toFixed(1)}
                   </span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="h-7 w-7 p-0 hover:bg-blue-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log("View listing:", listing.list_id);
-              }}
+              onClick={(e) => e.stopPropagation()}
             >
               <Eye className="h-3.5 w-3.5" />
             </Button>
             {!isOwner && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-7 w-7 p-0 hover:bg-green-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  console.log("Contact owner:", listing.list_id);
-                }}
+                onClick={(e) => e.stopPropagation()}
               >
                 <MessageCircle className="h-3.5 w-3.5" />
               </Button>
@@ -194,11 +180,6 @@ export function ListingCard({
           </div>
         </div>
 
-        {/* Time stamp */}
-        <div className="flex items-center gap-1 text-xs text-gray-400">
-          <Clock className="h-3 w-3" />
-          <span>2 hours ago</span>
-        </div>
       </div>
     </div>
   );

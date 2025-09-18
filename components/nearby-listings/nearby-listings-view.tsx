@@ -12,6 +12,7 @@ export function NearbyListingsView() {
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isPanelVisible, setIsPanelVisible] = useState(false);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
   const { 
     listings, 
@@ -32,7 +33,16 @@ export function NearbyListingsView() {
 
   const handleCardClick = (listingId: string) => {
     setSelectedListingId(listingId);
-    // Could add map centering functionality here
+    // Center map on the selected listing marker
+    centerMapOnListing(listingId);
+  };
+
+  const centerMapOnListing = (listingId: string) => {
+    const listing = listings.find(l => l.list_id === listingId);
+    if (listing && listing.latitude && listing.longitude) {
+      // This will be handled by the MapView component
+      setMapCenter({ lat: listing.latitude, lng: listing.longitude });
+    }
   };
 
   if (error) {
@@ -46,10 +56,11 @@ export function NearbyListingsView() {
   return (
     <GoogleMapsProvider apiKey={GOOGLE_MAPS_API_KEY}>
       <div className="h-full w-full">
-        <MapView 
+        <MapView
           listings={listings}
           isLoading={isLoading}
           userLocation={userLocation}
+          mapCenter={mapCenter}
           onMarkerClick={handleMarkerClick}
           onLocationChange={setUserLocation}
           formatDistance={formatDistance}

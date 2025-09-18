@@ -14,7 +14,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AddListingDialog } from "./add-listing-dialog";
 import { ReviewRequestsModal } from "./review-requests-modal";
 import { EditListingForm } from "./edit-listing";
-import { ListingDialog } from "../dashboard/listing-dialog";
 import { RefreshCw, AlertCircle, Plus, MessageSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase/api";
 
@@ -33,8 +32,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-  const [isListingDialogOpen, setIsListingDialogOpen] = useState(false);
-  const [selectedListingForDialog, setSelectedListingForDialog] = useState<Listing | null>(null);
 
   const [userData, setUserData] = useState<any>(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
@@ -266,8 +263,8 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   };
 
   const handleViewDetails = (listing: Listing) => {
-    setSelectedListingForDialog(listing);
-    setIsListingDialogOpen(true);
+    // Navigate to listing details page
+    window.location.href = `/user/listing/${listing.list_id}`;
   };
 
   const handleContact = (listing: Listing) => {
@@ -475,16 +472,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         onSave={handleSaveEdit}
       />
 
-      <ListingDialog
-        listing={selectedListingForDialog}
-        isOpen={isListingDialogOpen}
-        onOpenChange={setIsListingDialogOpen}
-        onContact={handleContact}
-        isOwner={isOwner}
-        formatPrice={formatPrice}
-        formatDate={formatDate}
-        getTypeColor={getTypeColor}
-      />
     </>
   );
 }
