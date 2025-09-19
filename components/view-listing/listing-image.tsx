@@ -162,7 +162,7 @@ export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatD
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-foreground text-sm uppercase tracking-wide mb-1">
-                          Instructions
+                          Pickup Instructions
                         </div>
                         <div className="text-sm text-muted-foreground leading-relaxed">
                           {listing.instructions}

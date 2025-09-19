@@ -160,22 +160,22 @@ export function ListingCard({
 
           {/* Tags - Only show if there are tags */}
           {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 min-h-[1.5rem]">
-              {tags.slice(0, 3).map((tag, index) => (
+            <div className="flex gap-1 min-h-[1.5rem] overflow-hidden">
+              {tags.slice(0, 2).map((tag, index) => (
                 <Badge
                   key={index}
                   variant="secondary"
-                  className="text-xs bg-muted text-muted-foreground hover:bg-muted/80"
+                  className="text-xs bg-muted text-muted-foreground hover:bg-muted/80 flex-shrink-0"
                 >
                   {tag}
                 </Badge>
               ))}
-              {tags.length > 3 && (
+              {tags.length > 2 && (
                 <Badge
                   variant="secondary"
-                  className="text-xs bg-muted text-muted-foreground"
+                  className="text-xs bg-muted text-muted-foreground flex-shrink-0"
                 >
-                  +{tags.length - 3}
+                  +{tags.length - 2}
                 </Badge>
               )}
             </div>

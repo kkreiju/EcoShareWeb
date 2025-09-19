@@ -17,9 +17,10 @@ import { Gift, DollarSign, Plus, Search } from "lucide-react";
 
 interface AddListingDialogProps {
   children: React.ReactNode;
+  onListingCreated?: () => void;
 }
 
-export function AddListingDialog({ children }: AddListingDialogProps) {
+export function AddListingDialog({ children, onListingCreated }: AddListingDialogProps) {
   const [open, setOpen] = useState(false);
   const [showListingForm, setShowListingForm] = useState(false);
   const [listingType, setListingType] = useState<"free" | "wanted" | "sale" | null>(null);
@@ -130,6 +131,7 @@ export function AddListingDialog({ children }: AddListingDialogProps) {
         open={showListingForm}
         onOpenChange={setShowListingForm}
         listingType={listingType}
+        onListingCreated={onListingCreated}
       />
     </Dialog>
   );

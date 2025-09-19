@@ -538,7 +538,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <AddListingDialog>
+            <AddListingDialog onListingCreated={handleRefresh}>
               <Button
                 variant="default"
                 size="sm"
@@ -650,6 +650,9 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
             listings={listings}
             onDelete={handleDeleteListing}
             onToggleVisibility={handleToggleVisibility}
+            onEditListing={handleEditListing}
+            onShare={handleShare}
+            onViewDetails={handleViewDetails}
             isOwner={isOwner}
             formatPrice={formatPrice}
             formatDate={formatDate}
