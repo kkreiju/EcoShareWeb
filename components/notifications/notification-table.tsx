@@ -38,25 +38,43 @@ export function NotificationTable({ notifications, onMarkAsRead }: NotificationT
         {notifications.length === 0 ? (
           <NotificationEmptyState />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-0">Notification</TableHead>
-                <TableHead className="hidden md:table-cell min-w-0">Details</TableHead>
-                <TableHead className="hidden sm:table-cell w-32">Time</TableHead>
-                <TableHead className="w-20 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <>
+            {/* Mobile Card View */}
+            <div className="block md:hidden">
               {notifications.map((notification) => (
                 <NotificationRow
                   key={notification.id}
                   notification={notification}
                   onMarkAsRead={onMarkAsRead}
+                  isMobile={true}
                 />
               ))}
-            </TableBody>
-          </Table>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-0">Notification</TableHead>
+                    <TableHead className="hidden lg:table-cell min-w-0">Details</TableHead>
+                    <TableHead className="hidden md:table-cell w-32">Time</TableHead>
+                    <TableHead className="w-20 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {notifications.map((notification) => (
+                    <NotificationRow
+                      key={notification.id}
+                      notification={notification}
+                      onMarkAsRead={onMarkAsRead}
+                      isMobile={false}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

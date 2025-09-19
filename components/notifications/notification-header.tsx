@@ -11,35 +11,59 @@ interface NotificationHeaderProps {
 
 export function NotificationHeader({ unreadCount, onMarkAllAsRead }: NotificationHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-      <div className="min-w-0 flex-1">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-          Notifications
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-1">
-          Stay updated with your latest activities and messages
-        </p>
-      </div>
+    <div className="space-y-4">
+      {/* Header Content */}
+      <div className="flex flex-col space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+              Notifications
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
+              Stay updated with your latest activities and messages
+            </p>
+          </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-        {unreadCount > 0 && (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">
+          {/* Desktop Actions */}
+          <div className="hidden sm:flex sm:items-center gap-3">
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
+                {unreadCount} unread
+              </Badge>
+            )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onMarkAllAsRead}
+              disabled={unreadCount === 0}
+              className="shrink-0"
+            >
+              <CheckCheck className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Mark All as Read</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Actions */}
+        <div className="flex sm:hidden items-center justify-between gap-3">
+          {unreadCount > 0 && (
+            <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
               {unreadCount} unread
             </Badge>
-          </div>
-        )}
+          )}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onMarkAllAsRead}
-          disabled={unreadCount === 0}
-          className="w-full sm:w-auto justify-center sm:justify-start"
-        >
-          <CheckCheck className="h-4 w-4 mr-2 flex-shrink-0" />
-          <span className="truncate">Mark All as Read</span>
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onMarkAllAsRead}
+            disabled={unreadCount === 0}
+            className="flex-1"
+          >
+            <CheckCheck className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Mark All as Read</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

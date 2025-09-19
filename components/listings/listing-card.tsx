@@ -4,7 +4,7 @@ import { Listing } from "@/lib/DataClass";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Package, MessageCircle, Trash2, Eye, EyeOff, Eye as ViewIcon, Edit, Share2 } from "lucide-react";
+import { MapPin, Clock, Package, MessageCircle, Trash2, Eye, EyeOff, Edit, Share2 } from "lucide-react";
 
 interface ListingCardProps {
   listing: Listing;
@@ -237,17 +237,16 @@ export function ListingCard({
           {/* Main Action Buttons */}
           <div className="flex gap-2">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               disabled={isUnavailable}
-              className="flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-border hover:bg-muted/50 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={(e) => {
                 if (isUnavailable) return;
                 e.stopPropagation();
                 onViewDetails?.(listing);
               }}
             >
-              <ViewIcon className="h-4 w-4 mr-2" />
               View Details
             </Button>
 

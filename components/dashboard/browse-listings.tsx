@@ -9,6 +9,7 @@ import { SearchBar } from "./search-bar";
 import { LoadingSkeleton, TableSkeleton } from "./loading-skeleton";
 import { EmptyState } from "./empty-state";
 import { ListingsTable } from "./listings-table";
+import { ListingContactDialog } from "@/components/view-listing/listing-contact-dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RefreshCw, AlertCircle } from "lucide-react";
@@ -31,6 +32,10 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [userDataLoading, setUserDataLoading] = useState(true);
   const [cachedUserEmail, setCachedUserEmail] = useState<string | null>(null);
   const { user } = useAuth();
+
+  // Contact dialog state
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
 
   // Fetch user data when user changes, with caching to prevent data loss
@@ -248,8 +253,8 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const handleContactListing = (listing: Listing) => {
     // Only allow contact if user is not the owner
     if (!isOwner(listing)) {
-      // TODO: Implement contact functionality
-      console.log("Contact listing:", listing.title);
+      setSelectedListing(listing);
+      setIsContactDialogOpen(true);
     }
   };
 
@@ -419,6 +424,22 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           </div>
         )}
       </div>
+
+      {/* Contact Dialog */}
+      {selectedListing && (
+        <ListingContactDialog
+          isOpen={isContactDialogOpen}
+          onClose={() => {
+            setIsContactDialogOpen(false);
+            setSelectedListing(null);
+          }}
+          listingId={selectedListing.list_id}
+          listingTitle={selectedListing.title}
+          listingImageURL={selectedListing.imageURL}
+          listingType={selectedListing.type}
+          ownerName={`${selectedListing.User?.firstName || ''} ${selectedListing.User?.lastName || ''}`.trim() || 'Owner'}
+        />
+      )}
 
     </>
   );
