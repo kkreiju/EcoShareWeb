@@ -15,6 +15,7 @@ const routeNames: Record<string, string> = {
   "/user/listings": "Listings",
   "/user/messages": "Messages",
   "/user/notifications": "Notifications",
+  "/user/nearby-listings": "Nearby Listings",
 };
 
 export function DynamicBreadcrumb() {

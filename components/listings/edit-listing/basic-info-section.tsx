@@ -25,18 +25,18 @@ export function BasicInfoSection({
         <CardTitle className="text-lg">Basic Information</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Title */}
+        {/* Title - Read Only (Cannot be updated) */}
         <div className="space-y-2">
-          <Label htmlFor="title">Title *</Label>
+          <Label htmlFor="title">Title</Label>
           <Input
             id="title"
             placeholder="e.g., Used coffee grounds for composting"
             {...register("title")}
-            className={errors.title ? "border-red-500" : ""}
+            className="bg-gray-50 text-gray-600 cursor-not-allowed"
+            disabled
+            readOnly
           />
-          {errors.title && (
-            <p className="text-sm text-red-500">{errors.title.message as string}</p>
-          )}
+          <p className="text-sm text-gray-500 italic">Title cannot be modified</p>
         </div>
 
         {/* Description */}
@@ -46,7 +46,7 @@ export function BasicInfoSection({
             id="description"
             placeholder="Describe your item in detail..."
             rows={3}
-            className={`resize-none ${errors.description ? "border-red-500" : ""}`}
+            className={`resize-none break-words whitespace-pre-wrap overflow-x-hidden ${errors.description ? "border-red-500" : ""}`}
             {...register("description")}
           />
           {errors.description && (

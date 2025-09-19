@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Listing } from "@/lib/DataClass";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { ListingContactDialog } from "@/components/view-listing/listing-contact-dialog";
 
 interface ListingCardProps {
   listing: Listing;
@@ -28,6 +30,7 @@ export function ListingCard({
   onCardClick,
   formatDistance
 }: ListingCardProps) {
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const handleCardClick = () => {
     onCardClick?.(listing.list_id);
   };
@@ -58,11 +61,6 @@ export function ListingCard({
     >
       <div className="relative mb-3">
         <div className="aspect-video w-full bg-gray-100 rounded-lg overflow-hidden">
-          <img
-            src={listing.imageURL || "/images/stock_veges.jpg"}
-            alt={listing.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-          />
         </div>
         <Badge 
           className={cn(
@@ -163,7 +161,10 @@ export function ListingCard({
               variant="ghost"
               size="sm"
               className="h-7 w-7 p-0 hover:bg-blue-50"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.location.href = `/user/listing/${listing.list_id}`;
+              }}
             >
               <Eye className="h-3.5 w-3.5" />
             </Button>
@@ -172,7 +173,10 @@ export function ListingCard({
                 variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0 hover:bg-green-50"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setContactDialogOpen(true);
+                }}
               >
                 <MessageCircle className="h-3.5 w-3.5" />
               </Button>
@@ -181,6 +185,17 @@ export function ListingCard({
         </div>
 
       </div>
+
+      {/* Contact Dialog */}
+      <ListingContactDialog
+        isOpen={contactDialogOpen}
+        onClose={() => setContactDialogOpen(false)}
+        listingId={listing.list_id}
+        listingTitle={listing.title}
+        listingImageURL={listing.imageURL}
+        listingType={listing.type}
+        ownerName={`${listing.User?.firstName || ''} ${listing.User?.lastName || ''}`.trim() || 'Owner'}
+      />
     </div>
   );
 }

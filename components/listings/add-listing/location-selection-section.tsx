@@ -54,8 +54,7 @@ export function LocationSelectionSection({
             variant="outline"
             onClick={onGetCurrentLocation}
             disabled={isLoadingLocation}
-            className="flex-1 touch-manipulation"
-            size="sm"
+            className="flex-1 touch-manipulation h-10"
           >
             <Navigation className={`w-4 h-4 mr-2 flex-shrink-0 ${isLoadingLocation ? 'animate-spin' : ''}`} />
             <span className="truncate">
@@ -66,10 +65,9 @@ export function LocationSelectionSection({
             type="button"
             variant="outline"
             onClick={() => setShowMap(!showMap)}
-            className="flex-1 touch-manipulation"
-            size="sm"
+            className="flex-1 touch-manipulation h-10"
           >
-            <Map className="w-4 h-4 mr-2 flex-shrink-0" />
+            <Map className="w-4 h-4 flex-shrink-0" />
             <span className="truncate">
               {showMap ? "Hide Map" : "View Map"}
             </span>

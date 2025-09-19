@@ -14,8 +14,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AddListingDialog } from "./add-listing-dialog";
 import { ReviewRequestsModal } from "./review-requests-modal";
 import { EditListingForm } from "./edit-listing";
+import { ListingDeleteDialog } from "./listing-delete-dialog";
+import { ListingVisibilityDialog } from "./listing-visibility-dialog";
 import { RefreshCw, AlertCircle, Plus, MessageSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase/api";
+import { toast } from "sonner";
 
 interface BrowseListingsProps {
   className?: string;
@@ -32,24 +35,37 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<Listing | null>(null);
+  const [isVisibilityDialogOpen, setIsVisibilityDialogOpen] = useState(false);
+  const [listingToToggle, setListingToToggle] = useState<Listing | null>(null);
+  const [isUpdatingListing, setIsUpdatingListing] = useState(false);
 
   const [userData, setUserData] = useState<any>(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
+  const [cachedUserEmail, setCachedUserEmail] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Fetch user data when user changes
+  // Fetch user data when user changes, with caching to prevent data loss
   useEffect(() => {
     const fetchUserData = async () => {
-      setUserDataLoading(true);
-
+      // If user.email is undefined but we have cached data, keep current state
       if (!user?.email) {
-        setUserData(null);
+        if (!cachedUserEmail && !userData) {
+          setUserDataLoading(false);
+        }
+        return;
+      }
+
+      // If email hasn't changed and we already have data, skip fetch
+      if (user.email === cachedUserEmail && userData) {
         setUserDataLoading(false);
         return;
       }
 
+      setUserDataLoading(true);
+
       try {
-        console.log("Fetching user data for email:", user.email);
         const { data, error } = await supabase
           .from("User")
           .select("user_id")
@@ -57,40 +73,51 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           .single();
 
         if (error) {
-          console.warn("User data fetch error:", error);
-          setUserData(null);
+          // Don't clear existing data on error
+          if (!userData) {
+            setUserData(null);
+          }
         } else {
-          console.log("User data fetched:", data);
           setUserData(data);
+          setCachedUserEmail(user.email);
         }
       } catch (err) {
-        console.warn("Failed to fetch user data:", err);
-        setUserData(null);
+        // Don't clear existing data on error
+        if (!userData) {
+          setUserData(null);
+        }
       } finally {
         setUserDataLoading(false);
       }
     };
 
     fetchUserData();
-  }, [user?.email]);
+  }, [user?.email, cachedUserEmail, userData]);
 
   // Check if current user owns the listing
   const isOwner = (listing: Listing) => {
-    // If still loading, return false (don't show as owner yet)
+    // If still loading, return false
     if (userDataLoading) {
-      console.log("Still loading user data, returning false for ownership");
       return false;
     }
 
-    // If no user data after loading, user doesn't own this listing
-    if (!userData) {
-      console.log("No user data available, returning false for ownership");
+    // If no user data and no cached email, return false
+    if (!userData && !cachedUserEmail) {
       return false;
     }
-    
-    console.log("is " + userData.user_id + " === " + listing.user_id + " ? " + (userData.user_id === listing.user_id));
-    return userData.user_id === listing.user_id;
+
+    // If we have user data, use it for ownership check
+    if (userData) {
+      const currentUserId = String(userData.user_id);
+      const listingUserId = String(listing.user_id);
+      return currentUserId === listingUserId;
+    }
+
+    // Conservative fallback: return false if no userData but have cached email
+    return false;
   };
+
+  const [allListings, setAllListings] = useState<Listing[]>([]);
 
   const fetchListings = useCallback(async () => {
     try {
@@ -132,78 +159,102 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       }
 
       const data: ListingsResponse = await response.json();
-
-      let filteredData = data.data || [];
-      let filteredCount = data.total_count || 0;
-
-
-      // Apply client-side search filtering if needed
-      if (searchQuery.trim()) {
-        const searchTerm = searchQuery.toLowerCase().trim();
-
-        filteredData = filteredData.filter((item) => {
-          // Search in title
-          if (item.title.toLowerCase().includes(searchTerm)) {
-            return true;
-          }
-
-          // Search in description
-          if (item.description.toLowerCase().includes(searchTerm)) {
-            return true;
-          }
-
-          // Search in tags (if they exist)
-          if (item.tags && Array.isArray(item.tags)) {
-            return item.tags.some((tag) =>
-              tag.toLowerCase().includes(searchTerm)
-            );
-          }
-
-          // Search in location name
-          if (item.locationName.toLowerCase().includes(searchTerm)) {
-            return true;
-          }
-
-          // Search in category/type
-          if (item.type.toLowerCase().includes(searchTerm)) {
-            return true;
-          }
-
-          return false;
-        });
-
-        filteredCount = filteredData.length;
-      }
-
-      // Apply client-side sorting if needed
-      if (filters.sort_by && filters.sort_by !== null) {
-        filteredData = filteredData.sort((a, b) => {
-          switch (filters.sort_by) {
-            case "newest":
-              return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
-            case "oldest":
-              return new Date(a.postedDate).getTime() - new Date(b.postedDate).getTime();
-            case "price_high":
-              return (b.price || 0) - (a.price || 0);
-            case "price_low":
-              return (a.price || 0) - (b.price || 0);
-            default:
-              return 0;
-          }
-        });
-      }
-
-      setListings(filteredData);
-      setTotalCount(filteredCount);
+      
+      // Store all listings without filtering by user
+      setAllListings(data.data || []);
+      setTotalCount(data.total_count || 0);
     } catch (err) {
       console.error("❌ Error fetching listings:", err);
       setError(err instanceof Error ? err.message : "Failed to load listings");
-      setListings([]);
+      setAllListings([]);
       setTotalCount(0);
     } finally {
       setIsLoading(false);
     }
   }, [filters, searchQuery]);
+
+  // Filter and process listings whenever allListings or userData changes
+  useEffect(() => {
+    if (!allListings.length) {
+      setListings([]);
+      return;
+    }
+
+    let filteredData = [...allListings];
+    let filteredCount = allListings.length;
+
+    // Filter to show only user's own listings
+    if (userData && userData.user_id) {
+      filteredData = filteredData.filter((listing) => listing.user_id === userData.user_id);
+      filteredCount = filteredData.length;
+    } else if (!userDataLoading) {
+      // If userData finished loading but no userData, show no listings
+      filteredData = [];
+      filteredCount = 0;
+    } else {
+      // Still loading userData, don't filter yet
+      return;
+    }
+
+    // Apply client-side search filtering if needed
+    if (searchQuery.trim()) {
+      const searchTerm = searchQuery.toLowerCase().trim();
+
+      filteredData = filteredData.filter((item) => {
+        // Search in title
+        if (item.title.toLowerCase().includes(searchTerm)) {
+          return true;
+        }
+
+        // Search in description
+        if (item.description.toLowerCase().includes(searchTerm)) {
+          return true;
+        }
+
+        // Search in tags (if they exist)
+        if (item.tags && Array.isArray(item.tags)) {
+          return item.tags.some((tag) =>
+            tag.toLowerCase().includes(searchTerm)
+          );
+        }
+
+        // Search in location name
+        if (item.locationName.toLowerCase().includes(searchTerm)) {
+          return true;
+        }
+
+        // Search in category/type
+        if (item.type.toLowerCase().includes(searchTerm)) {
+          return true;
+        }
+
+        return false;
+      });
+
+      filteredCount = filteredData.length;
+    }
+
+    // Apply client-side sorting if needed
+    if (filters.sort_by && filters.sort_by !== null) {
+      filteredData = filteredData.sort((a, b) => {
+        switch (filters.sort_by) {
+          case "newest":
+            return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
+          case "oldest":
+            return new Date(a.postedDate).getTime() - new Date(b.postedDate).getTime();
+          case "price_high":
+            return (b.price || 0) - (a.price || 0);
+          case "price_low":
+            return (a.price || 0) - (b.price || 0);
+          default:
+            return 0;
+        }
+      });
+    }
+
+    setListings(filteredData);
+    setTotalCount(filteredCount);
+  }, [allListings, userData, userDataLoading, searchQuery, filters]);
 
   // Initial load and refetch when filters/search changes
   useEffect(() => {
@@ -230,16 +281,86 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const handleDeleteListing = (listing: Listing) => {
     // Only allow delete if user is the owner
     if (isOwner(listing)) {
-      // TODO: Implement delete functionality
-      console.log("Delete listing:", listing.list_id);
+      setListingToDelete(listing);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async (listingId: string) => {
+    try {
+      if (!userData?.user_id) {
+        throw new Error("User data not available");
+      }
+
+      // Call the API to mark listing as unavailable
+      const response = await fetch('/api/listing/unavailable-listing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          list_id: listingId,
+          user_id: userData.user_id
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Mark as unavailable response:", result);
+
+      // Update the listing status to "Unavailable" in the local state instead of removing it
+      setListings(prevListings =>
+        prevListings.map(listing =>
+          listing.list_id === listingId
+            ? { ...listing, status: "Unavailable" }
+            : listing
+        )
+      );
+
+      // Close the dialog
+      setIsDeleteDialogOpen(false);
+      setListingToDelete(null);
+
+    } catch (error) {
+      console.error("Error marking listing as unavailable:", error);
+      throw error; // Re-throw so the dialog can handle the error
     }
   };
 
   const handleToggleVisibility = (listing: Listing) => {
     // Only allow toggle visibility if user is the owner
     if (isOwner(listing)) {
-      // TODO: Implement toggle visibility functionality
-      console.log("Toggle visibility for listing:", listing.list_id);
+      setListingToToggle(listing);
+      setIsVisibilityDialogOpen(true);
+    }
+  };
+
+  const handleConfirmToggleVisibility = async (listingId: string) => {
+    try {
+      // TODO: Implement actual API call to toggle listing visibility
+      // For now, we'll just simulate the toggle
+      console.log("Toggling visibility for listing:", listingId);
+      
+      // Update the listing status in the local state
+      setListings(prevListings => 
+        prevListings.map(listing => 
+          listing.list_id === listingId 
+            ? { ...listing, status: listing.status === "Active" ? "Inactive" : "Active" }
+            : listing
+        )
+      );
+      
+      // Close the dialog
+      setIsVisibilityDialogOpen(false);
+      setListingToToggle(null);
+      
+    } catch (error) {
+      console.error("Error toggling listing visibility:", error);
+      throw error; // Re-throw so the dialog can handle the error
     }
   };
 
@@ -251,15 +372,85 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     }
   };
 
-  const handleSaveEdit = (formData: any) => {
-    // TODO: Implement save functionality - call API to update listing
-    console.log("Save edited listing:", formData);
-    console.log("Original listing ID:", selectedListing?.list_id);
+  const handleSaveEdit = async (formData: any) => {
+    if (!selectedListing || !userData?.user_id) {
+      console.error("Missing selected listing or user data");
+      return;
+    }
 
-    // For now, just close the modal and refresh listings
-    setIsEditModalOpen(false);
-    setSelectedListing(null);
-    fetchListings(); // Refresh the listings to show updated data
+    setIsUpdatingListing(true);
+    
+    try {
+      // Prepare the data for the API according to the schema you provided
+      const updateData = {
+        list_id: selectedListing.list_id,
+        user_id: userData.user_id,
+        description: formData.description,
+        tags: formData.tags || [],
+        price: formData.price || undefined,
+        quantity: formData.quantity,
+        pickupTimeAvailability: formData.pickupTimes,
+        instructions: formData.pickupInstructions,
+        locationName: formData.location,
+        latitude: formData.latitude || undefined,
+        longitude: formData.longitude || undefined,
+      };
+
+      // TODO: Handle image upload if formData.image exists
+      // This would require a separate image upload API call or multipart form data
+      if (formData.image) {
+        console.log("Image upload needed for:", formData.image);
+        // For now, we'll log it. Image upload would typically require:
+        // 1. Upload image to storage service
+        // 2. Get the new image URL
+        // 3. Include the imageURL in the updateData
+      }
+
+      console.log("Updating listing with data:", updateData);
+
+      // Call the update API
+      const response = await fetch('/api/listing/update-listing', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Update response:", result);
+
+      // Close the modal
+      setIsEditModalOpen(false);
+      setSelectedListing(null);
+      
+      // Refresh the listings to show updated data
+      await fetchListings();
+      
+      // Show success message
+      toast.success("Listing updated successfully", {
+        description: "Your listing has been updated and is now live.",
+        duration: 4000,
+      });
+      
+    } catch (error) {
+      console.error("Error updating listing:", error);
+      
+      // Show error toast to user
+      toast.error("Failed to update listing", {
+        description: error instanceof Error ? error.message : "Please check your connection and try again.",
+        duration: 5000,
+      });
+      
+      // Keep the modal open so user can try again
+    } finally {
+      setIsUpdatingListing(false);
+    }
   };
 
   const handleViewDetails = (listing: Listing) => {
@@ -271,6 +462,21 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     // TODO: Implement contact functionality
     console.log("Contact listing owner:", listing.list_id);
     // This could open a chat modal or navigate to a messaging page
+  };
+
+  const handleShare = (listing: Listing) => {
+    const listingUrl = `${window.location.origin}/user/listing/${listing.list_id}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: listing.title,
+        text: listing.description,
+        url: listingUrl,
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(listingUrl);
+    }
   };
 
   const formatPrice = (price: number, type: string) => {
@@ -425,7 +631,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         ) : listings.length === 0 ? (
           <EmptyState onRefresh={handleRefresh} />
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
             {listings.map((listing) => (
               <ListingCard
                 key={listing.list_id}
@@ -434,6 +640,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
                 onToggleVisibility={handleToggleVisibility}
                 onEditListing={handleEditListing}
                 onViewDetails={handleViewDetails}
+                onShare={handleShare}
                 isOwner={isOwner(listing)}
               />
             ))}
@@ -470,6 +677,27 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         onOpenChange={setIsEditModalOpen}
         listing={selectedListing}
         onSave={handleSaveEdit}
+        isUpdating={isUpdatingListing}
+      />
+
+      <ListingDeleteDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setListingToDelete(null);
+        }}
+        listing={listingToDelete}
+        onConfirmDelete={handleConfirmDelete}
+      />
+
+      <ListingVisibilityDialog
+        isOpen={isVisibilityDialogOpen}
+        onClose={() => {
+          setIsVisibilityDialogOpen(false);
+          setListingToToggle(null);
+        }}
+        listing={listingToToggle}
+        onConfirmToggle={handleConfirmToggleVisibility}
       />
 
     </>

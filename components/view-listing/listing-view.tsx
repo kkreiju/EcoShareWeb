@@ -11,8 +11,11 @@ import { supabase } from "@/lib/supabase/api";
 
 import { ListingHeader } from "./listing-header";
 import { ListingImage } from "./listing-image";
-import { ListingOwnerInfo } from "./listing-owner-info";
 import { ListingLocationMap } from "./listing-location-map";
+import { ListingNutrientAnalytics } from "./listing-nutrient-analytics";
+import { ListingReportDialog } from "./listing-report-dialog";
+import { ListingContactDialog } from "./listing-contact-dialog";
+import { ListingSkeleton } from "./listing-skeleton";
 
 interface ListingViewProps {
   listingId: string;
@@ -28,6 +31,8 @@ export function ListingView({ listingId }: ListingViewProps) {
   const [userData, setUserData] = useState<any>(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
   const [cachedUserEmail, setCachedUserEmail] = useState<string | null>(null);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -175,10 +180,11 @@ export function ListingView({ listingId }: ListingViewProps) {
   };
 
   const handleContact = () => {
-    if (!isOwner()) {
-      // TODO: Implement contact functionality
-      console.log("Contact listing owner:", listing?.list_id);
-    }
+    setIsContactDialogOpen(true);
+  };
+
+  const handleReport = () => {
+    setIsReportDialogOpen(true);
   };
 
   const handleShare = () => {
@@ -209,19 +215,7 @@ export function ListingView({ listingId }: ListingViewProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-muted rounded w-1/3"></div>
-          <div className="h-64 bg-muted rounded"></div>
-          <div className="space-y-4">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
-            <div className="h-4 bg-muted rounded w-2/3"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return <ListingSkeleton />;
   }
 
   if (error || !listing) {
@@ -254,7 +248,7 @@ export function ListingView({ listingId }: ListingViewProps) {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Image and Details Side by Side */}
+        {/* Left Column - Image, Details, and Owner Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Image and Details Combined */}
           <ListingImage 
@@ -263,22 +257,41 @@ export function ListingView({ listingId }: ListingViewProps) {
             formatPrice={formatPrice}
             tags={tags}
             formatDate={formatDate}
-          />
-        </div>
-
-        {/* Right Column - User Info and Actions */}
-        <div className="space-y-6">
-          {/* Owner Info */}
-          <ListingOwnerInfo 
-            listing={listing}
             isOwner={isOwner()}
             onContact={handleContact}
+            onReport={handleReport}
           />
+
+        </div>
+
+        {/* Right Column - Analytics and Map */}
+        <div className="space-y-6">
+          {/* Nutrient Analytics */}
+          <ListingNutrientAnalytics />
 
           {/* Location Map */}
           <ListingLocationMap listing={listing} />
         </div>
       </div>
+
+      {/* Dialogs */}
+      <ListingReportDialog
+        isOpen={isReportDialogOpen}
+        onClose={() => setIsReportDialogOpen(false)}
+        listingId={listing.list_id}
+        listingTitle={listing.title}
+        listingImageURL={listing.imageURL}
+      />
+      
+      <ListingContactDialog
+        isOpen={isContactDialogOpen}
+        onClose={() => setIsContactDialogOpen(false)}
+        listingId={listing.list_id}
+        listingTitle={listing.title}
+        listingImageURL={listing.imageURL}
+        listingType={listing.type}
+        ownerName={`${listing.User?.firstName || ''} ${listing.User?.lastName || ''}`.trim() || 'Owner'}
+      />
     </div>
   );
 }

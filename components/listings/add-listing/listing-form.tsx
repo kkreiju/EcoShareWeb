@@ -230,7 +230,7 @@ export function ListingForm({ open, onOpenChange, listingType }: ListingFormProp
   return (
     <GoogleMapsProvider apiKey="AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA">
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[95vw] sm:w-full sm:max-w-[800px] max-h-[90vh] overflow-y-auto scrollbar-green">
+        <DialogContent className="w-[95vw] sm:w-full sm:max-w-[800px] max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-green">
           <DialogHeader>
             <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
               <Upload className={`h-5 w-5 sm:h-6 sm:w-6 ${
@@ -250,7 +250,7 @@ export function ListingForm({ open, onOpenChange, listingType }: ListingFormProp
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-w-0">
             <PhotoUploadSection
               uploadedImage={uploadedImage}
               onImageUpload={handleImageUpload}

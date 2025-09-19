@@ -87,12 +87,18 @@ export function ListingCard({
 
   const tags = parseTags(listing.tags);
 
+  // Check if listing is unavailable to apply disabled styling
+  const isUnavailable = listing.status === "Unavailable";
+
   return (
     <Card
-      className="group overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 py-0 cursor-pointer"
-      onClick={() => onViewDetails?.(listing)}
+      className={`group overflow-hidden transition-all duration-300 py-0 min-h-[400px] flex flex-col ${
+        isUnavailable
+          ? "opacity-60 grayscale hover:shadow-none cursor-not-allowed"
+          : "hover:shadow-lg hover:-translate-y-1"
+      }`}
     >
-      <div className="relative">
+      <div className="relative flex-shrink-0">
         <div className="aspect-video overflow-hidden">
           <img
             src={listing.imageURL}
@@ -124,139 +130,157 @@ export function ListingCard({
         </Badge>
       </div>
 
-      <CardContent className="p-4 space-y-3">
-        {/* Title and Price */}
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-lg text-card-foreground line-clamp-2 leading-tight">
-            {listing.title}
-          </h3>
-          <div className="text-right shrink-0">
-            <div className="text-xl font-bold text-card-foreground">
-              {formatPrice(listing.price || 0, listing.type)}
-            </div>
-            {listing.quantity > 0 && (
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
-                <Package className="h-3 w-3" />
-                {listing.quantity} available
+      <CardContent className="p-4 flex flex-col h-full">
+        {/* Fixed height content area */}
+        <div className="flex-1 flex flex-col space-y-3">
+          {/* Title and Price */}
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-semibold text-lg text-card-foreground line-clamp-2 leading-tight">
+              {listing.title}
+            </h3>
+            <div className="text-right shrink-0">
+              <div className="text-xl font-bold text-card-foreground">
+                {formatPrice(listing.price || 0, listing.type)}
               </div>
-            )}
+              {listing.quantity > 0 && (
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Package className="h-3 w-3" />
+                  {listing.quantity} available
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-          {listing.description}
-        </p>
-
-        {/* Tags */}
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {tags.slice(0, 3).map((tag, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="text-xs bg-muted text-muted-foreground hover:bg-muted/80"
-              >
-                {tag}
-              </Badge>
-            ))}
-            {tags.length > 3 && (
-              <Badge
-                variant="secondary"
-                className="text-xs bg-muted text-muted-foreground"
-              >
-                +{tags.length - 3}
-              </Badge>
-            )}
+          {/* Description - Always takes 2 lines of space */}
+          <div className="min-h-[2.75rem] flex flex-col justify-start">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed break-words whitespace-normal">
+              {listing.description}
+            </p>
           </div>
-        )}
 
-        {/* Location and Time */}
-        <div className="space-y-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            <span className="line-clamp-1">{listing.locationName}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>Posted {formatDate(listing.postedDate)}</span>
-          </div>
-        </div>
-
-
-        {/* Action Buttons */}
-        {isOwner && (
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className={
-                listing.status === "Active"
-                  ? "border-gray-500 text-gray-500 hover:bg-gray-50 hover:text-gray-600 flex-1"
-                  : "border-green-500 text-green-500 hover:bg-green-50 hover:text-green-600 flex-1"
-              }
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleVisibility?.(listing);
-              }}
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              {listing.status === "Active" ? "Hide" : "Show"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 flex-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete?.(listing);
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Delete
-            </Button>
-          </div>
-        )}
-
-        {/* Main Action Buttons */}
-        <div className="flex gap-2 pt-3 border-t border-border/50">
-          <Button
-            variant="default"
-            size="sm"
-            className="flex-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewDetails?.(listing);
-            }}
-          >
-            <ViewIcon className="h-4 w-4 mr-2" />
-            View Details
-          </Button>
-
-          {isOwner && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditListing?.(listing);
-              }}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
+          {/* Tags - Only show if there are tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 min-h-[1.5rem]">
+              {tags.slice(0, 3).map((tag, index) => (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="text-xs bg-muted text-muted-foreground hover:bg-muted/80"
+                >
+                  {tag}
+                </Badge>
+              ))}
+              {tags.length > 3 && (
+                <Badge
+                  variant="secondary"
+                  className="text-xs bg-muted text-muted-foreground"
+                >
+                  +{tags.length - 3}
+                </Badge>
+              )}
+            </div>
           )}
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-purple-500 text-purple-500 hover:bg-purple-50 hover:text-purple-600"
-            onClick={(e) => {
-              e.stopPropagation();
-              onShare?.(listing);
-            }}
-          >
-            <Share2 className="h-4 w-4" />
-          </Button>
+          {/* Location and Time - Fixed spacing and pinned to bottom of content */}
+          <div className="mt-auto space-y-2 text-xs text-muted-foreground pb-2">
+            <div className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              <span className="line-clamp-1">{listing.locationName}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>Posted {formatDate(listing.postedDate)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed Action Buttons at bottom */}
+        <div className="mt-auto pt-3 space-y-3 border-t border-border/50">
+          {/* Owner Action Buttons */}
+          {isOwner && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isUnavailable}
+                className={
+                  listing.status === "Active"
+                    ? "border-gray-500 text-gray-500 hover:bg-gray-50 hover:text-gray-600 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    : "border-green-500 text-green-500 hover:bg-green-50 hover:text-green-600 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                }
+                onClick={(e) => {
+                  if (isUnavailable) return;
+                  e.stopPropagation();
+                  onToggleVisibility?.(listing);
+                }}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                {listing.status === "Active" ? "Hide" : "Show"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isUnavailable}
+                className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={(e) => {
+                  if (isUnavailable) return;
+                  e.stopPropagation();
+                  onDelete?.(listing);
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                {listing.status === "Unavailable" ? "Unavailable" : "Delete"}
+              </Button>
+            </div>
+          )}
+
+          {/* Main Action Buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              disabled={isUnavailable}
+              className="flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={(e) => {
+                if (isUnavailable) return;
+                e.stopPropagation();
+                onViewDetails?.(listing);
+              }}
+            >
+              <ViewIcon className="h-4 w-4 mr-2" />
+              View Details
+            </Button>
+
+            {isOwner && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isUnavailable}
+                className="disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={(e) => {
+                  if (isUnavailable) return;
+                  e.stopPropagation();
+                  onEditListing?.(listing);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isUnavailable}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={(e) => {
+                if (isUnavailable) return;
+                e.stopPropagation();
+                onShare?.(listing);
+              }}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

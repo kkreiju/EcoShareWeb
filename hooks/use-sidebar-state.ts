@@ -5,22 +5,27 @@ import { useState, useEffect } from "react";
 const SIDEBAR_STATE_KEY = "ecoshare-sidebar-state";
 
 export function useSidebarState() {
-  const [isOpen, setIsOpen] = useState<boolean>(true); // Default to open
+  const [isOpen, setIsOpen] = useState<boolean>(true); // Default to open for SSR consistency
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load state from localStorage on mount
   useEffect(() => {
-    try {
-      const savedState = localStorage.getItem(SIDEBAR_STATE_KEY);
-      if (savedState !== null) {
-        setIsOpen(JSON.parse(savedState));
+    // Small delay to ensure proper hydration
+    const timeoutId = setTimeout(() => {
+      try {
+        const savedState = localStorage.getItem(SIDEBAR_STATE_KEY);
+        if (savedState !== null) {
+          setIsOpen(JSON.parse(savedState));
+        }
+      } catch (error) {
+        console.warn("Failed to load sidebar state from localStorage:", error);
+        // Keep default state if localStorage fails
+      } finally {
+        setIsLoaded(true);
       }
-    } catch (error) {
-      console.warn("Failed to load sidebar state from localStorage:", error);
-      // Keep default state if localStorage fails
-    } finally {
-      setIsLoaded(true);
-    }
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Save state to localStorage whenever it changes

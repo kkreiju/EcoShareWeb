@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Share2, Heart } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface ListingHeaderProps {
@@ -24,11 +24,6 @@ export function ListingHeader({ onShare, isOwner }: ListingHeaderProps) {
           <Share2 className="h-4 w-4 mr-2" />
           Share
         </Button>
-        {!isOwner && (
-          <Button variant="outline" size="sm">
-            <Heart className="h-4 w-4" />
-          </Button>
-        )}
       </div>
     </div>
   );

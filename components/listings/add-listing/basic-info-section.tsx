@@ -44,7 +44,7 @@ export function BasicInfoSection({
             id="description"
             placeholder="Describe your item in detail..."
             rows={3}
-            className={`resize-none ${errors.description ? "border-red-500" : ""}`}
+            className={`resize-none break-words whitespace-pre-wrap overflow-x-hidden ${errors.description ? "border-red-500" : ""}`}
             {...register("description")}
           />
           {errors.description && (

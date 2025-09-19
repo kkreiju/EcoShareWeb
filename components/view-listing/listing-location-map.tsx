@@ -25,7 +25,7 @@ export function ListingLocationMap({ listing }: ListingLocationMapProps) {
         <CardTitle className="text-lg">Location</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="w-full aspect-[4/3] rounded-lg overflow-hidden border border-border relative">
+        <div className="w-full aspect-[4/2] rounded-lg overflow-hidden border border-border relative">
           <iframe
             src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA&q=${listing.latitude},${listing.longitude}&zoom=15`}
             width="100%"

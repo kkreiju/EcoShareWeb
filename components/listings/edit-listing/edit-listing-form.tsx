@@ -40,9 +40,10 @@ interface EditListingFormProps {
   onOpenChange: (open: boolean) => void;
   listing: Listing | null;
   onSave?: (data: EditListingFormData) => void;
+  isUpdating?: boolean;
 }
 
-export function EditListingForm({ open, onOpenChange, listing, onSave }: EditListingFormProps) {
+export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdating = false }: EditListingFormProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>("");
@@ -51,14 +52,14 @@ export function EditListingForm({ open, onOpenChange, listing, onSave }: EditLis
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [existingImageUrl, setExistingImageUrl] = useState<string>("");
 
-  // Base schema
+  // Base schema (title excluded since it cannot be updated)
   const baseSchema = {
-    title: z.string().min(3, "Title must be at least 3 characters"),
+    title: z.string().optional(), // Read-only field, no validation needed
     description: z.string().min(10, "Description must be at least 10 characters"),
     quantity: z.number().min(1, "Quantity must be at least 1"),
     pickupTimes: z.string().min(1, "Please specify pickup times"),
     pickupInstructions: z.string().min(1, "Please provide pickup instructions"),
-    tags: z.array(z.string()).min(1, "Please select at least one tag"),
+    tags: z.array(z.string()).optional(),
     location: z.string().min(1, "Please select a location"),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
@@ -194,12 +195,12 @@ export function EditListingForm({ open, onOpenChange, listing, onSave }: EditLis
       };
 
       console.log("Edit listing form data:", formData);
-      
+
       // Call the onSave callback if provided
+      // Dialog will remain open with loading state until API call completes
       onSave?.(formData);
-      
-      // Close the modal
-      onOpenChange(false);
+
+      // Note: Dialog closure is now handled by the parent component after API success
     } catch (error) {
       console.error("Error updating listing:", error);
     }
@@ -213,7 +214,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave }: EditLis
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:w-full sm:max-w-[800px] max-h-[90vh] overflow-y-auto scrollbar-green">
+      <DialogContent className="w-[95vw] sm:w-full sm:max-w-[800px] max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-green">
         <DialogHeader>
           <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
@@ -225,12 +226,13 @@ export function EditListingForm({ open, onOpenChange, listing, onSave }: EditLis
         </DialogHeader>
 
         <GoogleMapsProvider>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-w-0">
             <PhotoUploadSection
               onImageUpload={handleImageUpload}
               uploadedImage={uploadedImage}
               existingImageUrl={existingImageUrl}
               error={errors.image?.message as string}
+              disabled={true}
             />
 
             <BasicInfoSection
@@ -264,7 +266,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave }: EditLis
 
             <FormActions
               onCancel={handleCancel}
-              isSubmitting={isSubmitting}
+              isSubmitting={isSubmitting || isUpdating}
               submitText="Update Listing"
               cancelText="Cancel"
             />

@@ -44,13 +44,13 @@ export function TagsSelectionSection({
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Tag className="h-5 w-5" />
-          Tags *
+          Tags
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Select all tags that apply to your item
+            Select tags that apply to your item (optional)
           </p>
           <div className="flex flex-wrap gap-2">
             {availableTags.map((tag) => (
