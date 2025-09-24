@@ -11,15 +11,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Calendar, Package, MessageCircle, Trash2, Eye, EyeOff, Edit, Share2 } from "lucide-react";
+import { MapPin, Calendar, Package, MessageCircle, Trash2, Eye, EyeOff } from "lucide-react";
 
 interface ListingsTableProps {
   listings: Listing[];
   onDelete: (listing: Listing) => void;
   onToggleVisibility: (listing: Listing) => void;
-  onEditListing?: (listing: Listing) => void;
-  onShare?: (listing: Listing) => void;
-  onViewDetails?: (listing: Listing) => void;
   isOwner: (listing: Listing) => boolean;
   formatPrice: (price: number, type: string) => string;
   formatDate: (dateString: string) => string;
@@ -30,9 +27,6 @@ export function ListingsTable({
   listings,
   onDelete,
   onToggleVisibility,
-  onEditListing,
-  onShare,
-  onViewDetails,
   isOwner,
   formatPrice,
   formatDate,
@@ -112,67 +106,28 @@ export function ListingsTable({
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex gap-1">
-                  {isOwner(listing) && onToggleVisibility && (
+                {isOwner(listing) && (
+                  <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0"
+                      className="h-7 px-2 text-xs"
                       onClick={() => onToggleVisibility(listing)}
-                      title={listing.status === "Active" ? "Hide" : "Show"}
                     >
-                      {listing.status === "Active" ? (
-                        <EyeOff className="w-3 h-3" />
-                      ) : (
-                        <Eye className="w-3 h-3" />
-                      )}
+                      <Eye className="w-3 h-3 mr-1" />
+                      {listing.status === "Active" ? "Hide" : "Show"}
                     </Button>
-                  )}
-                  {isOwner(listing) && onDelete && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      className="h-7 px-2 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
                       onClick={() => onDelete(listing)}
-                      title="Delete"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete
                     </Button>
-                  )}
-                  {onShare && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => onShare(listing)}
-                      title="Share"
-                    >
-                      <Share2 className="w-3 h-3" />
-                    </Button>
-                  )}
-                  {isOwner(listing) && onEditListing && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => onEditListing(listing)}
-                      title="Edit"
-                    >
-                      <Edit className="w-3 h-3" />
-                    </Button>
-                  )}
-                  {onViewDetails && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 py-1"
-                      onClick={() => onViewDetails(listing)}
-                      title="View Details"
-                    >
-                      <span className="text-xs font-medium">View Details</span>
-                    </Button>
-                  )}
-                </div>
+                  </div>
+                )}
               </TableCell>
             </TableRow>
           ))}

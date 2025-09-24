@@ -113,18 +113,18 @@ export function ListingCard({
 
         {/* Tags */}
         {Array.isArray(listing.tags) && listing.tags.length > 0 && (
-          <div className="flex gap-1 overflow-hidden">
+          <div className="flex flex-wrap gap-1">
             {listing.tags.slice(0, 2).map((tag, index) => (
-              <Badge
-                key={index}
-                variant="outline"
-                className="text-xs h-5 px-2 text-gray-600 border-gray-300 flex-shrink-0"
+              <Badge 
+                key={index} 
+                variant="outline" 
+                className="text-xs h-5 px-2 text-gray-600 border-gray-300"
               >
                 {tag}
               </Badge>
             ))}
             {listing.tags.length > 2 && (
-              <Badge variant="outline" className="text-xs h-5 px-2 text-gray-500 flex-shrink-0">
+              <Badge variant="outline" className="text-xs h-5 px-2 text-gray-500">
                 +{listing.tags.length - 2}
               </Badge>
             )}

@@ -55,7 +55,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
   // Base schema (title excluded since it cannot be updated)
   const baseSchema = {
     title: z.string().optional(), // Read-only field, no validation needed
-    description: z.string().min(1, "Description is required"),
+    description: z.string().min(10, "Description must be at least 10 characters"),
     quantity: z.number().min(1, "Quantity must be at least 1"),
     pickupTimes: z.string().min(1, "Please specify pickup times"),
     pickupInstructions: z.string().min(1, "Please provide pickup instructions"),

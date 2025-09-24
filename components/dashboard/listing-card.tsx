@@ -126,7 +126,7 @@ export function ListingCard({
               <Badge
                 key={index}
                 variant="secondary"
-                className="text-xs bg-muted text-muted-foreground hover:bg-muted/80 flex-shrink-0"
+                className="text-xs bg-muted text-muted-foreground hover:bg-muted/80 whitespace-nowrap"
               >
                 {tag}
               </Badge>
@@ -134,7 +134,7 @@ export function ListingCard({
             {tags.length > 2 && (
               <Badge
                 variant="secondary"
-                className="text-xs bg-muted text-muted-foreground flex-shrink-0"
+                className="text-xs bg-muted text-muted-foreground whitespace-nowrap"
               >
                 +{tags.length - 2}
               </Badge>
