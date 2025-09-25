@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,6 +19,9 @@ import { PickupInfoSection } from "./pickup-info-section";
 import { TagsSelectionSection } from "./tags-selection-section";
 import { LocationSelectionSection } from "./location-selection-section";
 import { FormActions } from "./form-actions";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/lib/supabase/api";
+import { toast } from "sonner";
 
 type ListingFormData = {
   title: string;
@@ -38,15 +41,21 @@ interface ListingFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   listingType?: "free" | "wanted" | "sale" | null;
+  onListingCreated?: () => void;
 }
 
-export function ListingForm({ open, onOpenChange, listingType }: ListingFormProps) {
+export function ListingForm({ open, onOpenChange, listingType, onListingCreated }: ListingFormProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>("");
   const [currentLatitude, setCurrentLatitude] = useState<number | null>(null);
   const [currentLongitude, setCurrentLongitude] = useState<number | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [userDataLoading, setUserDataLoading] = useState(true);
+
+  const { user, email } = useAuth();
 
   // Base schema
   const baseSchema = {
@@ -95,6 +104,102 @@ export function ListingForm({ open, onOpenChange, listingType }: ListingFormProp
       image: undefined,
     },
   });
+
+  // Fetch user data when component mounts or email changes
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!email) {
+        setUserDataLoading(false);
+        return;
+      }
+
+      setUserDataLoading(true);
+
+      try {
+        const { data, error } = await supabase
+          .from("User")
+          .select("user_id")
+          .eq("user_email", email)
+          .single();
+
+        if (error) {
+          console.error("Error fetching user data:", error);
+          setUserData(null);
+        } else {
+          setUserData(data);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        setUserData(null);
+      } finally {
+        setUserDataLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [email]);
+
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Create listing API call
+  const createListing = async (formData: ListingFormData) => {
+    if (!userData?.user_id) {
+      throw new Error("User not authenticated");
+    }
+
+    if (!uploadedImage) {
+      throw new Error("Please upload an image");
+    }
+
+    // Convert image to base64
+    const imageBase64 = await fileToBase64(uploadedImage);
+
+    // Map listing type to the expected format
+    const typeMapping = {
+      free: "Free",
+      wanted: "Wanted",
+      sale: "Sale"
+    };
+
+    const listingData = {
+      user_id: userData.user_id,
+      title: formData.title,
+      type: typeMapping[listingType as keyof typeof typeMapping] || "Free",
+      imageURL: imageBase64,
+      description: formData.description,
+      tags: selectedTags,
+      price: listingType === "sale" ? formData.price : undefined,
+      quantity: formData.quantity,
+      pickupTimeAvailability: formData.pickupTimes,
+      instructions: formData.pickupInstructions,
+      locationName: currentLocation,
+      latitude: currentLatitude || 0,
+      longitude: currentLongitude || 0
+    };
+
+    const response = await fetch('/api/listing/create-listing', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(listingData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  };
 
   const handleTagSelect = (tag: string) => {
     const updatedTags = selectedTags.includes(tag)
@@ -194,23 +299,52 @@ export function ListingForm({ open, onOpenChange, listingType }: ListingFormProp
     setValue("longitude", lng);
   };
 
-  const onSubmit = (data: ListingFormData) => {
-    console.log(`${listingType === "sale" ? "Sale" : listingType === "wanted" ? "Wanted" : "Free"} listing data:`, { 
-      ...data, 
-      image: uploadedImage, 
-      type: listingType,
-      coordinates: {
-        latitude: currentLatitude,
-        longitude: currentLongitude
-      }
-    });
+  const onSubmit = async (data: ListingFormData) => {
+    if (userDataLoading) {
+      toast.error("Please wait while we verify your account");
+      return;
+    }
 
-    // TODO: Submit the form data to your backend
-    // Example: await createListing({ ...data, type: listingType, latitude: currentLatitude, longitude: currentLongitude }, uploadedImage);
+    if (!userData?.user_id) {
+      toast.error("You must be logged in to create a listing");
+      return;
+    }
 
-    // Reset form and close dialog
-    handleFormReset();
-    onOpenChange(false);
+    setIsSubmitting(true);
+
+    try {
+      console.log("Creating listing with data:", data);
+
+      const result = await createListing(data);
+
+      console.log("Listing created successfully:", result);
+
+      // Show success message
+      toast.success("Listing created successfully!", {
+        description: "Your listing has been added and is now live for others to see.",
+        duration: 4000,
+      });
+
+      // Call the callback to refresh listings
+      onListingCreated?.();
+
+      // Reset form and close dialog
+      handleFormReset();
+      onOpenChange(false);
+
+    } catch (error) {
+      console.error("Error creating listing:", error);
+
+      // Show error message
+      toast.error("Failed to create listing", {
+        description: error instanceof Error ? error.message : "Please check your connection and try again.",
+        duration: 5000,
+      });
+
+      // Keep the modal open so user can try again
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleFormReset = () => {
@@ -290,6 +424,7 @@ export function ListingForm({ open, onOpenChange, listingType }: ListingFormProp
             <FormActions
               onCancel={handleCancel}
               listingType={listingType}
+              isSubmitting={isSubmitting}
             />
           </form>
         </DialogContent>

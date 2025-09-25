@@ -6,28 +6,115 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { CheckCheck, Clock } from "lucide-react";
 
 interface Notification {
-  id: string;
-  type: "message" | "like" | "follow" | "listing" | "review";
-  title: string;
-  message: string;
-  timestamp: string;
-  isRead: boolean;
-  avatar?: string;
-  userName?: string;
-  listingTitle?: string;
+  notif_id: string;
+  notif_message: string;
+  notif_isRead: boolean;
+  notif_dateTime: string;
+  tran_id: string;
 }
 
 interface NotificationRowProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  isMobile?: boolean;
 }
 
-export function NotificationRow({ notification, onMarkAsRead }: NotificationRowProps) {
+const formatTimestamp = (timestamp: string) => {
+  try {
+    if (!timestamp) {
+      return 'Recently';
+    }
+
+    const date = new Date(timestamp);
+
+    if (isNaN(date.getTime())) {
+      return 'Recently';
+    }
+
+    return formatDate(date);
+  } catch (error) {
+    return 'Recently';
+  }
+};
+
+const formatDate = (date: Date) => {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+
+  // Handle future dates
+  if (diffMs < 0) {
+    return 'Just now';
+  }
+
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return date.toLocaleDateString();
+};
+
+export function NotificationRow({ notification, onMarkAsRead, isMobile = false }: NotificationRowProps) {
+  // Mobile Card Layout
+  if (isMobile) {
+    return (
+      <div className={`p-4 border-b last:border-b-0 ${
+        !notification.notif_isRead
+          ? 'bg-blue-50/30 dark:bg-blue-950/30'
+          : 'hover:bg-muted/50'
+      }`}>
+        <div className="flex items-start justify-between">
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {!notification.notif_isRead && (
+                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                )}
+              </div>
+
+              {/* Timestamp */}
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {formatTimestamp(notification.notif_dateTime)}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-foreground text-sm leading-relaxed mb-3">
+              {notification.notif_message}
+            </p>
+
+            {/* Mark as Read Button */}
+            {!notification.notif_isRead && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onMarkAsRead(notification.notif_id)}
+                className="h-8 px-2 text-xs hover:bg-muted"
+                title="Mark as read"
+              >
+                <CheckCheck className="h-3 w-3 mr-1" />
+                Mark read
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop Table Layout
   return (
     <TableRow
       className={`${
-        !notification.isRead
-          ? 'bg-blue-50/30 border-l-4 border-l-blue-500 hover:bg-blue-50/50'
+        !notification.notif_isRead
+          ? 'bg-blue-50/30 border-l-4 border-l-blue-500 hover:bg-blue-50/50 dark:bg-blue-950/30'
           : 'hover:bg-muted/50'
       }`}
     >
@@ -36,89 +123,34 @@ export function NotificationRow({ notification, onMarkAsRead }: NotificationRowP
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-foreground text-sm">
-                {notification.title}
-              </h4>
-              {!notification.isRead && (
+              {!notification.notif_isRead && (
                 <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
               )}
             </div>
-            <p className="text-muted-foreground text-sm leading-relaxed mt-1 line-clamp-2">
-              {notification.message}
+            <p className="text-foreground text-sm leading-relaxed mt-1 line-clamp-2">
+              {notification.notif_message}
             </p>
-
-            {/* User/Listing info for mobile */}
-            <div className="md:hidden mt-2">
-              {notification.userName && (
-                <div className="flex items-center gap-2">
-                  <Avatar className="w-5 h-5">
-                    <AvatarImage src={notification.avatar} />
-                    <AvatarFallback className="text-xs">
-                      {notification.userName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs text-muted-foreground">
-                    {notification.userName}
-                  </span>
-                </div>
-              )}
-              {notification.listingTitle && (
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="text-xs text-muted-foreground">
-                    • {notification.listingTitle}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </TableCell>
-
-      {/* Details Column (User/Listing) */}
-      <TableCell className="hidden md:table-cell py-4">
-        <div className="flex items-center gap-2">
-          {notification.avatar && (
-            <Avatar className="w-6 h-6">
-              <AvatarImage src={notification.avatar} />
-              <AvatarFallback className="text-xs">
-                {notification.userName?.[0]}
-              </AvatarFallback>
-            </Avatar>
-          )}
-          <div className="min-w-0">
-            {notification.userName && (
-              <div className="text-sm font-medium text-foreground truncate">
-                {notification.userName}
-              </div>
-            )}
-            {notification.listingTitle && (
-              <div className="flex items-center gap-1 mt-1">
-                <span className="text-xs text-muted-foreground truncate">
-                  • {notification.listingTitle}
-                </span>
-              </div>
-            )}
           </div>
         </div>
       </TableCell>
 
       {/* Timestamp */}
-      <TableCell className="hidden sm:table-cell py-4">
+      <TableCell className="hidden md:table-cell py-4">
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
-            {notification.timestamp}
+            {formatTimestamp(notification.notif_dateTime)}
           </span>
         </div>
       </TableCell>
 
       {/* Actions */}
       <TableCell className="py-4 text-right">
-        {!notification.isRead && (
+        {!notification.notif_isRead && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onMarkAsRead(notification.id)}
+            onClick={() => onMarkAsRead(notification.notif_id)}
             className="h-8 w-8 p-0 hover:bg-muted"
             title="Mark as read"
           >

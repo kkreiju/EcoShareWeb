@@ -42,12 +42,39 @@ export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatD
               {listing.type}
             </Badge>
             
-            {/* Price Badge */}
+            {/* Enhanced Price Badge */}
             {listing.type.toLowerCase() === "sale" && (
-              <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2">
-                <span className="font-bold text-red-600 text-lg">
-                  {formatPrice(listing.price || 0, listing.type)}
-                </span>
+              <div className="absolute top-4 right-4">
+                <div className="relative group">
+                  {/* Glow effect background */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+
+                  {/* Main badge */}
+                  <div className="relative bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 rounded-xl px-4 py-2.5 shadow-lg border border-red-400/20 backdrop-blur-sm transform group-hover:scale-105 transition-all duration-300">
+                    {/* Inner highlight */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-xl"></div>
+
+                    {/* Price text */}
+                    <div className="relative flex items-center gap-1">
+                      <span className="text-white font-bold text-lg tracking-wide">
+                        {formatPrice(listing.price || 0, listing.type)}
+                      </span>
+
+                      {/* Small sparkle effect */}
+                      <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-pulse"></div>
+                    </div>
+
+                    {/* Subtle border glow */}
+                    <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-white/30 transition-all duration-300"></div>
+                  </div>
+
+                  {/* Floating price label */}
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="bg-black/70 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap backdrop-blur-sm">
+                      Listed Price
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -162,7 +189,7 @@ export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatD
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-foreground text-sm uppercase tracking-wide mb-1">
-                          Instructions
+                          Pickup Instructions
                         </div>
                         <div className="text-sm text-muted-foreground leading-relaxed">
                           {listing.instructions}

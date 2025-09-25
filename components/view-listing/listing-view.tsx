@@ -291,6 +291,7 @@ export function ListingView({ listingId }: ListingViewProps) {
         listingImageURL={listing.imageURL}
         listingType={listing.type}
         ownerName={`${listing.User?.firstName || ''} ${listing.User?.lastName || ''}`.trim() || 'Owner'}
+        ownerId={listing.user_id}
       />
     </div>
   );

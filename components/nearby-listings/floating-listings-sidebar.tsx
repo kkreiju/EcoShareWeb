@@ -257,6 +257,7 @@ export function FloatingListingsSidebar({
           listingImageURL={selectedContactListing.imageURL}
           listingType={selectedContactListing.type}
           ownerName={`${selectedContactListing.User?.firstName || ''} ${selectedContactListing.User?.lastName || ''}`.trim() || 'Owner'}
+          ownerId={selectedContactListing.user_id}
         />
       )}
     </>

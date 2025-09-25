@@ -124,26 +124,17 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       setIsLoading(true);
       setError(null);
 
-      // Build query parameters
-      const params = new URLSearchParams();
-
-      if (filters.type && filters.type !== "all") {
-        params.append("list_type", filters.type);
+      // For listing management, use the manage-listing endpoint like mobile app
+      // This returns all listings for the current user including inactive/unavailable ones
+      if (!userData?.user_id) {
+        // If userData is not available yet, don't set loading to false
+        // The component will wait for userData to be loaded
+        return;
       }
 
-      if (filters.availabilityStatus && filters.availabilityStatus !== "all") {
-        params.append("status", filters.availabilityStatus);
-      }
+      const url = `/api/listing/manage-listing?user_id=${userData.user_id}`;
 
-      if (filters.sort_by && filters.sort_by !== null) {
-        params.append("sort_by", filters.sort_by);
-      }
-
-      const url = `/api/listing/view-listing${
-        params.toString() ? `?${params.toString()}` : ""
-      }`;
-
-      const response = await fetch(`${url}`, {
+      const response = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -158,11 +149,37 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         );
       }
 
-      const data: ListingsResponse = await response.json();
-      
-      // Store all listings without filtering by user
-      setAllListings(data.data || []);
-      setTotalCount(data.total_count || 0);
+      const data = await response.json();
+
+      // Extract the data array from the API response (same format as mobile)
+      const listingsData = data.data || [];
+
+      // Map the API response fields to match the Listing interface (same as mobile)
+      const mappedListings = listingsData.map((apiListing: any) => {
+        return {
+          user_id: apiListing.user_id,
+          list_id: apiListing.list_id,
+          title: apiListing.title,
+          type: apiListing.type,
+          imageURL: apiListing.imageURL,
+          description: apiListing.description,
+          tags: apiListing.tags ? JSON.parse(apiListing.tags) : [],
+          price: apiListing.price,
+          quantity: apiListing.quantity,
+          pickupTimeAvailability: apiListing.pickupTimeAvailability,
+          instructions: apiListing.instructions,
+          locationName: apiListing.locationName,
+          latitude: apiListing.latitude,
+          longitude: apiListing.longitude,
+          status: apiListing.status?.trim() || "Active",
+          category: apiListing.type,
+          postedDate: apiListing.postedDate,
+        };
+      });
+
+      // Store all listings for the user
+      setAllListings(mappedListings);
+      setTotalCount(mappedListings.length);
     } catch (err) {
       console.error("❌ Error fetching listings:", err);
       setError(err instanceof Error ? err.message : "Failed to load listings");
@@ -171,9 +188,9 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, searchQuery]);
+  }, [userData?.user_id]);
 
-  // Filter and process listings whenever allListings or userData changes
+  // Filter and process listings whenever allListings changes
   useEffect(() => {
     if (!allListings.length) {
       setListings([]);
@@ -182,19 +199,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
 
     let filteredData = [...allListings];
     let filteredCount = allListings.length;
-
-    // Filter to show only user's own listings
-    if (userData && userData.user_id) {
-      filteredData = filteredData.filter((listing) => listing.user_id === userData.user_id);
-      filteredCount = filteredData.length;
-    } else if (!userDataLoading) {
-      // If userData finished loading but no userData, show no listings
-      filteredData = [];
-      filteredCount = 0;
-    } else {
-      // Still loading userData, don't filter yet
-      return;
-    }
 
     // Apply client-side search filtering if needed
     if (searchQuery.trim()) {
@@ -250,16 +254,34 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
             return 0;
         }
       });
+    } else {
+      // Default sorting by newest, with unavailable items at the bottom (like mobile app)
+      filteredData.sort((a, b) => {
+        // First sort by status priority: Active > Inactive/Sold > Unavailable
+        const statusA = a.status?.trim();
+        const statusB = b.status?.trim();
+        if (statusA === "Active" && statusB !== "Active") return -1;
+        if (statusA !== "Active" && statusB === "Active") return 1;
+        if (statusA === "Unavailable" && statusB !== "Unavailable") return 1;
+        if (statusA !== "Unavailable" && statusB === "Unavailable") return -1;
+
+        // Then sort by date (newest first)
+        return (
+          new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
+        );
+      });
     }
 
     setListings(filteredData);
     setTotalCount(filteredCount);
-  }, [allListings, userData, userDataLoading, searchQuery, filters]);
+  }, [allListings, searchQuery, filters]);
 
   // Initial load and refetch when filters/search changes
   useEffect(() => {
-    fetchListings();
-  }, [fetchListings]);
+    if (userData && !userDataLoading) {
+      fetchListings();
+    }
+  }, [fetchListings, userData, userDataLoading]);
 
   const handleFiltersChange = (newFilters: ListingFilters) => {
     setFilters(newFilters);
@@ -341,23 +363,43 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
 
   const handleConfirmToggleVisibility = async (listingId: string) => {
     try {
-      // TODO: Implement actual API call to toggle listing visibility
-      // For now, we'll just simulate the toggle
-      console.log("Toggling visibility for listing:", listingId);
-      
-      // Update the listing status in the local state
-      setListings(prevListings => 
-        prevListings.map(listing => 
-          listing.list_id === listingId 
-            ? { ...listing, status: listing.status === "Active" ? "Inactive" : "Active" }
+      if (!userData?.user_id) {
+        throw new Error("User data not available");
+      }
+
+      // Call the API to toggle listing availability status
+      const response = await fetch('/api/listing/deactivate-listing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          list_id: listingId,
+          user_id: userData.user_id
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Toggle listing status response:", result);
+
+      // Update the listing status in the local state based on the API response
+      setListings(prevListings =>
+        prevListings.map(listing =>
+          listing.list_id === listingId
+            ? { ...listing, status: result.data.new_status }
             : listing
         )
       );
-      
+
       // Close the dialog
       setIsVisibilityDialogOpen(false);
       setListingToToggle(null);
-      
+
     } catch (error) {
       console.error("Error toggling listing visibility:", error);
       throw error; // Re-throw so the dialog can handle the error
@@ -514,6 +556,8 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     switch (status.toLowerCase()) {
       case "active":
         return "bg-green-500 text-white";
+      case "inactive":
+        return "bg-gray-500 text-white";
       case "sold":
         return "bg-gray-500 text-white";
       case "unavailable":
@@ -538,7 +582,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <AddListingDialog>
+            <AddListingDialog onListingCreated={handleRefresh}>
               <Button
                 variant="default"
                 size="sm"
@@ -582,10 +626,10 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
             value={searchQuery}
             onChange={handleSearchChange}
             placeholder="Search for items, descriptions, locations..."
-            isLoading={isLoading}
+            isLoading={isLoading || userDataLoading}
             showSuggestions={true}
           />
-          {searchQuery && !isLoading && (
+          {searchQuery && !isLoading && !userDataLoading && (
             <div className="text-sm text-muted-foreground">
               Found {totalCount} result{totalCount !== 1 ? "s" : ""} for "
               <span className="truncate inline-block max-w-32 sm:max-w-none">{searchQuery}</span>"
@@ -598,7 +642,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           totalCount={totalCount}
-          isLoading={isLoading}
+          isLoading={isLoading || userDataLoading}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />
@@ -622,7 +666,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         )}
 
         {/* Content */}
-        {isLoading ? (
+        {isLoading || userDataLoading ? (
           viewMode === "grid" ? (
             <LoadingSkeleton />
           ) : (
@@ -650,6 +694,9 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
             listings={listings}
             onDelete={handleDeleteListing}
             onToggleVisibility={handleToggleVisibility}
+            onEditListing={handleEditListing}
+            onShare={handleShare}
+            onViewDetails={handleViewDetails}
             isOwner={isOwner}
             formatPrice={formatPrice}
             formatDate={formatDate}

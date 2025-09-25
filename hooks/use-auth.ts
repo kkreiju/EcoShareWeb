@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 
 interface AuthState {
   user: User | null;
+  userId: string | null; // Custom user ID from User table
   email: string | null;
   loading: boolean;
   isAuthenticated: boolean;
@@ -12,6 +13,7 @@ interface AuthState {
 export function useAuth(): AuthState {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
+    userId: null,
     email: null,
     loading: true,
     isAuthenticated: false,
@@ -34,7 +36,8 @@ export function useAuth(): AuthState {
           .single();
 
         setAuthState({
-          user: userData?.user_id ?? null,
+          user: session?.user ?? null,
+          userId: userData?.user_id ?? null,
           email: session?.user?.email ?? null,
           loading: false,
           isAuthenticated: !!session?.user,
@@ -43,6 +46,7 @@ export function useAuth(): AuthState {
         console.error("Error getting session:", error);
         setAuthState({
           user: null,
+          userId: null,
           email: null,
           loading: false,
           isAuthenticated: false,
@@ -59,6 +63,7 @@ export function useAuth(): AuthState {
 
       setAuthState({
         user: session?.user ?? null,
+        userId: null, // Will be fetched if needed
         email: session?.user?.email ?? null,
         loading: false,
         isAuthenticated: !!session?.user,

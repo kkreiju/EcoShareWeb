@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle, Package, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ListingContactDialogProps {
   isOpen: boolean;
@@ -24,17 +25,20 @@ interface ListingContactDialogProps {
   listingImageURL?: string;
   listingType: string;
   ownerName: string;
+  ownerId: string;
 }
 
-export function ListingContactDialog({ 
-  isOpen, 
-  onClose, 
-  listingId, 
+export function ListingContactDialog({
+  isOpen,
+  onClose,
+  listingId,
   listingTitle,
   listingImageURL,
   listingType,
-  ownerName
+  ownerName,
+  ownerId
 }: ListingContactDialogProps) {
+  const { userId, isAuthenticated } = useAuth();
   const [quantity, setQuantity] = useState<string>("1");
   const [message, setMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,42 +48,67 @@ export function ListingContactDialog({
   const actionVerb = isOffer ? "offering" : "requesting";
 
   const handleSubmit = async () => {
-    if (!quantity) {
+    if (!quantity || !userId) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement actual contact submission API
-      const contactData = {
-        listingId,
+      const requestData = {
+        list_id: listingId,
+        user_id: userId,
         quantity: parseInt(quantity),
-        message: message.trim() || "", // Empty string if no message
-        actionType,
-        timestamp: new Date().toISOString(),
+        message: message.trim() || '',
+        request_type: isOffer ? 'offer' : 'request',
+        status: 'pending',
+        owner_id: ownerId,
       };
 
-      console.log("Contact submitted:", contactData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Reset form and close dialog
-      setQuantity("1");
-      setMessage("");
-      onClose();
-      
-      // Show success toast
-      toast.success(`${actionType} sent successfully!`, {
-        description: "The owner will be notified of your request.",
-        duration: 4000,
-      });
-      
+      let response;
+
+      if (requestData.request_type === 'request') {
+        response = await fetch('/api/transaction/request-item', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
+      } else {
+        response = await fetch('/api/transaction/offer-item', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
+      }
+
+      console.log('Response status:', response.status);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Reset form and close dialog
+        setQuantity("1");
+        setMessage("");
+        onClose();
+
+        // Show success toast
+        toast.success(`${actionType} sent successfully!`, {
+          description: "The owner will be notified of your request.",
+          duration: 4000,
+        });
+      } else {
+        throw new Error(data.message || `Failed to send ${actionType.toLowerCase()}`);
+      }
+
     } catch (error) {
       console.error("Failed to submit contact:", error);
       toast.error(`Failed to send ${actionType.toLowerCase()}`, {
-        description: "Please check your connection and try again.",
+        description: error instanceof Error ? error.message : "Please check your connection and try again.",
         duration: 4000,
       });
     } finally {

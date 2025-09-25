@@ -99,7 +99,7 @@ export function ListingVisibilityDialog({
                 {listing.title}
               </div>
             <div className="text-xs text-gray-600">
-              Currently {isActive ? "visible" : "inactive"}
+              Currently {isActive ? "visible" : "hidden"}
             </div>
             </div>
           </div>

@@ -4,7 +4,7 @@ import { Listing } from "@/lib/DataClass";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Package, MessageCircle, Trash2, Eye, EyeOff, Eye as ViewIcon, Edit, Share2 } from "lucide-react";
+import { MapPin, Clock, Package, MessageCircle, Trash2, Eye, EyeOff, Edit, Share2 } from "lucide-react";
 
 interface ListingCardProps {
   listing: Listing;
@@ -50,6 +50,21 @@ export function ListingCard({
         return "bg-red-500 text-white border-red-500 dark:bg-red-600 dark:text-white dark:border-red-600";
       default:
         return "bg-muted text-muted-foreground border-border";
+    }
+  };
+
+  const getStatusDisplayText = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return "Visible";
+      case "inactive":
+        return "Hidden";
+      case "sold":
+        return "Sold";
+      case "unavailable":
+        return "Unavailable";
+      default:
+        return status;
     }
   };
 
@@ -126,7 +141,7 @@ export function ListingCard({
             listing.status
           )} font-medium`}
         >
-          {listing.status}
+          {getStatusDisplayText(listing.status)}
         </Badge>
       </div>
 
@@ -160,22 +175,22 @@ export function ListingCard({
 
           {/* Tags - Only show if there are tags */}
           {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 min-h-[1.5rem]">
-              {tags.slice(0, 3).map((tag, index) => (
+            <div className="flex gap-1 min-h-[1.5rem] overflow-hidden">
+              {tags.slice(0, 2).map((tag, index) => (
                 <Badge
                   key={index}
                   variant="secondary"
-                  className="text-xs bg-muted text-muted-foreground hover:bg-muted/80"
+                  className="text-xs bg-muted text-muted-foreground hover:bg-muted/80 flex-shrink-0"
                 >
                   {tag}
                 </Badge>
               ))}
-              {tags.length > 3 && (
+              {tags.length > 2 && (
                 <Badge
                   variant="secondary"
-                  className="text-xs bg-muted text-muted-foreground"
+                  className="text-xs bg-muted text-muted-foreground flex-shrink-0"
                 >
-                  +{tags.length - 3}
+                  +{tags.length - 2}
                 </Badge>
               )}
             </div>
@@ -237,17 +252,16 @@ export function ListingCard({
           {/* Main Action Buttons */}
           <div className="flex gap-2">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               disabled={isUnavailable}
-              className="flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-border hover:bg-muted/50 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={(e) => {
                 if (isUnavailable) return;
                 e.stopPropagation();
                 onViewDetails?.(listing);
               }}
             >
-              <ViewIcon className="h-4 w-4 mr-2" />
               View Details
             </Button>
 

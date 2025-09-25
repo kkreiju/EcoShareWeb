@@ -6,13 +6,13 @@ import { ReviewRequestCard } from "./ReviewRequestCard";
 
 interface ReviewRequest {
   id: string;
-  requesterName: string;
-  requesterAvatar?: string;
-  title: string;
-  type: "free" | "sale" | "wanted";
+  userName: string;
+  userAvatar?: string;
+  listingTitle: string;
+  listingType: string;
+  requestDate: string;
   message: string;
-  timestamp: string;
-  status: "pending" | "accepted" | "declined";
+  status: "Pending" | "Accepted" | "Declined";
 }
 
 interface ReviewRequestsSectionProps {

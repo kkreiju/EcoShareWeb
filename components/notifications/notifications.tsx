@@ -1,126 +1,183 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NotificationHeader } from "./notification-header";
-import { NotificationTable } from "./notification-table";
-import { NotificationStats } from "./notification-stats";
+import { NotificationTable, NotificationTableSkeleton } from "./notification-table";
+import { NotificationStats, NotificationStatsSkeleton } from "./notification-stats";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
-// Mock notification data
+// Notification interface matching API response
 interface Notification {
-  id: string;
-  type: "message" | "like" | "follow" | "listing" | "review";
-  title: string;
-  message: string;
-  timestamp: string;
-  isRead: boolean;
-  avatar?: string;
-  userName?: string;
-  listingTitle?: string;
+  notif_id: string;
+  notif_message: string;
+  notif_isRead: boolean;
+  notif_dateTime: string;
+  tran_id: string;
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    type: "message",
-    title: "New Message",
-    message: "John Doe sent you a message about your coffee grounds listing",
-    timestamp: "2 minutes ago",
-    isRead: false,
-    avatar: "/api/placeholder/32/32",
-    userName: "John Doe"
-  },
-  {
-    id: "2",
-    type: "like",
-    title: "Listing Liked",
-    message: "Sarah Johnson liked your 'Used Coffee Grounds' listing",
-    timestamp: "15 minutes ago",
-    isRead: false,
-    avatar: "/api/placeholder/32/32",
-    userName: "Sarah Johnson",
-    listingTitle: "Used Coffee Grounds"
-  },
-  {
-    id: "3",
-    type: "follow",
-    title: "New Follower",
-    message: "Mike Chen started following you",
-    timestamp: "1 hour ago",
-    isRead: false,
-    avatar: "/api/placeholder/32/32",
-    userName: "Mike Chen"
-  },
-  {
-    id: "4",
-    type: "listing",
-    title: "New Listing Match",
-    message: "A new listing matches your search for 'compost materials'",
-    timestamp: "2 hours ago",
-    isRead: true,
-    listingTitle: "Organic Compost Materials"
-  },
-  {
-    id: "5",
-    type: "review",
-    title: "New Review",
-    message: "You received a 5-star review from Lisa Park",
-    timestamp: "3 hours ago",
-    isRead: true,
-    avatar: "/api/placeholder/32/32",
-    userName: "Lisa Park"
-  },
-  {
-    id: "6",
-    type: "message",
-    title: "Pickup Request",
-    message: "Anna Garcia wants to arrange pickup for your vegetable scraps",
-    timestamp: "5 hours ago",
-    isRead: true,
-    avatar: "/api/placeholder/32/32",
-    userName: "Anna Garcia",
-    listingTitle: "Vegetable Scraps for Compost"
-  },
-  {
-    id: "7",
-    type: "like",
-    title: "Review Liked",
-    message: "Your review on 'Garden Waste Collection' received 3 likes",
-    timestamp: "1 day ago",
-    isRead: true,
-    listingTitle: "Garden Waste Collection"
-  },
-  {
-    id: "8",
-    type: "listing",
-    title: "Listing Expired",
-    message: "Your 'Paper Recycling Materials' listing has expired",
-    timestamp: "2 days ago",
-    isRead: true,
-    listingTitle: "Paper Recycling Materials"
-  }
-];
-
-
 export function Notifications() {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const { userId, isAuthenticated } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  // Fetch notifications when component mounts
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated, userId]);
 
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, isRead: true }))
-    );
+  const fetchNotifications = async () => {
+    if (!userId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/notification/get-notification?user_id=${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setNotifications(data.data || []);
+      } else {
+        throw new Error(data.message || 'Failed to fetch notifications');
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load notifications');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id
-          ? { ...notification, isRead: true }
-          : notification
-      )
-    );
+  const unreadCount = notifications.filter(n => !n.notif_isRead).length;
+
+  const markAllAsRead = async () => {
+    if (!userId || unreadCount === 0) return;
+
+    try {
+      const response = await fetch(`/api/notification/mark-all-as-read?user_id=${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setNotifications(prev =>
+          prev.map(notification => ({ ...notification, notif_isRead: true }))
+        );
+
+        toast.success(`Successfully marked ${data.message.match(/\d+/)?.[0] || 'all'} notifications as read`, {
+          duration: 3000,
+        });
+      } else {
+        throw new Error(data.message || 'Failed to mark notifications as read');
+      }
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      toast.error("Failed to mark notifications as read", {
+        description: error instanceof Error ? error.message : "Please try again.",
+        duration: 4000,
+      });
+    }
   };
+
+  const markAsRead = async (id: string) => {
+    if (!userId) return;
+
+    try {
+      const response = await fetch(`/api/notification/read-notification?user_id=${userId}&notification_id=${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setNotifications(prev =>
+          prev.map(notification =>
+            notification.notif_id === id
+              ? { ...notification, notif_isRead: true }
+              : notification
+          )
+        );
+      } else {
+        throw new Error(data.message || 'Failed to mark notification as read');
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      // Don't show toast for individual notification errors to avoid spam
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <NotificationHeader
+          unreadCount={0}
+          onMarkAllAsRead={() => {}}
+        />
+
+        <NotificationTableSkeleton />
+
+        <NotificationStatsSkeleton />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <div className="text-red-500 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Notifications</h3>
+          <p className="text-sm text-muted-foreground mb-4">{error}</p>
+          <button
+            onClick={fetchNotifications}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -132,6 +189,7 @@ export function Notifications() {
       <NotificationTable
         notifications={notifications}
         onMarkAsRead={markAsRead}
+        isLoading={isLoading}
       />
 
       <NotificationStats

@@ -8,13 +8,13 @@ import { CheckCircle, XCircle, User } from "lucide-react";
 
 interface ReviewRequest {
   id: string;
-  requesterName: string;
-  requesterAvatar?: string;
-  title: string;
-  type: "free" | "sale" | "wanted";
+  userName: string;
+  userAvatar?: string;
+  listingTitle: string;
+  listingType: string;
+  requestDate: string;
   message: string;
-  timestamp: string;
-  status: "pending" | "accepted" | "declined";
+  status: "Pending" | "Accepted" | "Declined";
 }
 
 interface ReviewRequestCardProps {
@@ -39,24 +39,24 @@ const getTypeColor = (type: string) => {
 
 export function ReviewRequestCard({ request, onAccept, onDecline, showActions = true }: ReviewRequestCardProps) {
   const getStatusColor = () => {
-    if (request.status === "accepted") return "bg-green-600";
-    if (request.status === "declined") return "bg-gray-500";
+    if (request.status === "Accepted") return "bg-green-600";
+    if (request.status === "Declined") return "bg-gray-500";
     return "bg-orange-500";
   };
 
   const getStatusText = () => {
-    if (request.status === "accepted") return "Accepted";
-    if (request.status === "declined") return "Declined";
+    if (request.status === "Accepted") return "Accepted";
+    if (request.status === "Declined") return "Declined";
     return "Pending";
   };
 
   return (
-    <Card className={`${request.status === "pending" ? "border-l-4 border-l-primary/50" : "border-muted"}`}>
+    <Card className={`${request.status === "Pending" ? "border-l-4 border-l-primary/50" : "border-muted"}`}>
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Avatar className="h-10 w-10 flex-shrink-0">
-              <AvatarImage src={request.requesterAvatar} />
+              <AvatarImage src={request.userAvatar} />
               <AvatarFallback className="bg-primary/10">
                 <User className="h-4 w-4" />
               </AvatarFallback>
@@ -64,17 +64,17 @@ export function ReviewRequestCard({ request, onAccept, onDecline, showActions = 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="font-semibold text-sm sm:text-base truncate">
-                  {request.requesterName}
+                  {request.userName}
                 </h4>
                 <Badge
-                  variant={request.status === "pending" ? "secondary" : request.status === "accepted" ? "default" : "secondary"}
-                  className={`text-xs ${request.status !== "pending" ? getStatusColor() : ""}`}
+                  variant={request.status === "Pending" ? "secondary" : request.status === "Accepted" ? "default" : "secondary"}
+                  className={`text-xs ${request.status !== "Pending" ? getStatusColor() : ""}`}
                 >
                   {getStatusText()}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {request.timestamp}
+                {new Date(request.requestDate).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -83,13 +83,13 @@ export function ReviewRequestCard({ request, onAccept, onDecline, showActions = 
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2 flex-wrap">
           <h5 className="font-medium text-sm sm:text-base flex-1 min-w-0">
-            {request.title}
+            {request.listingTitle}
           </h5>
           <Badge
             variant="outline"
-            className={`text-xs ${getTypeColor(request.type)}`}
+            className={`text-xs ${getTypeColor(request.listingType)}`}
           >
-            {request.type.charAt(0).toUpperCase() + request.type.slice(1)}
+            {request.listingType.charAt(0).toUpperCase() + request.listingType.slice(1)}
           </Badge>
         </div>
 
@@ -97,7 +97,7 @@ export function ReviewRequestCard({ request, onAccept, onDecline, showActions = 
           {request.message}
         </p>
 
-        {showActions && request.status === "pending" && (
+        {showActions && request.status === "Pending" && (
           <div className="flex gap-2 pt-2">
             <Button
               onClick={() => onAccept(request.id)}
