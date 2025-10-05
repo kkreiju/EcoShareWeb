@@ -14,8 +14,6 @@ const routeNames: Record<string, string> = {
   "/admin/dashboard": "Dashboard",
   "/admin/users": "Users",
   "/admin/reports": "Reports",
-  "/admin/analytics": "Analytics",
-  "/admin/settings": "Settings",
 };
 
 export function DynamicBreadcrumbAdmin() {

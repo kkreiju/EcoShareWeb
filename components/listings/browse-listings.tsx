@@ -16,7 +16,14 @@ import { ReviewRequestsModal } from "./review-requests-modal";
 import { EditListingForm } from "./edit-listing";
 import { ListingDeleteDialog } from "./listing-delete-dialog";
 import { ListingVisibilityDialog } from "./listing-visibility-dialog";
-import { RefreshCw, AlertCircle, Plus, MessageSquare } from "lucide-react";
+import {
+  RefreshCw,
+  AlertCircle,
+  Plus,
+  MessageSquare,
+  Package,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/api";
 import { toast } from "sonner";
 
@@ -45,6 +52,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [userDataLoading, setUserDataLoading] = useState(true);
   const [cachedUserEmail, setCachedUserEmail] = useState<string | null>(null);
   const { user } = useAuth();
+  const router = useRouter();
 
   // Fetch user data when user changes, with caching to prevent data loss
   useEffect(() => {
@@ -243,9 +251,15 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       filteredData = filteredData.sort((a, b) => {
         switch (filters.sort_by) {
           case "newest":
-            return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
+            return (
+              new Date(b.postedDate).getTime() -
+              new Date(a.postedDate).getTime()
+            );
           case "oldest":
-            return new Date(a.postedDate).getTime() - new Date(b.postedDate).getTime();
+            return (
+              new Date(a.postedDate).getTime() -
+              new Date(b.postedDate).getTime()
+            );
           case "price_high":
             return (b.price || 0) - (a.price || 0);
           case "price_low":
@@ -295,7 +309,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     fetchListings();
   };
 
-
   const handleReviewRequests = () => {
     setIsReviewModalOpen(true);
   };
@@ -315,28 +328,32 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       }
 
       // Call the API to mark listing as unavailable
-      const response = await fetch('/api/listing/unavailable-listing', {
-        method: 'POST',
+      const response = await fetch("/api/listing/unavailable-listing", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           list_id: listingId,
-          user_id: userData.user_id
+          user_id: userData.user_id,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
       const result = await response.json();
       console.log("Mark as unavailable response:", result);
 
       // Update the listing status to "Unavailable" in the local state instead of removing it
-      setListings(prevListings =>
-        prevListings.map(listing =>
+      setListings((prevListings) =>
+        prevListings.map((listing) =>
           listing.list_id === listingId
             ? { ...listing, status: "Unavailable" }
             : listing
@@ -346,7 +363,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       // Close the dialog
       setIsDeleteDialogOpen(false);
       setListingToDelete(null);
-
     } catch (error) {
       console.error("Error marking listing as unavailable:", error);
       throw error; // Re-throw so the dialog can handle the error
@@ -368,28 +384,32 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       }
 
       // Call the API to toggle listing availability status
-      const response = await fetch('/api/listing/deactivate-listing', {
-        method: 'POST',
+      const response = await fetch("/api/listing/deactivate-listing", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           list_id: listingId,
-          user_id: userData.user_id
+          user_id: userData.user_id,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
       const result = await response.json();
       console.log("Toggle listing status response:", result);
 
       // Update the listing status in the local state based on the API response
-      setListings(prevListings =>
-        prevListings.map(listing =>
+      setListings((prevListings) =>
+        prevListings.map((listing) =>
           listing.list_id === listingId
             ? { ...listing, status: result.data.new_status }
             : listing
@@ -399,7 +419,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       // Close the dialog
       setIsVisibilityDialogOpen(false);
       setListingToToggle(null);
-
     } catch (error) {
       console.error("Error toggling listing visibility:", error);
       throw error; // Re-throw so the dialog can handle the error
@@ -421,7 +440,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     }
 
     setIsUpdatingListing(true);
-    
+
     try {
       // Prepare the data for the API according to the schema you provided
       const updateData = {
@@ -451,17 +470,21 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       console.log("Updating listing with data:", updateData);
 
       // Call the update API
-      const response = await fetch('/api/listing/update-listing', {
-        method: 'PUT',
+      const response = await fetch("/api/listing/update-listing", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
       const result = await response.json();
@@ -470,25 +493,27 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       // Close the modal
       setIsEditModalOpen(false);
       setSelectedListing(null);
-      
+
       // Refresh the listings to show updated data
       await fetchListings();
-      
+
       // Show success message
       toast.success("Listing updated successfully", {
         description: "Your listing has been updated and is now live.",
         duration: 4000,
       });
-      
     } catch (error) {
       console.error("Error updating listing:", error);
-      
+
       // Show error toast to user
       toast.error("Failed to update listing", {
-        description: error instanceof Error ? error.message : "Please check your connection and try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your connection and try again.",
         duration: 5000,
       });
-      
+
       // Keep the modal open so user can try again
     } finally {
       setIsUpdatingListing(false);
@@ -508,7 +533,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
 
   const handleShare = (listing: Listing) => {
     const listingUrl = `${window.location.origin}/user/listing/${listing.list_id}`;
-    
+
     if (navigator.share) {
       navigator.share({
         title: listing.title,
@@ -596,11 +621,23 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => router.push("/user/transaction-management")}
+                className="border-border flex-1 sm:flex-initial justify-center sm:justify-start"
+              >
+                <Package className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate hidden sm:inline">Transactions</span>
+                <span className="truncate sm:hidden">History</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleReviewRequests}
                 className="border-border flex-1 sm:flex-initial justify-center sm:justify-start"
               >
                 <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span className="truncate hidden sm:inline">Review Requests</span>
+                <span className="truncate hidden sm:inline">
+                  Review Requests
+                </span>
                 <span className="truncate sm:hidden">Requests</span>
               </Button>
               <Button
@@ -611,7 +648,9 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
                 className="border-border flex-1 sm:flex-initial justify-center sm:justify-start"
               >
                 <RefreshCw
-                  className={`h-4 w-4 mr-2 flex-shrink-0 ${isLoading ? "animate-spin" : ""}`}
+                  className={`h-4 w-4 mr-2 flex-shrink-0 ${
+                    isLoading ? "animate-spin" : ""
+                  }`}
                 />
                 <span className="truncate hidden sm:inline">Refresh</span>
                 <span className="truncate sm:hidden">Sync</span>
@@ -632,7 +671,10 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           {searchQuery && !isLoading && !userDataLoading && (
             <div className="text-sm text-muted-foreground">
               Found {totalCount} result{totalCount !== 1 ? "s" : ""} for "
-              <span className="truncate inline-block max-w-32 sm:max-w-none">{searchQuery}</span>"
+              <span className="truncate inline-block max-w-32 sm:max-w-none">
+                {searchQuery}
+              </span>
+              "
             </div>
           )}
         </div>
@@ -707,7 +749,10 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         {/* Load More - Future Enhancement */}
         {listings.length > 0 && listings.length < totalCount && (
           <div className="text-center pt-6 sm:pt-8">
-            <Button variant="outline" className="border-border w-full sm:w-auto">
+            <Button
+              variant="outline"
+              className="border-border w-full sm:w-auto"
+            >
               Load More Listings
             </Button>
           </div>
@@ -746,7 +791,6 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         listing={listingToToggle}
         onConfirmToggle={handleConfirmToggleVisibility}
       />
-
     </>
   );
 }

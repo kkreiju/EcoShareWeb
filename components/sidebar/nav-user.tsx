@@ -3,7 +3,7 @@
 import {
   BadgeCheck,
   ChevronsUpDown,
-  CreditCard,
+  History,
   LogOut,
   Sparkles,
 } from "lucide-react";
@@ -101,9 +101,11 @@ export function NavUser({
                 <BadgeCheck />
                 Account Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
+              <DropdownMenuItem
+                onClick={() => router.push("/user/subscription-history")}
+              >
+                <History />
+                Subscription History
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

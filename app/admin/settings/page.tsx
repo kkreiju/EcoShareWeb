@@ -1,7 +1,9 @@
+import { AdminSettingsView } from "@/components/admin-settings";
+
 export default function AdminSettingsPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      {/* Page content removed */}
+      <AdminSettingsView />
     </div>
   );
 }

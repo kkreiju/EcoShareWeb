@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import {
-  AudioWaveform,
   Bell,
-  Command,
   GalleryVerticalEnd,
   Home,
   List,
   MessageCircle,
   Search,
+  Leaf,
 } from "lucide-react";
 
 import { NavMain } from "./nav-main";
@@ -32,22 +31,19 @@ const data = {
   },
   teams: [
     {
-      name: "Acme Inc",
+      name: "EcoShare",
       logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
+      plan: "Community",
     },
   ],
-  navMain: [
+  nutrientAssistant: [
+    {
+      title: "Nutrient Assistant",
+      url: "/user/nutrient-assistant",
+      icon: Leaf,
+    },
+  ],
+  mainNav: [
     {
       title: "Home",
       url: "/user/dashboard",
@@ -85,7 +81,11 @@ export function AppSidebar({
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain
+          items={data.nutrientAssistant}
+          groupLabel="Nutrient Assistant"
+        />
+        <NavMain items={data.mainNav} groupLabel="Main Menu" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

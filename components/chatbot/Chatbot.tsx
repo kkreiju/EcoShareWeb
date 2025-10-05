@@ -7,7 +7,8 @@ import { MessageCircle } from "lucide-react";
 import { ChatbotHeader } from "./ChatbotHeader";
 import { ChatbotMessages, ChatMessage } from "./ChatbotMessages";
 import { ChatbotInput } from "./ChatbotInput";
-
+import { ChatbotService } from "@/lib/chatbotService";
+import { toast } from "sonner";
 
 export function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,6 +23,7 @@ export function Chatbot() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isFindListingMode, setIsFindListingMode] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Update welcome message when find listing mode changes
   useEffect(() => {
@@ -29,12 +31,14 @@ export function Chatbot() {
       const welcomeMessage = isFindListingMode
         ? "🔍 I'm in Find Listing mode! Ask me to help you find specific items or browse categories."
         : "👋 Hi! I'm your EcoShare assistant. How can I help you today?";
-      setMessages([{
-        id: "welcome",
-        role: "assistant",
-        content: welcomeMessage,
-        timestamp: new Date(),
-      }]);
+      setMessages([
+        {
+          id: "welcome",
+          role: "assistant",
+          content: welcomeMessage,
+          timestamp: new Date(),
+        },
+      ]);
     }
   }, [isFindListingMode]);
 
@@ -52,36 +56,44 @@ export function Chatbot() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
+    setError(null);
 
-    // Simulate AI response (replace with real API call)
-    setTimeout(() => {
-      const findListingResponses = [
-        "🔍 I'm searching for listings that match your criteria...",
-        "Let me help you find the perfect item! What type of listing are you looking for?",
-        "I can help you browse available listings. What category interests you?",
-        "Great! I can search our database for items matching your description.",
-      ];
-
-      const generalResponses = [
-        "Thanks for your question! Let me help you with that.",
-        "That's a great question about EcoShare. Here's what I can tell you:",
-        "I understand you're looking for information about our platform. Let me assist you.",
-        "Great question! EcoShare is designed to make sharing resources easy and sustainable.",
-      ];
-
-      const responses = isFindListingMode ? findListingResponses : generalResponses;
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    try {
+      const response = await ChatbotService.sendMessage(trimmed);
 
       const botMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: randomResponse,
+        content: response.message,
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, botMsg]);
+    } catch (err) {
+      console.error("Error getting chatbot response:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to get response from chatbot";
+      setError(errorMessage);
+
+      // Show error message to user
+      const errorMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorMsg]);
+      toast.error("Failed to get response from chatbot", {
+        description: errorMessage,
+        duration: 4000,
+      });
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000); // Random delay between 1-2 seconds
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -109,8 +121,16 @@ export function Chatbot() {
       </SheetTrigger>
 
       <SheetContent side="right" className="w-full sm:w-[400px] p-0">
-        <ChatbotHeader isTyping={isTyping} isFindListingMode={isFindListingMode} />
+        <ChatbotHeader
+          isTyping={isTyping}
+          isFindListingMode={isFindListingMode}
+        />
         <ChatbotMessages messages={messages} isTyping={isTyping} />
+        {error && (
+          <div className="px-4 py-2 bg-destructive/10 border-t border-destructive/20">
+            <p className="text-xs text-destructive text-center">{error}</p>
+          </div>
+        )}
         <ChatbotInput
           input={input}
           onInputChange={setInput}

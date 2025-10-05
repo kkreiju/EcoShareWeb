@@ -142,7 +142,7 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
             <div className="text-center sm:text-left space-y-2">
               <h3 className="text-lg font-semibold">
                 {formData.user_firstName}{" "}
-                {formData.user_middleName && `${formData.user_middleName} `}
+                {formData.user_middleName && `${formData.user_middleName[0]}. `}
                 {formData.user_lastName}
               </h3>
               <div className="flex flex-col items-center sm:items-start gap-1 text-sm text-muted-foreground">

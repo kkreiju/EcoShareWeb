@@ -16,6 +16,8 @@ const routeNames: Record<string, string> = {
   "/user/messages": "Messages",
   "/user/notifications": "Notifications",
   "/user/nearby-listings": "Nearby Listings",
+  "/user/account-settings": "Account Settings",
+  "/user/nutrient-assistant": "Nutrient Assistant",
 };
 
 export function DynamicBreadcrumb() {

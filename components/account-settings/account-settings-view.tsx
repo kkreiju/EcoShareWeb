@@ -133,7 +133,7 @@ export function AccountSettingsView() {
 
   // Show loading state while auth is loading
   if (authLoading) {
-    return <AccountSettingsSkeleton />;
+    return <AccountSettingsSkeleton activeSection={activeSection} />;
   }
 
   // Show login prompt if not authenticated
@@ -151,7 +151,7 @@ export function AccountSettingsView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header - Always shown */}
       <AccountSettingsHeader
         activeSection={activeSection}
         onSectionChange={setActiveSection}
@@ -179,7 +179,7 @@ export function AccountSettingsView() {
 
       {/* Content */}
       {isLoading ? (
-        <AccountSettingsSkeleton />
+        <AccountSettingsSkeleton activeSection={activeSection} />
       ) : userProfile ? (
         <div className="space-y-6">
           {activeSection === "profile" && (

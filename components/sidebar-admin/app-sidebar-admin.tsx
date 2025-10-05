@@ -3,12 +3,10 @@
 import * as React from "react";
 import {
   AudioWaveform,
-  BarChart3,
   Command,
   FileText,
   GalleryVerticalEnd,
   Home,
-  Settings,
   Shield,
   Users,
 } from "lucide-react";
@@ -37,16 +35,6 @@ const data = {
       logo: Shield,
       plan: "Admin Panel",
     },
-    {
-      name: "Analytics",
-      logo: BarChart3,
-      plan: "Reports",
-    },
-    {
-      name: "Management",
-      logo: Settings,
-      plan: "Control",
-    },
   ],
   navMain: [
     {
@@ -63,16 +51,6 @@ const data = {
       title: "Reports",
       url: "/admin/reports",
       icon: FileText,
-    },
-    {
-      title: "Analytics",
-      url: "/admin/analytics",
-      icon: BarChart3,
-    },
-    {
-      title: "Settings",
-      url: "/admin/settings",
-      icon: Settings,
     },
   ],
 };

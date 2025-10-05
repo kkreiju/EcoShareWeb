@@ -13,6 +13,7 @@ import {
 
 export function NavMain({
   items,
+  groupLabel,
 }: {
   items: {
     title: string;
@@ -20,12 +21,13 @@ export function NavMain({
     icon?: LucideIcon;
     isActive?: boolean;
   }[];
+  groupLabel?: string;
 }) {
   const pathname = usePathname();
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      {groupLabel && <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>}
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>

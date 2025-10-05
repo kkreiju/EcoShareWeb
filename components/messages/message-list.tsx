@@ -18,7 +18,10 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
           // Use a stable key that doesn't change during optimistic updates
           const stableKey = `${m.senderId}_${m.content}_${m.timestamp}_${index}`;
           return (
-            <div key={stableKey} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
+            <div
+              key={stableKey}
+              className={cn("flex", isMe ? "justify-end" : "justify-start")}
+            >
               <div
                 className={cn(
                   "max-w-[80%] rounded-lg px-3 py-2 text-sm shadow-sm",
@@ -26,8 +29,17 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
                 )}
               >
                 <p className="break-words whitespace-pre-wrap">{m.content}</p>
-                <p className={cn("mt-1 text-[10px] opacity-70", isMe ? "text-primary-foreground" : "text-muted-foreground")}
-                >{new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+                <p
+                  className={cn(
+                    "mt-1 text-[10px] opacity-70",
+                    isMe ? "text-primary-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {new Date(m.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
               </div>
             </div>
           );
@@ -38,5 +50,3 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
 }
 
 export default MessageList;
-
-
