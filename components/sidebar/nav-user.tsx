@@ -26,6 +26,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { SubscriptionPlanDialog } from "@/components/subscription-plan";
 
 export function NavUser({
   user,
@@ -85,16 +86,20 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
+              <SubscriptionPlanDialog>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Sparkles />
+                  Subscribe to Pro
+                </DropdownMenuItem>
+              </SubscriptionPlanDialog>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/user/account-settings")}
+              >
                 <BadgeCheck />
-                Account
+                Account Settings
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />
