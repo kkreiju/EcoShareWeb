@@ -11,10 +11,7 @@ import {
 import { MessageSquare, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import {
-  ReviewRequestsSection,
-  ReviewRequestsEmpty
-} from "./review-requests";
+import { ReviewRequestsSection, ReviewRequestsEmpty } from "./review-requests";
 
 interface ReviewRequest {
   id: string;
@@ -32,7 +29,10 @@ interface ReviewRequestsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ReviewRequestsModal({ isOpen, onOpenChange }: ReviewRequestsModalProps) {
+export function ReviewRequestsModal({
+  isOpen,
+  onOpenChange,
+}: ReviewRequestsModalProps) {
   const { userId, isAuthenticated } = useAuth();
   const [requests, setRequests] = useState<ReviewRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,13 +52,16 @@ export function ReviewRequestsModal({ isOpen, onOpenChange }: ReviewRequestsModa
     setError(null);
 
     try {
-      const response = await fetch(`/api/transaction/review-requests?user_id=${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      });
+      const response = await fetch(
+        `/api/transaction/review-requests?user_id=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -76,16 +79,18 @@ export function ReviewRequestsModal({ isOpen, onOpenChange }: ReviewRequestsModa
           listingType: req.listingType.toLowerCase(),
           requestDate: req.requestDate,
           message: req.message,
-          status: req.status
+          status: req.status,
         }));
 
         setRequests(transformedRequests);
       } else {
-        throw new Error(data.message || 'Failed to fetch review requests');
+        throw new Error(data.message || "Failed to fetch review requests");
       }
     } catch (err) {
-      console.error('Error fetching review requests:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load review requests');
+      console.error("Error fetching review requests:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to load review requests"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -94,99 +99,124 @@ export function ReviewRequestsModal({ isOpen, onOpenChange }: ReviewRequestsModa
   const handleAccept = async (requestId: string) => {
     if (!userId) return;
 
+    // Find the request to get listing title
+    const request = requests.find((req) => req.id === requestId);
+    if (!request) {
+      toast.error("Request not found", {
+        description: "Unable to find the request details.",
+        duration: 4000,
+      });
+      return;
+    }
+
     try {
-      const response = await fetch('/api/transaction/accept-request', {
-        method: 'POST',
+      const response = await fetch("/api/transaction/accept-request", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
-          request_id: requestId,
-          user_id: userId
+          id: requestId,
+          listingTitle: request.listingTitle,
+          message: `Great! I've accepted your request for "${request.listingTitle}". Please let me know when you'd like to arrange pickup.`,
+          user_id: userId,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
       const data = await response.json();
 
       if (data.success) {
         // Update local state
-        setRequests(prev =>
-          prev.map(req =>
+        setRequests((prev) =>
+          prev.map((req) =>
             req.id === requestId ? { ...req, status: "Accepted" as const } : req
           )
         );
 
         toast.success("Request accepted successfully!", {
-          description: "The user has been notified of your acceptance.",
+          description:
+            "A conversation has been created and the user has been notified.",
           duration: 4000,
         });
       } else {
-        throw new Error(data.message || 'Failed to accept request');
+        throw new Error(data.message || "Failed to accept request");
       }
     } catch (error) {
       console.error("Error accepting request:", error);
       toast.error("Failed to accept request", {
-        description: error instanceof Error ? error.message : "Please check your connection and try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your connection and try again.",
         duration: 4000,
       });
     }
   };
 
   const handleDecline = async (requestId: string) => {
-    if (!userId) return;
-
     try {
-      const response = await fetch('/api/transaction/decline-request', {
-        method: 'POST',
+      const response = await fetch("/api/transaction/decline-request", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
-          request_id: requestId,
-          user_id: userId
+          id: requestId,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
       const data = await response.json();
 
       if (data.success) {
         // Update local state
-        setRequests(prev =>
-          prev.map(req =>
+        setRequests((prev) =>
+          prev.map((req) =>
             req.id === requestId ? { ...req, status: "Declined" as const } : req
           )
         );
 
         toast.success("Request declined", {
-          description: "The user has been notified.",
+          description:
+            "The transaction has been declined and the user has been notified.",
           duration: 4000,
         });
       } else {
-        throw new Error(data.message || 'Failed to decline request');
+        throw new Error(data.message || "Failed to decline request");
       }
     } catch (error) {
       console.error("Error declining request:", error);
       toast.error("Failed to decline request", {
-        description: error instanceof Error ? error.message : "Please check your connection and try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your connection and try again.",
         duration: 4000,
       });
     }
   };
 
-  const pendingRequests = requests.filter(req => req.status === "Pending");
-  const completedRequests = requests.filter(req => req.status !== "Pending");
+  const pendingRequests = requests.filter((req) => req.status === "Pending");
+  const completedRequests = requests.filter((req) => req.status !== "Pending");
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -205,12 +235,16 @@ export function ReviewRequestsModal({ isOpen, onOpenChange }: ReviewRequestsModa
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-sm text-muted-foreground">Loading review requests...</p>
+              <p className="text-sm text-muted-foreground">
+                Loading review requests...
+              </p>
             </div>
           ) : error ? (
             <div className="text-center py-8">
               <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-destructive mb-2">Error Loading Requests</h3>
+              <h3 className="text-lg font-semibold text-destructive mb-2">
+                Error Loading Requests
+              </h3>
               <p className="text-sm text-muted-foreground mb-4">{error}</p>
               <button
                 onClick={fetchReviewRequests}

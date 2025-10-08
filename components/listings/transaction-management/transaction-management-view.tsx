@@ -5,125 +5,162 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   RefreshCw,
   CheckCircle,
   XCircle,
-  Trash2,
   AlertCircle,
   Package,
-  Calendar,
-  DollarSign,
+  User,
+  Users,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/lib/supabase/api";
+import { toast } from "sonner";
 import { TransactionManagementTable } from "./transaction-management-table";
 import { TransactionManagementSkeleton } from "./loading-skeleton";
 
-interface TransactionListing {
+interface Listing {
+  user_id: string;
+  list_title: string;
+  list_type: string;
+  list_imageURL: string;
+  list_description: string;
+  list_tags: string;
+  list_price: number;
+  list_quantity: number;
+  list_pickupTimeAvailability: string;
+  list_pickupInstructions: string;
+  list_locationName: string;
+  list_latitude: number;
+  list_longitude: number;
+  list_postedDate: string;
+  list_availabilityStatus: string;
   list_id: string;
-  title: string;
-  type: string;
-  imageURL: string;
-  status: "completed" | "cancelled" | "deleted";
-  price: number;
-  postedDate: string;
-  completedDate?: string;
-  cancelledDate?: string;
-  deletedDate?: string;
-  transaction_amount?: number;
-  buyer_info?: {
-    name: string;
-    email: string;
-  };
+  user_firstName?: string;
+  user_lastName?: string;
+}
+
+interface Transaction {
+  list_id: string;
+  tran_userId: string;
+  tran_amount: number;
+  tran_quantity: number;
+  tran_dateTime: string;
+  tran_status: string;
+  tran_id: string;
+  listing: Listing;
+  buyer_name?: string;
+}
+
+interface TransactionData {
+  contributor: Transaction[];
+  receiver: Transaction[];
+  contributor_count: number;
+  receiver_count: number;
 }
 
 export function TransactionManagementView() {
-  const [transactions, setTransactions] = useState<TransactionListing[]>([]);
+  const { userId, isAuthenticated, loading: authLoading } = useAuth();
+  const [transactionData, setTransactionData] =
+    useState<TransactionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<
-    "all" | "completed" | "cancelled" | "deleted"
-  >("all");
+  const [activeTab, setActiveTab] = useState<"contributor" | "receiver">(
+    "contributor"
+  );
+
+  const fetchBuyerNames = async (
+    transactions: Transaction[]
+  ): Promise<Transaction[]> => {
+    // Get unique buyer IDs from contributor transactions
+    const buyerIds = [
+      ...new Set(
+        transactions
+          .filter((t) => t.tran_userId !== userId) // Only fetch names for other users
+          .map((t) => t.tran_userId)
+      ),
+    ];
+
+    if (buyerIds.length === 0) return transactions;
+
+    try {
+      // Fetch buyer information
+      const { data: buyers, error } = await supabase
+        .from("User")
+        .select("user_id, user_firstName, user_lastName")
+        .in("user_id", buyerIds);
+
+      if (error) {
+        console.error("Error fetching buyer names:", error);
+        return transactions; // Return original transactions if fetch fails
+      }
+
+      // Create a map of user_id to full name
+      const buyerNameMap = new Map();
+      buyers?.forEach((buyer) => {
+        const fullName = `${buyer.user_firstName || ""} ${
+          buyer.user_lastName || ""
+        }`.trim();
+        buyerNameMap.set(buyer.user_id, fullName || buyer.user_id);
+      });
+
+      // Update transactions with buyer names
+      return transactions.map((transaction) => ({
+        ...transaction,
+        buyer_name:
+          buyerNameMap.get(transaction.tran_userId) || transaction.tran_userId,
+      }));
+    } catch (err) {
+      console.error("Error in fetchBuyerNames:", err);
+      return transactions;
+    }
+  };
 
   const fetchTransactions = async () => {
+    if (!userId) {
+      setError("User not authenticated");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/user/transaction-history');
-      // const data = await response.json();
+      const response = await fetch(
+        `/api/transaction/manage-transaction?user_id=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      // Mock data for now
-      const mockTransactions: TransactionListing[] = [
-        {
-          list_id: "1",
-          title: "Organic Tomatoes",
-          type: "donation",
-          imageURL: "/images/tomatoes.jpg",
-          status: "completed",
-          price: 0,
-          postedDate: "2024-01-15T10:30:00Z",
-          completedDate: "2024-01-20T14:30:00Z",
-          transaction_amount: 0,
-          buyer_info: {
-            name: "John Doe",
-            email: "john@example.com",
-          },
-        },
-        {
-          list_id: "2",
-          title: "Used Bicycle",
-          type: "sale",
-          imageURL: "/images/bicycle.jpg",
-          status: "completed",
-          price: 150,
-          postedDate: "2024-01-10T09:00:00Z",
-          completedDate: "2024-01-18T16:45:00Z",
-          transaction_amount: 150,
-          buyer_info: {
-            name: "Jane Smith",
-            email: "jane@example.com",
-          },
-        },
-        {
-          list_id: "3",
-          title: "Garden Tools Set",
-          type: "sale",
-          imageURL: "/images/tools.jpg",
-          status: "cancelled",
-          price: 75,
-          postedDate: "2024-01-12T11:15:00Z",
-          cancelledDate: "2024-01-16T13:20:00Z",
-          transaction_amount: 0,
-        },
-        {
-          list_id: "4",
-          title: "Old Furniture",
-          type: "donation",
-          imageURL: "/images/furniture.jpg",
-          status: "deleted",
-          price: 0,
-          postedDate: "2024-01-08T08:30:00Z",
-          deletedDate: "2024-01-14T10:00:00Z",
-        },
-        {
-          list_id: "5",
-          title: "Composting Materials",
-          type: "sale",
-          imageURL: "/images/compost.jpg",
-          status: "completed",
-          price: 25,
-          postedDate: "2024-01-05T15:45:00Z",
-          completedDate: "2024-01-12T12:30:00Z",
-          transaction_amount: 25,
-          buyer_info: {
-            name: "Bob Johnson",
-            email: "bob@example.com",
-          },
-        },
-      ];
+      if (!response.ok) {
+        throw new Error(`Failed to fetch transactions: ${response.statusText}`);
+      }
 
-      setTransactions(mockTransactions);
+      const data = await response.json();
+
+      if (data.success) {
+        // Fetch buyer names for contributor transactions
+        const contributorWithNames = await fetchBuyerNames(
+          data.contributor || []
+        );
+        const receiverWithNames = await fetchBuyerNames(data.receiver || []);
+
+        setTransactionData({
+          contributor: contributorWithNames,
+          receiver: receiverWithNames,
+          contributor_count: data.contributor_count || 0,
+          receiver_count: data.receiver_count || 0,
+        });
+      } else {
+        throw new Error(data.message || "Failed to load transactions");
+      }
     } catch (err) {
       console.error("Error fetching transactions:", err);
       setError(
@@ -135,51 +172,207 @@ export function TransactionManagementView() {
   };
 
   useEffect(() => {
-    fetchTransactions();
-  }, []);
+    if (!authLoading && isAuthenticated && userId) {
+      fetchTransactions();
+    } else if (!authLoading && !isAuthenticated) {
+      setError("Please log in to view transactions");
+      setIsLoading(false);
+    }
+  }, [authLoading, isAuthenticated, userId]);
 
   const handleRefresh = () => {
     fetchTransactions();
   };
 
-  // Filter transactions based on active filter
-  const filteredTransactions = transactions.filter((transaction) => {
-    if (activeFilter === "all") return true;
-    return transaction.status === activeFilter;
-  });
-
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "completed":
+      case "accepted":
+      case "active":
         return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case "pending":
+        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
       case "cancelled":
+      case "declined":
         return <XCircle className="h-4 w-4 text-red-600" />;
-      case "deleted":
-        return <Trash2 className="h-4 w-4 text-gray-600" />;
       default:
         return <AlertCircle className="h-4 w-4 text-gray-600" />;
     }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "completed":
+      case "accepted":
+      case "active":
         return "bg-green-100 text-green-800 border-green-200";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "cancelled":
+      case "declined":
         return "bg-red-100 text-red-800 border-red-200";
-      case "deleted":
-        return "bg-gray-100 text-gray-800 border-gray-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   // Calculate stats
-  const stats = {
-    completed: transactions.filter((t) => t.status === "completed").length,
-    cancelled: transactions.filter((t) => t.status === "cancelled").length,
-    deleted: transactions.filter((t) => t.status === "deleted").length,
-    total: transactions.length,
+  const stats = transactionData
+    ? {
+        contributorTotal: transactionData.contributor_count,
+        receiverTotal: transactionData.receiver_count,
+        total:
+          transactionData.contributor_count + transactionData.receiver_count,
+      }
+    : {
+        contributorTotal: 0,
+        receiverTotal: 0,
+        total: 0,
+      };
+
+  const handleComplete = async (transactionId: string) => {
+    if (!userId) {
+      toast.error("User not authenticated");
+      return;
+    }
+
+    try {
+      // Find the transaction to get details for the API call
+      const transaction = transactionData?.contributor.find(
+        (t) => t.tran_id === transactionId
+      );
+      if (!transaction) {
+        toast.error("Transaction not found");
+        return;
+      }
+
+      const response = await fetch("/api/transaction/complete-transaction", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          tran_id: transactionId,
+          user_id: userId,
+          quantity: transaction.tran_quantity,
+          status: "Completed",
+          image: transaction.listing.list_imageURL, // Use listing image as transaction image
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state to reflect the completion
+        setTransactionData((prev) =>
+          prev
+            ? {
+                ...prev,
+                contributor: prev.contributor.map((t) =>
+                  t.tran_id === transactionId
+                    ? { ...t, tran_status: "Completed" }
+                    : t
+                ),
+              }
+            : null
+        );
+
+        toast.success("Transaction completed!", {
+          description: `Transaction ${transactionId} has been completed successfully.`,
+          duration: 4000,
+        });
+      } else {
+        throw new Error(data.message || "Failed to complete transaction");
+      }
+    } catch (error) {
+      console.error("Error completing transaction:", error);
+      toast.error("Failed to complete transaction", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your connection and try again.",
+        duration: 4000,
+      });
+    }
+  };
+
+  const handleCancel = async (transactionId: string) => {
+    if (!userId) {
+      toast.error("User not authenticated");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/transaction/cancel-transaction", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          tran_id: transactionId,
+          user_id: userId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state to reflect the cancellation
+        setTransactionData((prev) =>
+          prev
+            ? {
+                ...prev,
+                contributor: prev.contributor.map((t) =>
+                  t.tran_id === transactionId
+                    ? { ...t, tran_status: "Cancelled" }
+                    : t
+                ),
+                receiver: prev.receiver.map((t) =>
+                  t.tran_id === transactionId
+                    ? { ...t, tran_status: "Cancelled" }
+                    : t
+                ),
+              }
+            : null
+        );
+
+        toast.success("Transaction cancelled", {
+          description: `Transaction ${transactionId} has been cancelled successfully.`,
+          duration: 4000,
+        });
+      } else {
+        throw new Error(data.message || "Failed to cancel transaction");
+      }
+    } catch (error) {
+      console.error("Error cancelling transaction:", error);
+      toast.error("Failed to cancel transaction", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your connection and try again.",
+        duration: 4000,
+      });
+    }
   };
 
   return (
@@ -214,55 +407,19 @@ export function TransactionManagementView() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-green-100 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+                <Users className="h-6 w-6 text-green-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Completed
+                  Items Sold
                 </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {isLoading ? "..." : stats.completed}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-red-100 rounded-lg">
-                <XCircle className="h-6 w-6 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Cancelled
-                </p>
-                <p className="text-2xl font-bold text-red-600">
-                  {isLoading ? "..." : stats.cancelled}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <Trash2 className="h-6 w-6 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Deleted
-                </p>
-                <p className="text-2xl font-bold text-gray-600">
-                  {isLoading ? "..." : stats.deleted}
+                  {isLoading ? "..." : stats.contributorTotal}
                 </p>
               </div>
             </div>
@@ -273,13 +430,31 @@ export function TransactionManagementView() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-blue-100 rounded-lg">
-                <Package className="h-6 w-6 text-blue-600" />
+                <User className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Items Bought
+                </p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {isLoading ? "..." : stats.receiverTotal}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <Package className="h-6 w-6 text-purple-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Total Transactions
                 </p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-purple-600">
                   {isLoading ? "..." : stats.total}
                 </p>
               </div>
@@ -296,7 +471,7 @@ export function TransactionManagementView() {
         </Alert>
       )}
 
-      {/* Filter Buttons */}
+      {/* Transaction Tabs */}
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -305,51 +480,51 @@ export function TransactionManagementView() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Button
-              variant={activeFilter === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveFilter("all")}
-              className="flex items-center gap-2"
-            >
-              <Package className="h-4 w-4" />
-              All ({stats.total})
-            </Button>
-            <Button
-              variant={activeFilter === "completed" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveFilter("completed")}
-              className="flex items-center gap-2"
-            >
-              <CheckCircle className="h-4 w-4" />
-              Completed ({stats.completed})
-            </Button>
-            <Button
-              variant={activeFilter === "cancelled" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveFilter("cancelled")}
-              className="flex items-center gap-2"
-            >
-              <XCircle className="h-4 w-4" />
-              Cancelled ({stats.cancelled})
-            </Button>
-            <Button
-              variant={activeFilter === "deleted" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveFilter("deleted")}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Deleted ({stats.deleted})
-            </Button>
-          </div>
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) =>
+              setActiveTab(value as "contributor" | "receiver")
+            }
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger
+                value="contributor"
+                className="flex items-center gap-2"
+              >
+                <Users className="h-4 w-4" />
+                Items Sold ({stats.contributorTotal})
+              </TabsTrigger>
+              <TabsTrigger value="receiver" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Items Bought ({stats.receiverTotal})
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Transaction Table */}
-          {isLoading ? (
-            <TransactionManagementSkeleton />
-          ) : (
-            <TransactionManagementTable transactions={filteredTransactions} />
-          )}
+            <TabsContent value="contributor" className="mt-6">
+              {isLoading ? (
+                <TransactionManagementSkeleton />
+              ) : (
+                <TransactionManagementTable
+                  transactions={transactionData?.contributor || []}
+                  type="contributor"
+                  onComplete={handleComplete}
+                  onCancel={handleCancel}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="receiver" className="mt-6">
+              {isLoading ? (
+                <TransactionManagementSkeleton />
+              ) : (
+                <TransactionManagementTable
+                  transactions={transactionData?.receiver || []}
+                  type="receiver"
+                  onCancel={handleCancel}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

@@ -1,14 +1,13 @@
-"use client"
+"use client";
 
-import { Pie, PieChart } from "recharts"
+import { Pie, PieChart } from "recharts";
 
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
-
+} from "@/components/ui/chart";
 
 const chartData = [
   { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
@@ -16,7 +15,7 @@ const chartData = [
   { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
   { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
   { browser: "other", visitors: 90, fill: "var(--color-other)" },
-]
+];
 
 const chartConfig = {
   visitors: {
@@ -42,7 +41,7 @@ const chartConfig = {
     label: "Other Minerals",
     color: "var(--chart-5)",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 export function ChartPieLabel() {
   return (
@@ -58,7 +57,9 @@ export function ChartPieLabel() {
             Key Benefits
           </h5>
           <div className="text-xs text-muted-foreground leading-relaxed">
-            Essential nutrients that support bone health, muscle function, energy production, and overall immune system strength for optimal plant-based nutrition.
+            Essential nutrients that support bone health, muscle function,
+            energy production, and overall immune system strength for optimal
+            plant-based nutrition.
           </div>
         </div>
 
@@ -86,5 +87,5 @@ export function ChartPieLabel() {
         </div>
       </div>
     </div>
-  )
+  );
 }

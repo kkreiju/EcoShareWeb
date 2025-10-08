@@ -26,32 +26,56 @@ import {
   Package,
   DollarSign,
   Calendar,
+  AlertCircle,
+  Check,
+  X,
 } from "lucide-react";
 
-interface TransactionListing {
+interface Listing {
+  user_id: string;
+  list_title: string;
+  list_type: string;
+  list_imageURL: string;
+  list_description: string;
+  list_tags: string;
+  list_price: number;
+  list_quantity: number;
+  list_pickupTimeAvailability: string;
+  list_pickupInstructions: string;
+  list_locationName: string;
+  list_latitude: number;
+  list_longitude: number;
+  list_postedDate: string;
+  list_availabilityStatus: string;
   list_id: string;
-  title: string;
-  type: string;
-  imageURL: string;
-  status: "completed" | "cancelled" | "deleted";
-  price: number;
-  postedDate: string;
-  completedDate?: string;
-  cancelledDate?: string;
-  deletedDate?: string;
-  transaction_amount?: number;
-  buyer_info?: {
-    name: string;
-    email: string;
-  };
+  user_firstName?: string;
+  user_lastName?: string;
+}
+
+interface Transaction {
+  list_id: string;
+  tran_userId: string;
+  tran_amount: number;
+  tran_quantity: number;
+  tran_dateTime: string;
+  tran_status: string;
+  tran_id: string;
+  listing: Listing;
+  buyer_name?: string;
 }
 
 interface TransactionManagementTableProps {
-  transactions: TransactionListing[];
+  transactions: Transaction[];
+  type: "contributor" | "receiver";
+  onComplete?: (transactionId: string) => void;
+  onCancel?: (transactionId: string) => void;
 }
 
 export function TransactionManagementTable({
   transactions,
+  type,
+  onComplete,
+  onCancel,
 }: TransactionManagementTableProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -62,36 +86,35 @@ export function TransactionManagementTable({
     });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
-
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "completed":
+      case "accepted":
+      case "active":
         return "bg-green-100 text-green-800 border-green-200";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "cancelled":
+      case "declined":
         return "bg-red-100 text-red-800 border-red-200";
-      case "deleted":
-        return "bg-gray-100 text-gray-800 border-gray-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "completed":
+      case "accepted":
+      case "active":
         return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case "pending":
+        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
       case "cancelled":
+      case "declined":
         return <XCircle className="h-4 w-4 text-red-600" />;
-      case "deleted":
-        return <Trash2 className="h-4 w-4 text-gray-600" />;
       default:
-        return <CheckCircle className="h-4 w-4 text-gray-600" />;
+        return <AlertCircle className="h-4 w-4 text-gray-600" />;
     }
   };
 
@@ -118,17 +141,11 @@ export function TransactionManagementTable({
       .slice(0, 2);
   };
 
-  const getTransactionDate = (transaction: TransactionListing) => {
-    switch (transaction.status) {
-      case "completed":
-        return transaction.completedDate;
-      case "cancelled":
-        return transaction.cancelledDate;
-      case "deleted":
-        return transaction.deletedDate;
-      default:
-        return transaction.postedDate;
-    }
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amount);
   };
 
   if (transactions.length === 0) {
@@ -155,7 +172,7 @@ export function TransactionManagementTable({
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Amount</TableHead>
-            <TableHead>Buyer</TableHead>
+            <TableHead>{type === "contributor" ? "Buyer" : "Seller"}</TableHead>
             <TableHead className="hidden lg:table-cell">Date</TableHead>
             <TableHead className="w-16"></TableHead>
           </TableRow>
@@ -163,93 +180,94 @@ export function TransactionManagementTable({
         <TableBody>
           {transactions.map((transaction) => (
             <TableRow
-              key={transaction.list_id}
+              key={transaction.tran_id}
               className="border-border hover:bg-muted/50"
             >
               <TableCell>
                 <div className="flex items-center justify-center">
-                  {getStatusIcon(transaction.status)}
+                  {getStatusIcon(transaction.tran_status)}
                 </div>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
                   <div className="font-medium flex items-center gap-2">
                     <img
-                      src={transaction.imageURL}
-                      alt={transaction.title}
+                      src={transaction.listing.list_imageURL}
+                      alt={transaction.listing.list_title}
                       className="w-8 h-8 rounded object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = "/placeholder-image.jpg";
                       }}
                     />
-                    <span className="line-clamp-1">{transaction.title}</span>
+                    <span className="line-clamp-1">
+                      {transaction.listing.list_title}
+                    </span>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    Posted {formatDate(transaction.postedDate)}
+                    Posted {formatDate(transaction.listing.list_postedDate)}
                   </div>
                 </div>
               </TableCell>
               <TableCell>
                 <Badge
                   variant="outline"
-                  className={getTypeColor(transaction.type)}
+                  className={getTypeColor(transaction.listing.list_type)}
                 >
-                  {transaction.type}
+                  {transaction.listing.list_type}
                 </Badge>
               </TableCell>
               <TableCell>
                 <Badge
                   variant="outline"
-                  className={getStatusColor(transaction.status)}
+                  className={getStatusColor(transaction.tran_status)}
                 >
-                  {transaction.status}
+                  {transaction.tran_status}
                 </Badge>
               </TableCell>
               <TableCell>
                 <div className="text-sm">
-                  {transaction.transaction_amount !== undefined ? (
+                  {transaction.tran_amount > 0 ? (
                     <span className="font-medium">
-                      {formatCurrency(transaction.transaction_amount)}
+                      {formatCurrency(transaction.tran_amount)}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground">-</span>
+                    <span className="text-muted-foreground">Free</span>
                   )}
-                  {transaction.price > 0 && (
+                  {transaction.listing.list_price > 0 && (
                     <div className="text-xs text-muted-foreground">
-                      Listed: {formatCurrency(transaction.price)}
+                      Listed: {formatCurrency(transaction.listing.list_price)}
                     </div>
                   )}
                 </div>
               </TableCell>
               <TableCell>
-                {transaction.buyer_info ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs">
-                        {getInitials(transaction.buyer_info.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="hidden sm:block">
-                      <div className="text-sm font-medium">
-                        {transaction.buyer_info.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {transaction.buyer_info.email}
+                <div className="text-sm">
+                  {type === "contributor" ? (
+                    <div>
+                      <div className="font-medium text-foreground">Buyer</div>
+                      <div className="text-muted-foreground">
+                        {transaction.buyer_name || transaction.tran_userId}
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
+                  ) : (
+                    <div>
+                      <div className="font-medium text-foreground">Seller</div>
+                      <div className="text-muted-foreground">
+                        {transaction.listing.user_firstName &&
+                        transaction.listing.user_lastName
+                          ? `${transaction.listing.user_firstName} ${transaction.listing.user_lastName}`.trim()
+                          : transaction.listing.user_id}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
                 <div className="text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {formatDate(
-                      getTransactionDate(transaction) || transaction.postedDate
-                    )}
+                    {formatDate(transaction.tran_dateTime)}
                   </div>
                 </div>
               </TableCell>
@@ -262,6 +280,28 @@ export function TransactionManagementTable({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {/* Show Complete button only for contributor (sold items) */}
+                    {type === "contributor" && onComplete && (
+                      <DropdownMenuItem
+                        onClick={() => onComplete(transaction.tran_id)}
+                        className="text-green-600 focus:text-green-600"
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        Complete
+                      </DropdownMenuItem>
+                    )}
+
+                    {/* Show Cancel button for both contributor and receiver */}
+                    {onCancel && (
+                      <DropdownMenuItem
+                        onClick={() => onCancel(transaction.tran_id)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel
+                      </DropdownMenuItem>
+                    )}
+
                     <DropdownMenuItem>
                       <Eye className="h-4 w-4 mr-2" />
                       View Details

@@ -24,7 +24,7 @@ interface ListingViewProps {
 export function ListingView({ listingId }: ListingViewProps) {
   const router = useRouter();
   const { user } = useAuth();
-  
+
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export function ListingView({ listingId }: ListingViewProps) {
         setError(null);
 
         // First try to get all listings and find the specific one
-        const response = await fetch('/api/listing/view-listing', {
+        const response = await fetch("/api/listing/view-listing", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -55,10 +55,12 @@ export function ListingView({ listingId }: ListingViewProps) {
 
         const data = await response.json();
         const listings = data.data || [];
-        
+
         // Find the specific listing by ID
-        const foundListing = listings.find((l: Listing) => l.list_id === listingId);
-        
+        const foundListing = listings.find(
+          (l: Listing) => l.list_id === listingId
+        );
+
         if (!foundListing) {
           throw new Error("Listing not found");
         }
@@ -222,7 +224,7 @@ export function ListingView({ listingId }: ListingViewProps) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <ListingHeader onShare={handleShare} isOwner={false} />
-        
+
         <Card className="max-w-md mx-auto mt-8">
           <CardContent className="text-center p-8">
             <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -251,7 +253,7 @@ export function ListingView({ listingId }: ListingViewProps) {
         {/* Left Column - Image, Details, and Owner Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Image and Details Combined */}
-          <ListingImage 
+          <ListingImage
             listing={listing}
             getTypeColor={getTypeColor}
             formatPrice={formatPrice}
@@ -261,13 +263,12 @@ export function ListingView({ listingId }: ListingViewProps) {
             onContact={handleContact}
             onReport={handleReport}
           />
-
         </div>
 
         {/* Right Column - Analytics and Map */}
         <div className="space-y-6">
           {/* Nutrient Analytics */}
-          <ListingNutrientAnalytics />
+          <ListingNutrientAnalytics listId={listing.list_id} />
 
           {/* Location Map */}
           <ListingLocationMap listing={listing} />
@@ -282,7 +283,7 @@ export function ListingView({ listingId }: ListingViewProps) {
         listingTitle={listing.title}
         listingImageURL={listing.imageURL}
       />
-      
+
       <ListingContactDialog
         isOpen={isContactDialogOpen}
         onClose={() => setIsContactDialogOpen(false)}
@@ -290,7 +291,11 @@ export function ListingView({ listingId }: ListingViewProps) {
         listingTitle={listing.title}
         listingImageURL={listing.imageURL}
         listingType={listing.type}
-        ownerName={`${listing.User?.firstName || ''} ${listing.User?.lastName || ''}`.trim() || 'Owner'}
+        ownerName={
+          `${listing.User?.firstName || ""} ${
+            listing.User?.lastName || ""
+          }`.trim() || "Owner"
+        }
         ownerId={listing.user_id}
       />
     </div>
