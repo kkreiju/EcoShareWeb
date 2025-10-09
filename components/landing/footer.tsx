@@ -4,22 +4,21 @@ import Link from "next/link";
 
 const footerLinks = {
   about: [
-    { name: "Our Mission", href: "#" },
-    { name: "Blog", href: "#" },
-    { name: "Team", href: "#" },
-    { name: "Press", href: "#" },
+    { name: "About Us", href: "/docs/about-us" },
+    { name: "Our Mission", href: "/docs/our-mission" },
+    { name: "Team", href: "/docs/team" },
+    { name: "Blog", href: "/docs/blog" },
+    { name: "Press", href: "/docs/press" },
   ],
   support: [
-    { name: "Help Center", href: "#" },
-    { name: "Contact Us", href: "#" },
-    { name: "FAQs", href: "#" },
-    { name: "Community Guidelines", href: "#" },
+    { name: "Help Center", href: "/docs/help-center" },
+    { name: "Contact Us", href: "/docs/contact-us" },
+    { name: "FAQs", href: "/docs/faqs" },
+    { name: "Community Guidelines", href: "/docs/community-guidelines" },
   ],
   legal: [
-    { name: "Privacy Policy", href: "#" },
-    { name: "Terms of Use", href: "#" },
-    { name: "Sustainability Commitment", href: "#" },
-    { name: "Cookies", href: "#" },
+    { name: "Privacy Policy", href: "/docs/privacy-policy" },
+    { name: "Terms of Use", href: "/docs/terms-of-use" },
   ],
 };
 

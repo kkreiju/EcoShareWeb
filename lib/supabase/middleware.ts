@@ -52,6 +52,7 @@ export async function updateSession(request: NextRequest) {
   const isApiRoute = request.nextUrl.pathname.startsWith("/api");
   const isHomePage = request.nextUrl.pathname === "/";
   const isUserRoute = request.nextUrl.pathname.startsWith("/user");
+  const isDocsRoute = request.nextUrl.pathname.startsWith("/docs");
 
   // If user is authenticated
   if (user) {
@@ -66,19 +67,19 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Allow access to user routes and API routes
-    if (isUserRoute || isApiRoute) {
+    // Allow access to user routes, API routes, and docs
+    if (isUserRoute || isApiRoute || isDocsRoute) {
       return supabaseResponse;
     }
   } else {
     // User is not authenticated
-    // Allow access to auth routes, API routes, and home page
-    if (isAuthRoute || isApiRoute || isHomePage) {
+    // Allow access to auth routes, API routes, home page, and docs
+    if (isAuthRoute || isApiRoute || isHomePage || isDocsRoute) {
       return supabaseResponse;
     }
 
     // Redirect unauthenticated users trying to access protected routes
-    if (isUserRoute || (!isAuthRoute && !isApiRoute && !isHomePage)) {
+    if (isUserRoute || (!isAuthRoute && !isApiRoute && !isHomePage && !isDocsRoute)) {
       console.log("MIDDLEWARE: No user found, redirecting to login page");
       const url = request.nextUrl.clone();
       url.pathname = "/auth/login";
