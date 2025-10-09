@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Loader2, Navigation, Route, X } from "lucide-react";
 import { useGoogleMaps } from "./google-maps-provider";
-import { FloatingListingsSidebar } from "./floating-listings-sidebar";
+import { ListingModal } from "./listing-modal";
 import { Listing } from "@/lib/DataClass";
 
 interface MapViewProps {
@@ -17,10 +17,7 @@ interface MapViewProps {
   onMarkerClick?: (listingId: string) => void;
   onLocationChange?: (location: { lat: number; lng: number }) => void;
   formatDistance?: (listing: Listing) => string;
-  isPanelVisible?: boolean;
-  onTogglePanel?: () => void;
   selectedListingId?: string | null;
-  onCardClick?: (id: string) => void;
   onRefresh?: () => void;
   totalCount?: number;
   isOwner?: (listing: Listing) => boolean;
@@ -34,10 +31,7 @@ export function MapView({
   onMarkerClick,
   onLocationChange,
   formatDistance,
-  isPanelVisible = false,
-  onTogglePanel,
   selectedListingId,
-  onCardClick,
   onRefresh,
   totalCount = 0,
   isOwner
@@ -51,6 +45,8 @@ export function MapView({
   const [isShowingDirections, setIsShowingDirections] = useState(false);
   const [selectedListingForDirections, setSelectedListingForDirections] = useState<Listing | null>(null);
   const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { isLoaded, loadError } = useGoogleMaps();
 
   useEffect(() => {
@@ -225,9 +221,13 @@ export function MapView({
           mapInstance.setCenter({ lat: listing.latitude, lng: listing.longitude });
           mapInstance.setZoom(16); // Slightly zoomed in to focus on the marker
         }
-        
+
         // Set the selected listing for directions
         setSelectedListingForDirections(listing);
+
+        // Open the modal with listing details
+        setSelectedListing(listing);
+        setIsModalOpen(true);
       });
 
       newMarkers.push(marker);
@@ -434,17 +434,12 @@ export function MapView({
             </div>
           </div>
 
-          <FloatingListingsSidebar
-            listings={listings}
-            isLoading={dataLoading}
-            totalCount={totalCount}
-            isVisible={isPanelVisible}
-            onToggle={onTogglePanel || (() => {})}
-            selectedListingId={selectedListingId}
-            onCardClick={onCardClick}
-            onRefresh={onRefresh}
-            isOwner={isOwner}
+          <ListingModal
+            listing={selectedListing}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
             formatDistance={formatDistance}
+            isOwner={isOwner ? isOwner(selectedListing || {} as Listing) : false}
             onDirectionsClick={showDirections}
             hasUserLocation={!!userLocation}
             isShowingDirections={isShowingDirections}

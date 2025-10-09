@@ -246,6 +246,15 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       filteredCount = filteredData.length;
     }
 
+    // Apply client-side category filtering if needed
+    if (filters.type && filters.type !== "all") {
+      filteredData = filteredData.filter((item) => {
+        return item.type === filters.type;
+      });
+
+      filteredCount = filteredData.length;
+    }
+
     // Apply client-side sorting if needed
     if (filters.sort_by && filters.sort_by !== null) {
       filteredData = filteredData.sort((a, b) => {
@@ -670,11 +679,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           />
           {searchQuery && !isLoading && !userDataLoading && (
             <div className="text-sm text-muted-foreground">
-              Found {totalCount} result{totalCount !== 1 ? "s" : ""} for "
-              <span className="truncate inline-block max-w-32 sm:max-w-none">
-                {searchQuery}
-              </span>
-              "
+              Found {totalCount} result{totalCount !== 1 ? "s" : ""} for "{searchQuery}"
             </div>
           )}
         </div>

@@ -16,6 +16,7 @@ interface Notification {
 interface NotificationRowProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  onNotificationClick?: (notification: Notification) => void;
   isMobile?: boolean;
 }
 
@@ -58,15 +59,18 @@ const formatDate = (date: Date) => {
   return date.toLocaleDateString();
 };
 
-export function NotificationRow({ notification, onMarkAsRead, isMobile = false }: NotificationRowProps) {
+export function NotificationRow({ notification, onMarkAsRead, onNotificationClick, isMobile = false }: NotificationRowProps) {
   // Mobile Card Layout
   if (isMobile) {
     return (
-      <div className={`p-4 border-b last:border-b-0 ${
-        !notification.notif_isRead
-          ? 'bg-blue-50/30 dark:bg-blue-950/30'
-          : 'hover:bg-muted/50'
-      }`}>
+      <div 
+        className={`p-4 border-b last:border-b-0 cursor-pointer transition-colors duration-200 ${
+          !notification.notif_isRead
+            ? 'bg-blue-50/30 dark:bg-blue-950/30 hover:bg-blue-50/50 dark:hover:bg-blue-950/40'
+            : 'hover:bg-muted/50'
+        }`}
+        onClick={() => onNotificationClick?.(notification)}
+      >
         <div className="flex items-start justify-between">
           {/* Content */}
           <div className="flex-1 min-w-0">
@@ -95,7 +99,10 @@ export function NotificationRow({ notification, onMarkAsRead, isMobile = false }
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onMarkAsRead(notification.notif_id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMarkAsRead(notification.notif_id);
+                }}
                 className="h-8 px-2 text-xs hover:bg-muted"
                 title="Mark as read"
               >
@@ -112,11 +119,12 @@ export function NotificationRow({ notification, onMarkAsRead, isMobile = false }
   // Desktop Table Layout
   return (
     <TableRow
-      className={`${
+      className={`cursor-pointer transition-colors duration-200 ${
         !notification.notif_isRead
-          ? 'bg-blue-50/30 border-l-4 border-l-blue-500 hover:bg-blue-50/50 dark:bg-blue-950/30'
+          ? 'bg-blue-50/30 border-l-4 border-l-blue-500 hover:bg-blue-50/50 dark:bg-blue-950/30 dark:hover:bg-blue-950/40'
           : 'hover:bg-muted/50'
       }`}
+      onClick={() => onNotificationClick?.(notification)}
     >
       {/* Main Content */}
       <TableCell className="py-4">
@@ -150,7 +158,10 @@ export function NotificationRow({ notification, onMarkAsRead, isMobile = false }
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onMarkAsRead(notification.notif_id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMarkAsRead(notification.notif_id);
+            }}
             className="h-8 w-8 p-0 hover:bg-muted"
             title="Mark as read"
           >

@@ -154,9 +154,11 @@ export function ListingCard({
               {listing.title}
             </h3>
             <div className="text-right shrink-0">
-              <div className="text-xl font-bold text-card-foreground">
-                {formatPrice(listing.price || 0, listing.type)}
-              </div>
+              {listing.type.toLowerCase() === "sale" && (
+                <div className="text-xl font-bold text-card-foreground">
+                  ₱{(listing.price || 0).toFixed(2)}
+                </div>
+              )}
               {listing.quantity > 0 && (
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                   <Package className="h-3 w-3" />
@@ -200,7 +202,7 @@ export function ListingCard({
           <div className="mt-auto space-y-2 text-xs text-muted-foreground pb-2">
             <div className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              <span className="line-clamp-1">{listing.locationName}</span>
+              <span className="line-clamp-1">{listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />

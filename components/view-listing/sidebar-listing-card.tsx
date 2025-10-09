@@ -127,7 +127,7 @@ export const SidebarListingCard = forwardRef<HTMLDivElement, SidebarListingCardP
           {/* Location */}
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <MapPin className="h-3 w-3 flex-shrink-0" />
-            <span className="flex-1 truncate">{listing.locationName}</span>
+            <span className="flex-1 truncate">{listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}</span>
             {formatDistance && (
               <>
                 <span className="text-gray-400">•</span>

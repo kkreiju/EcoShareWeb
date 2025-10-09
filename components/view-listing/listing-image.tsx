@@ -144,7 +144,7 @@ export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatD
                         Location
                       </div>
                       <div className="text-sm text-muted-foreground break-words leading-relaxed">
-                        {listing.locationName}
+                        {listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}
                       </div>
                     </div>
                   </div>

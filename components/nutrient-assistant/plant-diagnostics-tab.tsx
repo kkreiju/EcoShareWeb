@@ -139,13 +139,15 @@ export function PlantDiagnosticsTab() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Title */}
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">
-          Capture a plant to analyze nutrient needs and get compost
-          recommendations
+        <h2 className="text-3xl font-bold text-green-800 dark:text-green-200">
+          Plant Diagnostics
         </h2>
+        <p className="text-muted-foreground">
+          Capture a plant to analyze nutrient needs and get compost recommendations
+        </p>
       </div>
 
       {/* Error Message */}
@@ -252,61 +254,58 @@ export function PlantDiagnosticsTab() {
 
       {/* Results Dialog */}
       <Dialog open={showResultsDialog} onOpenChange={setShowResultsDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Leaf className="h-5 w-5 text-green-600" />
-              Plant Analysis Results
+              Plant Analysis for {diagnosisResult?.prediction}
             </DialogTitle>
           </DialogHeader>
 
           {diagnosisResult && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Plant Identification */}
-              <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                <div className="flex items-center justify-center gap-2">
-                  <Leaf className="h-6 w-6 text-green-600" />
-                  <span className="text-lg font-semibold">
+              <div className="text-center p-6 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Leaf className="h-8 w-8 text-green-600" />
+                  <span className="text-xl font-semibold">
                     {diagnosisResult.prediction}
                   </span>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  Analysis completed successfully
+                </p>
               </div>
 
-              <Separator />
-
               {/* Nutrient Needs */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-blue-600" />
-                  <h4 className="font-medium">Nutrient Needs</h4>
-                </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Nutrient Needs
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {diagnosisResult.nutrientNeeds
                     .split(",")
                     .map((nutrient, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
+                      <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                         {nutrient.trim()}
                       </Badge>
                     ))}
                 </div>
               </div>
 
-              <Separator />
-
               {/* Compost Suggestions */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Droplets className="h-4 w-4 text-green-600" />
-                  <h4 className="font-medium">Recommended Compost</h4>
-                </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Recommended Compost Materials
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {diagnosisResult.compostSuggestions
                     .split(",")
                     .map((compost, index) => (
                       <Badge
                         key={index}
-                        variant="default"
-                        className="text-xs bg-green-100 text-green-800"
+                        variant="secondary"
+                        className="bg-green-100 text-green-800"
                       >
                         {compost.trim()}
                       </Badge>
@@ -314,15 +313,9 @@ export function PlantDiagnosticsTab() {
                 </div>
               </div>
 
-              <Separator />
-
               {/* Actions */}
-              <div className="pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowResultsDialog(false)}
-                  className="w-full"
-                >
+              <div className="flex justify-end pt-4 border-t">
+                <Button onClick={() => setShowResultsDialog(false)}>
                   Close
                 </Button>
               </div>

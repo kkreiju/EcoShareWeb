@@ -87,9 +87,11 @@ export function ListingCard({
           <h3 className="font-medium text-gray-900 text-sm line-clamp-2 flex-1">
             {listing.title}
           </h3>
-          <span className="font-semibold text-blue-600 text-sm whitespace-nowrap">
-            {formatPrice(listing.price || 0, listing.type)}
-          </span>
+          {listing.type.toLowerCase() === "sale" && (
+            <span className="font-semibold text-blue-600 text-sm whitespace-nowrap">
+              ₱{(listing.price || 0).toLocaleString()}
+            </span>
+          )}
         </div>
 
         {/* Description */}
@@ -100,7 +102,7 @@ export function ListingCard({
         {/* Location and Distance */}
         <div className="flex items-center gap-1 text-xs text-gray-500">
           <MapPin className="h-3 w-3" />
-          <span className="truncate">{listing.locationName}</span>
+          <span className="truncate">{listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}</span>
           {formatDistance && (
             <>
               <span>•</span>

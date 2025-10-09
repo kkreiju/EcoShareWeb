@@ -67,7 +67,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
   };
 
   // Dynamic schema that includes conditional price
-  const editListingSchema = listing?.type === "sale"
+  const editListingSchema = listing?.type?.toLowerCase() === "sale"
     ? z.object({
         ...baseSchema,
         price: z.number().min(0.01, "Price must be greater than 0"),
@@ -97,7 +97,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
       pickupInstructions: "",
       tags: [],
       location: "",
-      price: listing?.type === "sale" ? 0 : undefined,
+      price: listing?.type?.toLowerCase() === "sale" ? (listing?.price || 0) : undefined,
     },
   });
 
@@ -120,7 +120,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
   useEffect(() => {
     if (open && listing) {
       const tags = parseTags(listing.tags);
-      
+
       setSelectedTags(tags);
       setCurrentLocation(listing.locationName || "");
       setCurrentLatitude(listing.latitude || null);
@@ -138,7 +138,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
         location: listing.locationName || "",
         latitude: listing.latitude,
         longitude: listing.longitude,
-        price: listing.price || (listing.type === "sale" ? 0 : undefined),
+        price: listing.type?.toLowerCase() === "sale" ? (listing.price || 0) : undefined,
       });
 
       // Set form values
@@ -146,6 +146,9 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
       setValue("location", listing.locationName || "");
       setValue("latitude", listing.latitude);
       setValue("longitude", listing.longitude);
+      if (listing.type?.toLowerCase() === "sale") {
+        setValue("price", listing.price || 0);
+      }
     }
   }, [open, listing, reset, setValue]);
 

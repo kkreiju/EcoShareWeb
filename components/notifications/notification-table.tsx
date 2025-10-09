@@ -24,10 +24,11 @@ interface Notification {
 interface NotificationTableProps {
   notifications: Notification[];
   onMarkAsRead: (id: string) => void;
+  onNotificationClick?: (notification: Notification) => void;
   isLoading?: boolean;
 }
 
-export function NotificationTable({ notifications, onMarkAsRead, isLoading = false }: NotificationTableProps) {
+export function NotificationTable({ notifications, onMarkAsRead, onNotificationClick, isLoading = false }: NotificationTableProps) {
   return (
     <Card>
       <CardContent className="p-0">
@@ -42,6 +43,7 @@ export function NotificationTable({ notifications, onMarkAsRead, isLoading = fal
                   key={notification.notif_id}
                   notification={notification}
                   onMarkAsRead={onMarkAsRead}
+                  onNotificationClick={onNotificationClick}
                   isMobile={true}
                 />
               ))}
@@ -63,6 +65,7 @@ export function NotificationTable({ notifications, onMarkAsRead, isLoading = fal
                       key={notification.notif_id}
                       notification={notification}
                       onMarkAsRead={onMarkAsRead}
+                      onNotificationClick={onNotificationClick}
                       isMobile={false}
                     />
                   ))}

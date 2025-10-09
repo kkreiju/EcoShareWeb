@@ -348,8 +348,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           />
           {searchQuery && !isLoading && (
             <div className="text-sm text-muted-foreground">
-              Found {totalCount} result{totalCount !== 1 ? "s" : ""} for "
-              <span className="truncate inline-block max-w-32 sm:max-w-none">{searchQuery}</span>"
+              Found {totalCount} result{totalCount !== 1 ? "s" : ""} for "{searchQuery}"
             </div>
           )}
         </div>

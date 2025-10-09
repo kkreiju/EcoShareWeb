@@ -34,7 +34,7 @@ export function ListingLocationMap({ listing }: ListingLocationMapProps) {
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            title={`Location of ${listing.locationName}`}
+            title={`Location of ${listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}`}
           />
           
           {/* Get Directions Button */}

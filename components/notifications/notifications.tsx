@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { NotificationHeader } from "./notification-header";
 import { NotificationTable, NotificationTableSkeleton } from "./notification-table";
 import { NotificationStats, NotificationStatsSkeleton } from "./notification-stats";
+import { ReviewRequestsModal } from "@/components/listings/review-requests-modal";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
@@ -21,6 +22,7 @@ export function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isReviewRequestsModalOpen, setIsReviewRequestsModalOpen] = useState(false);
 
   // Fetch notifications when component mounts
   useEffect(() => {
@@ -142,6 +144,31 @@ export function Notifications() {
     }
   };
 
+  const handleNotificationClick = async (notification: Notification) => {
+    // First mark the notification as read if it's unread
+    if (!notification.notif_isRead) {
+      await markAsRead(notification.notif_id);
+    }
+
+    // Check if this is a review request notification based on the message content
+    const isReviewRequest = notification.notif_message.toLowerCase().includes('review') || 
+                           notification.notif_message.toLowerCase().includes('request') ||
+                           notification.tran_id; // Has transaction ID
+
+    if (isReviewRequest) {
+      // Open the review requests modal
+      setIsReviewRequestsModalOpen(true);
+      toast.success("Opening review requests...", {
+        duration: 2000,
+      });
+    } else {
+      // For other notification types, you can add different handling here
+      toast.info("Notification opened", {
+        duration: 2000,
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -189,12 +216,18 @@ export function Notifications() {
       <NotificationTable
         notifications={notifications}
         onMarkAsRead={markAsRead}
+        onNotificationClick={handleNotificationClick}
         isLoading={isLoading}
       />
 
       <NotificationStats
         totalCount={notifications.length}
         unreadCount={unreadCount}
+      />
+
+      <ReviewRequestsModal
+        isOpen={isReviewRequestsModalOpen}
+        onOpenChange={setIsReviewRequestsModalOpen}
       />
     </div>
   );

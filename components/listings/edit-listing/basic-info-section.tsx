@@ -71,7 +71,7 @@ export function BasicInfoSection({
         </div>
 
         {/* Price - Only show for sale listings */}
-        {listingType === "sale" && (
+        {listingType?.toLowerCase() === "sale" && (
           <div className="space-y-2">
             <Label htmlFor="price">Price (₱) *</Label>
             <Input

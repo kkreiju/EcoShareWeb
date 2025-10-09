@@ -1,25 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  RefreshCw,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Package,
-  User,
-  Users,
-} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/api";
 import { toast } from "sonner";
-import { TransactionManagementTable } from "./transaction-management-table";
-import { TransactionManagementSkeleton } from "./loading-skeleton";
+import { TransactionHeader } from "./transaction-header";
+import { TransactionError } from "./transaction-error";
+import { TransactionTabs } from "./transaction-tabs";
 
 interface Listing {
   user_id: string;
@@ -184,38 +171,6 @@ export function TransactionManagementView() {
     fetchTransactions();
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-      case "accepted":
-      case "active":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "pending":
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
-      case "cancelled":
-      case "declined":
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-      case "accepted":
-      case "active":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "cancelled":
-      case "declined":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
   // Calculate stats
   const stats = transactionData
     ? {
@@ -230,7 +185,7 @@ export function TransactionManagementView() {
         total: 0,
       };
 
-  const handleComplete = async (transactionId: string) => {
+  const handleComplete = async (transactionId: string, imageBase64: string) => {
     if (!userId) {
       toast.error("User not authenticated");
       return;
@@ -246,6 +201,21 @@ export function TransactionManagementView() {
         return;
       }
 
+      // Verify the current user owns the listing (security check on frontend)
+      if (transaction.listing.user_id !== userId) {
+        toast.error("You are not authorized to complete this transaction");
+        return;
+      }
+
+      console.log("Completing transaction:", {
+        tran_id: transactionId,
+        current_user: userId,
+        listing_owner: transaction.listing.user_id,
+        buyer: transaction.tran_userId,
+        status: transaction.tran_status
+      });
+
+      // API now properly expects seller's ID (current user) to authorize completion
       const response = await fetch("/api/transaction/complete-transaction", {
         method: "POST",
         headers: {
@@ -254,10 +224,10 @@ export function TransactionManagementView() {
         },
         body: JSON.stringify({
           tran_id: transactionId,
-          user_id: userId,
+          user_id: userId, // Use seller's ID (current authenticated user)
           quantity: transaction.tran_quantity,
           status: "Completed",
-          image: transaction.listing.list_imageURL, // Use listing image as transaction image
+          image: imageBase64, // Use captured base64 image data
         }),
       });
 
@@ -265,6 +235,29 @@ export function TransactionManagementView() {
         const errorData = await response
           .json()
           .catch(() => ({ message: "Unknown error" }));
+        
+        console.error("API Error Details:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          transactionStatus: transaction.tran_status,
+          userId,
+          transactionId,
+          requestPayload: {
+            tran_id: transactionId,
+            user_id: userId,
+            quantity: transaction.tran_quantity,
+            status: "Completed"
+          }
+        });
+        
+        // Provide more specific error messages
+        if (errorData.message === "Failed to find transaction") {
+          throw new Error(
+            `Transaction not found. Check that transaction ${transactionId} exists and has status '${transaction.tran_status}'.`
+          );
+        }
+        
         throw new Error(
           errorData.message || `HTTP error! status: ${response.status}`
         );
@@ -376,157 +369,23 @@ export function TransactionManagementView() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            Transaction Management
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
-            View and manage your completed, cancelled, and deleted listings
-          </p>
-        </div>
+    <div className="space-y-4">
+      <TransactionHeader 
+        stats={stats}
+        isLoading={isLoading}
+        onRefresh={handleRefresh}
+      />
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="border-border w-full sm:w-auto justify-center sm:justify-start"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 flex-shrink-0 ${
-                isLoading ? "animate-spin" : ""
-              }`}
-            />
-            <span className="truncate">Refresh</span>
-          </Button>
-        </div>
-      </div>
+      <TransactionError error={error} />
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <Users className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Items Sold
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {isLoading ? "..." : stats.contributorTotal}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <User className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Items Bought
-                </p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {isLoading ? "..." : stats.receiverTotal}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Package className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Transactions
-                </p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {isLoading ? "..." : stats.total}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Error Alert */}
-      {error && (
-        <Alert className="border-destructive/50 text-destructive dark:border-destructive dark:text-destructive">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Transaction Tabs */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-green-600" />
-            Transaction History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) =>
-              setActiveTab(value as "contributor" | "receiver")
-            }
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger
-                value="contributor"
-                className="flex items-center gap-2"
-              >
-                <Users className="h-4 w-4" />
-                Items Sold ({stats.contributorTotal})
-              </TabsTrigger>
-              <TabsTrigger value="receiver" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Items Bought ({stats.receiverTotal})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="contributor" className="mt-6">
-              {isLoading ? (
-                <TransactionManagementSkeleton />
-              ) : (
-                <TransactionManagementTable
-                  transactions={transactionData?.contributor || []}
-                  type="contributor"
-                  onComplete={handleComplete}
-                  onCancel={handleCancel}
-                />
-              )}
-            </TabsContent>
-
-            <TabsContent value="receiver" className="mt-6">
-              {isLoading ? (
-                <TransactionManagementSkeleton />
-              ) : (
-                <TransactionManagementTable
-                  transactions={transactionData?.receiver || []}
-                  type="receiver"
-                  onCancel={handleCancel}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+      <TransactionTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        transactionData={transactionData}
+        isLoading={isLoading}
+        onComplete={handleComplete}
+        onCancel={handleCancel}
+      />
     </div>
   );
 }

@@ -127,197 +127,236 @@ export function PlantNutrientBuilderTab() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Plant Selection */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-green-600" />
-            Nutrient Plan Builder
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Plant Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="plant-select">Plant Names</Label>
-            <Select value={selectedPlant} onValueChange={setSelectedPlant}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a plant" />
-              </SelectTrigger>
-              <SelectContent>
-                {PLANT_NAMES.map((plant) => (
-                  <SelectItem key={plant} value={plant}>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <h2 className="text-3xl font-bold text-green-800 dark:text-green-200">
+          Nutrient Plant Builder
+        </h2>
+        <p className="text-muted-foreground">
+          Select your plant and available compost materials to generate a personalized nutrient plan
+        </p>
+      </div>
+
+      {/* Form Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Plant Selection */}
+        <Card className="border-2 border-dashed border-green-200 dark:border-green-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              Select Plant
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Choose one plant type for your nutrient plan
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              {PLANT_NAMES.map((plant) => (
+                <div key={plant} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={plant}
+                    checked={selectedPlant === plant}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedPlant(plant);
+                      } else {
+                        setSelectedPlant("");
+                      }
+                    }}
+                  />
+                  <Label
+                    htmlFor={plant}
+                    className="text-sm cursor-pointer leading-tight"
+                  >
                     {plant}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Compost Materials Multi-Select */}
-          <div className="space-y-2">
-            <Label>Compostable Materials (Select up to 3)</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between text-left font-normal"
-                >
-                  {selectedCompostMaterials.length === 0
-                    ? "Select compost materials"
-                    : `${selectedCompostMaterials.length} of 3 selected`}
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <ScrollArea className="h-48">
-                  <div className="p-2">
-                    {COMPOST_NAMES.map((material) => (
-                      <div
-                        key={material}
-                        className="flex items-center space-x-2 p-2 hover:bg-accent rounded-md"
-                      >
-                        <Checkbox
-                          id={material}
-                          checked={selectedCompostMaterials.includes(material)}
-                          disabled={
-                            !selectedCompostMaterials.includes(material) &&
-                            selectedCompostMaterials.length >= 3
-                          }
-                          onCheckedChange={() => handleCompostToggle(material)}
-                        />
-                        <Label
-                          htmlFor={material}
-                          className="text-sm font-normal cursor-pointer flex-1"
-                        >
-                          {material}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </PopoverContent>
-            </Popover>
-
-            {/* Selected Materials Display */}
-            {selectedCompostMaterials.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedCompostMaterials.map((material) => (
-                  <Badge
-                    key={material}
-                    variant="secondary"
-                    className="flex items-center gap-1 bg-green-100 text-green-800"
+        {/* Materials Selection */}
+        <Card className="border-2 border-dashed border-green-200 dark:border-green-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              Compost Materials
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Select up to 3 materials you have available
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              {COMPOST_NAMES.map((material) => (
+                <div key={material} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={material}
+                    checked={selectedCompostMaterials.includes(material)}
+                    disabled={
+                      !selectedCompostMaterials.includes(material) &&
+                      selectedCompostMaterials.length >= 3
+                    }
+                    onCheckedChange={() => handleCompostToggle(material)}
+                  />
+                  <Label
+                    htmlFor={material}
+                    className="text-sm cursor-pointer leading-tight"
                   >
                     {material}
-                    <button
-                      onClick={() => removeCompostMaterial(material)}
-                      className="ml-1 hover:bg-green-200 rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Generate Button */}
-          <Button
-            onClick={handleGenerate}
-            disabled={
-              !selectedPlant ||
-              selectedCompostMaterials.length === 0 ||
-              isGenerating
-            }
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-            size="lg"
-          >
-            {isGenerating ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Generating Plan...
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
-                Generate Nutrient Plan
-              </div>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Compost Plan Results Dialog */}
-      <Dialog open={showPlanDialog} onOpenChange={setShowPlanDialog}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Wrench className="h-5 w-5 text-green-600" />
-              Compost Building Instructions
-            </DialogTitle>
-          </DialogHeader>
-
-          {compostPlan && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-              {/* Left Column - Plant Info & Materials */}
-              <div className="space-y-4">
-                {/* Plant Info */}
-                <div className="text-center p-6 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <Check className="h-8 w-8 text-green-600" />
-                    <span className="text-xl font-semibold">
-                      {selectedPlant}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Compost plan generated successfully
-                  </p>
+                  </Label>
                 </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-                {/* Materials Used */}
-                <div className="space-y-3">
-                  <h4 className="font-medium flex items-center gap-2 text-base">
-                    <Sparkles className="h-4 w-4 text-green-600" />
-                    Materials Used ({selectedCompostMaterials.length})
-                  </h4>
+      {/* Selected Items Summary */}
+      {(selectedPlant || selectedCompostMaterials.length > 0) && (
+        <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
+          <CardContent className="pt-4 pb-4">
+            <div className="space-y-2">
+              {selectedPlant && (
+                <div>
+                  <h3 className="font-medium text-green-800 dark:text-green-200 mb-1">
+                    Selected Plant
+                  </h3>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    {selectedPlant}
+                  </Badge>
+                </div>
+              )}
+
+              {selectedCompostMaterials.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-green-800 dark:text-green-200 mb-1">
+                    Selected Materials ({selectedCompostMaterials.length}/3)
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedCompostMaterials.map((material) => (
                       <Badge
                         key={material}
-                        variant="outline"
-                        className="text-xs bg-green-50 text-green-700 border-green-200"
+                        variant="secondary"
+                        className="bg-green-100 text-green-800 hover:bg-green-200"
                       >
                         {material}
+                        <button
+                          onClick={() => removeCompostMaterial(material)}
+                          className="ml-2 hover:bg-green-300 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
                   </div>
                 </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-                {/* Actions */}
-                <div className="pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowPlanDialog(false)}
-                    className="w-full"
-                  >
-                    Close
-                  </Button>
+      {/* Generate Button */}
+      <div className="flex justify-center">
+        <Button
+          onClick={handleGenerate}
+          disabled={
+            !selectedPlant ||
+            selectedCompostMaterials.length === 0 ||
+            isGenerating
+          }
+          size="lg"
+          className="px-8 py-3 text-lg font-medium"
+        >
+          {isGenerating ? (
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Generating Plan...
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-5 w-5" />
+              Generate Nutrient Plan
+            </div>
+          )}
+        </Button>
+      </div>
+
+      {/* Compost Plan Results Dialog */}
+      <Dialog open={showPlanDialog} onOpenChange={setShowPlanDialog}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-600" />
+              Nutrient Plan for {selectedPlant}
+            </DialogTitle>
+          </DialogHeader>
+
+          {compostPlan && (
+            <div className="space-y-6">
+              {/* Materials Used */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Materials Used
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedCompostMaterials.map((material) => (
+                    <Badge key={material} variant="secondary">
+                      {material}
+                    </Badge>
+                  ))}
                 </div>
               </div>
 
-              {/* Right Column - Building Instructions */}
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <h4 className="font-medium text-base flex items-center gap-2">
-                    <Wrench className="h-4 w-4 text-green-600" />
-                    Building Instructions
-                  </h4>
-                  <div className="bg-muted rounded-lg p-4 h-96 overflow-auto">
-                    <pre className="text-sm whitespace-pre-wrap font-mono leading-relaxed">
-                      {JSON.stringify(compostPlan, null, 2)}
-                    </pre>
+              {/* Recommendations */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Recommendations
+                </h3>
+                <ScrollArea className="h-96">
+                  <div className="space-y-4">
+                    {compostPlan?.recommendations?.map((recommendation: any, index: number) => (
+                      <div key={index} className="border rounded-lg p-4 space-y-3">
+                        <h4 className="font-medium text-green-700">
+                          {recommendation.compostable}
+                        </h4>
+
+                        {/* Nutrient Values */}
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            N: {recommendation.nutrients?.Nitrogen || 0}
+                          </Badge>
+                          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                            P: {recommendation.nutrients?.Phosphorus || 0}
+                          </Badge>
+                          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                            K: {recommendation.nutrients?.Potassium || 0}
+                          </Badge>
+                        </div>
+
+                        {/* Explanation */}
+                        <p className="text-sm text-muted-foreground">
+                          {recommendation.explanation}
+                        </p>
+                      </div>
+                    )) || (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No recommendations available
+                      </div>
+                    )}
                   </div>
-                </div>
+                </ScrollArea>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end pt-4 border-t">
+                <Button onClick={() => setShowPlanDialog(false)}>
+                  Close
+                </Button>
               </div>
             </div>
           )}

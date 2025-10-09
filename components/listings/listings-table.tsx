@@ -130,7 +130,10 @@ export function ListingsTable({
               </TableCell>
               <TableCell>
                   <div className="font-medium text-foreground">
-                    {formatPrice(listing.price || 0, listing.type)}
+                    {listing.type.toLowerCase() === "sale"
+                      ? formatPrice(listing.price || 0, listing.type)
+                      : "-"
+                    }
                   </div>
                   {listing.quantity > 0 && (
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
@@ -143,7 +146,7 @@ export function ListingsTable({
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <MapPin className="w-3 h-3 flex-shrink-0" />
                     <span className="truncate max-w-32">
-                      {listing.locationName}
+                      {listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}
                     </span>
                   </div>
                 </TableCell>
