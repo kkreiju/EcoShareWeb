@@ -4,7 +4,7 @@
   <h1><b>EcoShare</b></h1>
   <p><i>Give waste a new life.</i></p>
 
-<!--Badgess-->
+<!--Badges-->
   <p align="center">
     <img src="https://img.shields.io/badge/typescript-3178c6?style=for-the-badge&logo=typescript&logoColor=white" />
     <img src="https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" />
