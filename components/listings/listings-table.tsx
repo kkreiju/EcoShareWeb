@@ -15,8 +15,8 @@ import { MapPin, Calendar, Package, MessageCircle, Trash2, Eye, Edit, Share2 } f
 
 interface ListingsTableProps {
   listings: Listing[];
-  onDelete: (listing: Listing) => void;
-  onToggleVisibility: (listing: Listing) => void;
+  onDelete?: (listing: Listing) => void;
+  onToggleVisibility?: (listing: Listing) => void;
   onEditListing?: (listing: Listing) => void;
   onShare?: (listing: Listing) => void;
   onViewDetails?: (listing: Listing) => void;
@@ -28,8 +28,8 @@ interface ListingsTableProps {
 
 export function ListingsTable({
   listings,
-  onDelete,
-  onToggleVisibility,
+  onDelete = undefined,
+  onToggleVisibility = undefined,
   onEditListing,
   onShare,
   onViewDetails,

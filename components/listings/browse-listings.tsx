@@ -10,6 +10,7 @@ import { LoadingSkeleton, TableSkeleton } from "./loading-skeleton";
 import { EmptyState } from "./empty-state";
 import { ListingsTable } from "./listings-table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AddListingDialog } from "./add-listing-dialog";
 import { ReviewRequestsModal } from "./review-requests-modal";
@@ -47,6 +48,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
   const [isVisibilityDialogOpen, setIsVisibilityDialogOpen] = useState(false);
   const [listingToToggle, setListingToToggle] = useState<Listing | null>(null);
   const [isUpdatingListing, setIsUpdatingListing] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
   const [userData, setUserData] = useState<any>(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
@@ -197,6 +199,40 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       setIsLoading(false);
     }
   }, [userData?.user_id]);
+
+  const fetchPendingRequestsCount = useCallback(async () => {
+    if (!userData?.user_id) return;
+
+    try {
+      const response = await fetch(
+        `/api/transaction/review-requests?user_id=${userData.user_id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.requests) {
+          const pendingCount = data.requests.filter((req: any) => req.status === "Pending").length;
+          setPendingRequestsCount(pendingCount);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching pending requests count:", error);
+    }
+  }, [userData?.user_id]);
+
+  // Fetch pending requests count when user data is available
+  useEffect(() => {
+    if (userData?.user_id && !userDataLoading) {
+      fetchPendingRequestsCount();
+    }
+  }, [userData?.user_id, userDataLoading, fetchPendingRequestsCount]);
 
   // Filter and process listings whenever allListings changes
   useEffect(() => {
@@ -361,7 +397,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       console.log("Mark as unavailable response:", result);
 
       // Update the listing status to "Unavailable" in the local state instead of removing it
-      setListings((prevListings) =>
+      setAllListings((prevListings) =>
         prevListings.map((listing) =>
           listing.list_id === listingId
             ? { ...listing, status: "Unavailable" }
@@ -416,8 +452,8 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       const result = await response.json();
       console.log("Toggle listing status response:", result);
 
-      // Update the listing status in the local state based on the API response
-      setListings((prevListings) =>
+      // Update the listing status in local state based on the API response
+      setAllListings((prevListings) =>
         prevListings.map((listing) =>
           listing.list_id === listingId
             ? { ...listing, status: result.data.new_status }
@@ -528,6 +564,12 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       setIsUpdatingListing(false);
     }
   };
+
+
+
+
+
+
 
   const handleViewDetails = (listing: Listing) => {
     // Navigate to listing details page
@@ -641,13 +683,21 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleReviewRequests}
-                className="border-border flex-1 sm:flex-initial justify-center sm:justify-start"
+                className="border-border flex-1 sm:flex-initial justify-center sm:justify-start relative"
               >
                 <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="truncate hidden sm:inline">
                   Review Requests
                 </span>
                 <span className="truncate sm:hidden">Requests</span>
+                {pendingRequestsCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
+                  >
+                    {pendingRequestsCount > 9 ? '9+' : pendingRequestsCount}
+                  </Badge>
+                )}
               </Button>
               <Button
                 variant="outline"
@@ -767,6 +817,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       <ReviewRequestsModal
         isOpen={isReviewModalOpen}
         onOpenChange={setIsReviewModalOpen}
+        onRequestsUpdate={fetchPendingRequestsCount}
       />
 
       <EditListingForm
@@ -796,6 +847,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         listing={listingToToggle}
         onConfirmToggle={handleConfirmToggleVisibility}
       />
+
     </>
   );
 }

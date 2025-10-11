@@ -55,30 +55,38 @@ export function ListingReportDialog({
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement actual report submission API
       const reportData = {
-        listingId,
+        list_id: listingId,
         reason: selectedReason,
-        details: selectedReason === "Other (please specify)" ? otherReason : "",
-        timestamp: new Date().toISOString(),
+        otherComments: selectedReason === "Other (please specify)" ? otherReason.trim() : "",
       };
 
-      console.log("Report submitted:", reportData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Reset form and close dialog
-      setSelectedReason("");
-      setOtherReason("");
-      onClose();
-      
-      // Show success toast
-      toast.success("Report submitted successfully", {
-        description: "Thank you for helping keep our community safe.",
-        duration: 4000,
+      const response = await fetch('/api/listing/report-listing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(reportData),
       });
-      
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Reset form and close dialog
+        setSelectedReason("");
+        setOtherReason("");
+        onClose();
+
+        // Show success toast
+        toast.success("Listing reported successfully", {
+          description: data.message || "Thank you for helping keep our community safe.",
+          duration: 4000,
+        });
+      } else {
+        throw new Error(data.message || `Failed to report listing`);
+      }
+
     } catch (error) {
       console.error("Failed to submit report:", error);
       toast.error("Failed to submit report", {

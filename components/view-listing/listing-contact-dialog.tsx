@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, Package, Send } from "lucide-react";
+import { MessageCircle, Package, Send, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -26,6 +26,7 @@ interface ListingContactDialogProps {
   listingType: string;
   ownerName: string;
   ownerId: string;
+  onOpenReviewRequests?: () => void;
 }
 
 export function ListingContactDialog({
@@ -36,7 +37,8 @@ export function ListingContactDialog({
   listingImageURL,
   listingType,
   ownerName,
-  ownerId
+  ownerId,
+  onOpenReviewRequests
 }: ListingContactDialogProps) {
   const { userId, isAuthenticated } = useAuth();
   const [quantity, setQuantity] = useState<string>("1");
@@ -89,6 +91,14 @@ export function ListingContactDialog({
 
       console.log('Response status:', response.status);
       const data = await response.json();
+
+      // Handle specific error cases
+      if (response.status === 409) { // Conflict - duplicate request
+        toast.error("You already have a pending request for this listing.", {
+          duration: 4000,
+        });
+        return;
+      }
 
       if (response.ok && data.success) {
         // Reset form and close dialog

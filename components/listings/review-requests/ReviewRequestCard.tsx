@@ -22,6 +22,8 @@ interface ReviewRequestCardProps {
   onAccept: (requestId: string) => void;
   onDecline: (requestId: string) => void;
   showActions?: boolean;
+  processingAction?: 'accept' | 'decline';
+  compact?: boolean;
 }
 
 const getTypeColor = (type: string) => {
@@ -37,7 +39,7 @@ const getTypeColor = (type: string) => {
   }
 };
 
-export function ReviewRequestCard({ request, onAccept, onDecline, showActions = true }: ReviewRequestCardProps) {
+export function ReviewRequestCard({ request, onAccept, onDecline, showActions = true, processingAction, compact = false }: ReviewRequestCardProps) {
   const getStatusColor = () => {
     if (request.status === "Accepted") return "bg-green-600";
     if (request.status === "Declined") return "bg-gray-500";
@@ -51,70 +53,91 @@ export function ReviewRequestCard({ request, onAccept, onDecline, showActions = 
   };
 
   return (
-    <Card className={`${request.status === "Pending" ? "border-l-4 border-l-primary/50" : "border-muted"}`}>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
+    <Card className={`${request.status === "Pending" ? "border-l-4 border-l-primary/50" : "border-muted"} ${compact ? "p-3" : ""}`}>
+      <CardHeader className={compact ? "pb-2 px-3" : ""}>
+        <div className={`flex justify-between gap-3 ${compact ? "items-center" : "items-start"}`}>
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Avatar className="h-10 w-10 flex-shrink-0">
+            <Avatar className={`flex-shrink-0 ${compact ? "h-8 w-8" : "h-10 w-10"}`}>
               <AvatarImage src={request.userAvatar} />
               <AvatarFallback className="bg-primary/10">
-                <User className="h-4 w-4" />
+                <User className={`h-3 w-3 ${compact ? "" : "h-4 w-4"}`} />
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="font-semibold text-sm sm:text-base truncate">
+                <h4 className={`font-semibold truncate ${compact ? "text-xs" : "text-sm sm:text-base"}`}>
                   {request.userName}
                 </h4>
                 <Badge
                   variant={request.status === "Pending" ? "secondary" : request.status === "Accepted" ? "default" : "secondary"}
-                  className={`text-xs ${request.status !== "Pending" ? getStatusColor() : ""}`}
+                  className={`${compact ? "text-[10px] px-1 py-0" : "text-xs"} ${request.status !== "Pending" ? getStatusColor() : ""}`}
                 >
                   {getStatusText()}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className={`text-muted-foreground mt-1 ${compact ? "text-[10px]" : "text-xs"}`}>
                 {new Date(request.requestDate).toLocaleDateString()}
               </p>
             </div>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={compact ? "pt-0 px-3" : "space-y-4"}>
         <div className="flex items-center gap-2 flex-wrap">
-          <h5 className="font-medium text-sm sm:text-base flex-1 min-w-0">
+          <h5 className={`font-medium flex-1 min-w-0 truncate ${compact ? "text-xs" : "text-sm sm:text-base"}`}>
             {request.listingTitle}
           </h5>
           <Badge
             variant="outline"
-            className={`text-xs ${getTypeColor(request.listingType)}`}
+            className={`${compact ? "text-[10px] px-1 py-0" : "text-xs"} ${getTypeColor(request.listingType)}`}
           >
             {request.listingType.charAt(0).toUpperCase() + request.listingType.slice(1)}
           </Badge>
         </div>
 
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {request.message}
-        </p>
+        {!compact && (
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {request.message}
+          </p>
+        )}
 
         {showActions && request.status === "Pending" && (
           <div className="flex gap-2 pt-2">
             <Button
               onClick={() => onAccept(request.id)}
               size="sm"
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              disabled={processingAction === 'accept'}
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Accept
+              {processingAction === 'accept' ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Accepting...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Accept
+                </>
+              )}
             </Button>
             <Button
               onClick={() => onDecline(request.id)}
-              variant="outline"
               size="sm"
-              className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+              disabled={processingAction === 'decline'}
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <XCircle className="h-4 w-4 mr-2" />
-              Decline
+              {processingAction === 'decline' ? (
+                <>
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Declining...
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Decline
+                </>
+              )}
             </Button>
           </div>
         )}

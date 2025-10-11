@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { MessageSquare, AlertCircle } from "lucide-react";
+import { MessageSquare, AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { ReviewRequestsSection, ReviewRequestsEmpty } from "./review-requests";
@@ -27,16 +27,19 @@ interface ReviewRequest {
 interface ReviewRequestsModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onRequestsUpdate?: () => void;
 }
 
 export function ReviewRequestsModal({
   isOpen,
   onOpenChange,
+  onRequestsUpdate,
 }: ReviewRequestsModalProps) {
   const { userId, isAuthenticated } = useAuth();
   const [requests, setRequests] = useState<ReviewRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [processingRequests, setProcessingRequests] = useState<Map<string, 'accept' | 'decline'>>(new Map());
 
   // Fetch review requests when modal opens
   useEffect(() => {
@@ -44,6 +47,13 @@ export function ReviewRequestsModal({
       fetchReviewRequests();
     }
   }, [isOpen, isAuthenticated, userId]);
+
+  // Call onRequestsUpdate when modal closes
+  useEffect(() => {
+    if (!isOpen && onRequestsUpdate) {
+      onRequestsUpdate();
+    }
+  }, [isOpen, onRequestsUpdate]);
 
   const fetchReviewRequests = async () => {
     if (!userId) return;
@@ -83,6 +93,10 @@ export function ReviewRequestsModal({
         }));
 
         setRequests(transformedRequests);
+        // Update the badge count on the main page
+        if (onRequestsUpdate) {
+          onRequestsUpdate();
+        }
       } else {
         throw new Error(data.message || "Failed to fetch review requests");
       }
@@ -108,6 +122,9 @@ export function ReviewRequestsModal({
       });
       return;
     }
+
+    // Add to processing map
+    setProcessingRequests(prev => new Map(prev).set(requestId, 'accept'));
 
     try {
       const response = await fetch("/api/transaction/accept-request", {
@@ -160,10 +177,20 @@ export function ReviewRequestsModal({
             : "Please check your connection and try again.",
         duration: 4000,
       });
+    } finally {
+      // Remove from processing map
+      setProcessingRequests(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(requestId);
+        return newMap;
+      });
     }
   };
 
   const handleDecline = async (requestId: string) => {
+    // Add to processing map
+    setProcessingRequests(prev => new Map(prev).set(requestId, 'decline'));
+
     try {
       const response = await fetch("/api/transaction/decline-request", {
         method: "POST",
@@ -212,6 +239,13 @@ export function ReviewRequestsModal({
             : "Please check your connection and try again.",
         duration: 4000,
       });
+    } finally {
+      // Remove from processing map
+      setProcessingRequests(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(requestId);
+        return newMap;
+      });
     }
   };
 
@@ -226,8 +260,16 @@ export function ReviewRequestsModal({
             <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6" />
             Review Requests
           </DialogTitle>
-          <DialogDescription className="text-sm sm:text-base text-muted-foreground">
-            Manage requests from users interested in your listings
+          <DialogDescription className="text-sm sm:text-base text-muted-foreground flex items-center justify-between">
+            <span>Manage requests from users interested in your listings</span>
+            <button
+              onClick={fetchReviewRequests}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-4"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
           </DialogDescription>
         </DialogHeader>
 
@@ -261,6 +303,7 @@ export function ReviewRequestsModal({
               completedRequests={completedRequests}
               onAccept={handleAccept}
               onDecline={handleDecline}
+              processingRequests={processingRequests}
             />
           )}
         </div>

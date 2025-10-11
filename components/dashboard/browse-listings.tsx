@@ -153,6 +153,12 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       let filteredData = data.data || [];
       let filteredCount = data.total_count || 0;
 
+      // Filter out the current user's own listings to show only other users' listings
+      if (userData?.user_id) {
+        filteredData = filteredData.filter((listing: any) => listing.user_id !== userData.user_id);
+        filteredCount = filteredData.length;
+      }
+
       // Apply client-side price filtering if needed
       if (filters.price && filters.price !== "all") {
         // Filter by price range
@@ -231,12 +237,14 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, userData?.user_id]);
 
-  // Initial load and refetch when filters/search changes
+  // Initial load and refetch when filters/search/userData changes
   useEffect(() => {
-    fetchListings();
-  }, [fetchListings]);
+    if (userData?.user_id) {
+      fetchListings();
+    }
+  }, [fetchListings, userData?.user_id]);
 
   const handleFiltersChange = (newFilters: ListingFilters) => {
     setFilters(newFilters);
@@ -382,7 +390,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
         )}
 
         {/* Content */}
-        {isLoading ? (
+        {userDataLoading || isLoading ? (
           viewMode === "grid" ? (
             <LoadingSkeleton />
           ) : (

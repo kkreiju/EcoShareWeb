@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Package, MapPin, Calendar, Clock, AlertCircle, MessageCircle, Star } from "lucide-react";
+import { Package, MapPin, Calendar, Clock, AlertCircle, Flag, MessageCircle, Star } from "lucide-react";
 import { Listing } from "@/lib/DataClass";
 
 interface ListingImageProps {
@@ -239,12 +239,11 @@ export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatD
                     </Button>
 
                     <Button
-                      variant="outline"
                       size="lg"
-                      className="flex-1 font-medium border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-all duration-200 hover:shadow-md"
+                      className="flex-1 font-medium text-white shadow-lg transition-all duration-200 hover:shadow-xl transform hover:-translate-y-0.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
                       onClick={onReport}
                     >
-                      <AlertCircle className="w-5 h-5 mr-3" />
+                      <Flag className="w-5 h-5 mr-3" />
                       Report Item
                     </Button>
                   </div>
