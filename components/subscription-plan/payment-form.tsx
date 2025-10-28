@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CreditCard, Loader2 } from "lucide-react";
+import { stripeService } from "@/lib/StripeService";
+import { useAuth } from "@/hooks/use-auth";
 
 interface PaymentFormProps {
   onSuccess: () => void;
@@ -14,6 +16,7 @@ interface PaymentFormProps {
 }
 
 const CARD_ELEMENT_OPTIONS = {
+  hidePostalCode: true, // Remove postal code field to match mobile app
   style: {
     base: {
       fontSize: "16px",
@@ -30,9 +33,19 @@ const CARD_ELEMENT_OPTIONS = {
   },
 };
 
+// Subscription plan configuration
+const SUBSCRIPTION_PLAN = {
+  planId: "premium_monthly",
+  planName: "Premium Plan",
+  amount: 500, // $5.00 in cents
+  currency: "usd",
+  interval: "month",
+};
+
 export function PaymentForm({ onSuccess, onCancel }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
+  const { userId } = useAuth();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [billingInfo, setBillingInfo] = useState({
@@ -57,6 +70,11 @@ export function PaymentForm({ onSuccess, onCancel }: PaymentFormProps) {
       return;
     }
 
+    if (!userId) {
+      toast.error("User not authenticated");
+      return;
+    }
+
     // Validate billing info
     if (
       !billingInfo.firstName.trim() ||
@@ -76,7 +94,7 @@ export function PaymentForm({ onSuccess, onCancel }: PaymentFormProps) {
     setIsProcessing(true);
 
     try {
-      // Create payment method
+      // Step 1: Create payment method
       const { error: paymentMethodError, paymentMethod } =
         await stripe.createPaymentMethod({
           type: "card",
@@ -90,27 +108,66 @@ export function PaymentForm({ onSuccess, onCancel }: PaymentFormProps) {
         });
 
       if (paymentMethodError) {
-        toast.error(paymentMethodError.message || "Payment failed");
+        toast.error(paymentMethodError.message || "Payment method creation failed");
         return;
       }
 
-      // Here you would typically send the payment method ID to your server
-      // to create a subscription. For now, we'll simulate success.
+      if (!paymentMethod) {
+        toast.error("Failed to create payment method");
+        return;
+      }
 
-      console.log("Payment method created:", paymentMethod?.id);
-      console.log("Billing info:", billingInfo);
+      // Step 2: Create payment intent on backend
+      toast.loading("Processing payment...", { id: "payment-processing" });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      toast.success("Payment successful! Welcome to Premium!", {
-        description: "Your subscription is now active.",
+      const paymentIntentResponse = await stripeService.createPaymentIntent({
+        userId: userId,
+        planId: SUBSCRIPTION_PLAN.planId,
+        planName: SUBSCRIPTION_PLAN.planName,
+        amount: SUBSCRIPTION_PLAN.amount,
+        currency: SUBSCRIPTION_PLAN.currency,
+        interval: SUBSCRIPTION_PLAN.interval,
+        billing_information_firstName: billingInfo.firstName,
+        billing_information_lastName: billingInfo.lastName,
+        billing_information_address: billingInfo.address,
       });
 
-      onSuccess();
+      if (!paymentIntentResponse) {
+        throw new Error("Failed to create payment intent");
+      }
+
+      // Step 3: Confirm payment with Stripe
+      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
+        paymentIntentResponse.client_secret,
+        {
+          payment_method: paymentMethod.id,
+        }
+      );
+
+      if (confirmError) {
+        toast.error(confirmError.message || "Payment confirmation failed", {
+          id: "payment-processing",
+        });
+        return;
+      }
+
+      if (paymentIntent?.status === "succeeded") {
+        toast.success("Payment successful! Welcome to Premium!", {
+          id: "payment-processing",
+          description: "Your subscription is now active.",
+        });
+        onSuccess();
+      } else {
+        toast.error("Payment was not successful. Please try again.", {
+          id: "payment-processing",
+        });
+      }
     } catch (error) {
       console.error("Payment error:", error);
-      toast.error("Payment failed. Please try again.");
+      toast.error(
+        error instanceof Error ? error.message : "Payment failed. Please try again.",
+        { id: "payment-processing" }
+      );
     } finally {
       setIsProcessing(false);
     }

@@ -1,156 +1,210 @@
-// import { Alert } from 'react-native';
+/**
+ * StripeService - Frontend service to interact with Stripe backend APIs
+ * Handles payment intents, subscriptions, and payment confirmations
+ */
 
-// export interface PaymentIntent {
-//   id: string;
-//   amount: number;
-//   currency: string;
-//   status: string;
-//   client_secret: string;
-// }
+export interface PaymentIntentResponse {
+  success: boolean;
+  client_secret: string;
+  payment_intent_id: string;
+  customer_id: string;
+  price_id: string;
+}
 
-// export interface PaymentIntentResponse {
-//   success: boolean;
-//   client_secret: string;
-//   payment_intent_id: string;
-//   customer_id: string;
-//   price_id: string;
-// }
+export interface SubscriptionData {
+  userId: string;
+  planId: string;
+  planName: string;
+  amount: number;
+  currency: string;
+  interval: string;
+  billing_information_firstName: string;
+  billing_information_lastName: string;
+  billing_information_address: string;
+}
 
-// export interface SubscriptionData {
-//   userId: string;
-//   planId: string;
-//   planName: string;
-//   amount: number;
-//   currency: string;
-//   interval: string;
-//   paymentMethodId?: string;
-// }
+export interface SubscriptionHistoryItem {
+  user_id: string;
+  sub_amountDue: number;
+  sub_status: string;
+  sub_details: string | object;
+  created_at?: string;
+  sub_dateTime?: string; // Fallback field name from database
+}
 
-// export class StripeService {
-//   private static instance: StripeService;
-//   private apiUrl: string;
+export interface ConfirmPaymentResponse {
+  success: boolean;
+  paymentIntent?: {
+    id: string;
+    status: string;
+    client_secret: string;
+    amount: number;
+    currency: string;
+    next_action?: any;
+  };
+  setupIntent?: {
+    id: string;
+    status: string;
+    payment_method: string;
+    next_action?: any;
+  };
+  message?: string;
+}
 
-//   private constructor() {
-//     this.apiUrl = process.env.EXPO_PUBLIC_API_URL || '';
-//   }
 
-//   public static getInstance(): StripeService {
-//     if (!StripeService.instance) {
-//       StripeService.instance = new StripeService();
-//     }
-//     return StripeService.instance;
-//   }
+export class StripeService {
+  private static instance: StripeService;
+  private apiUrl: string;
 
-//   // Create a payment intent for subscription
-//   async createPaymentIntent(subscriptionData: SubscriptionData): Promise<PaymentIntentResponse | null> {
-//     try {
-//       console.log(subscriptionData)
+  private constructor() {
+    // Use relative URLs for Next.js API routes
+    this.apiUrl = '';
+  }
 
-//       const response = await fetch(`${this.apiUrl}/api/stripe/create-payment-intent`, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(subscriptionData),
-//       });
+  public static getInstance(): StripeService {
+    if (!StripeService.instance) {
+      StripeService.instance = new StripeService();
+    }
+    return StripeService.instance;
+  }
 
-//       if (response.ok) {
-//         const data = await response.json();
-//         if (data.success) {
-//           return data;
-//         } else {
-//           throw new Error(data.message || 'Failed to create setup intent');
-//         }
-//       } else {
-//         throw new Error('Network error creating payment intent');
-//       }
-//     } catch (error) {
-//       console.error('Error creating payment intent:', error);
-//       Alert.alert('Error', 'Failed to create payment. Please try again.');
-//       return null;
-//     }
-//   }
+  /**
+   * Create a payment intent for subscription
+   * @param subscriptionData - Subscription details including user info and billing details
+   * @returns PaymentIntentResponse or null on error
+   */
+  async createPaymentIntent(subscriptionData: SubscriptionData): Promise<PaymentIntentResponse | null> {
+    try {
+      console.log('Creating payment intent:', subscriptionData);
 
-//   // Confirm payment and create subscription
-//   async confirmPayment(paymentIntentId: string, paymentMethodId: string): Promise<boolean> {
-//     try {
-//       const response = await fetch(`${this.apiUrl}/api/stripe/confirm-payment`, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({
-//           paymentIntentId,
-//           paymentMethodId,
-//         }),
-//       });
+      const response = await fetch(`${this.apiUrl}/api/stripe/create-payment-intent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(subscriptionData),
+      });
 
-//       if (response.ok) {
-//         const data = await response.json();
-//         if (data.success) {
-//           Alert.alert('Success', 'Payment successful! Your subscription is now active.');
-//           return true;
-//         } else {
-//           throw new Error(data.message || 'Payment confirmation failed');
-//         }
-//       } else {
-//         throw new Error('Network error confirming payment');
-//       }
-//     } catch (error) {
-//       console.error('Error confirming payment:', error);
-//       Alert.alert('Error', 'Payment confirmation failed. Please try again.');
-//       return false;
-//     }
-//   }
+      const data = await response.json();
 
-//   // Get subscription status
-//   async getSubscriptionStatus(userId: string): Promise<any> {
-//     try {
-//       const response = await fetch(`${this.apiUrl}/api/stripe/subscription-status?userId=${userId}`, {
-//         method: 'GET',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//       });
+      if (response.ok && data.success) {
+        return data;
+      } else {
+        throw new Error(data.message || data.error || 'Failed to create payment intent');
+      }
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      throw error;
+    }
+  }
 
-//       if (response.ok) {
-//         const data = await response.json();
-//         return data.success ? data.data : null;
-//       } else {
-//         throw new Error('Failed to fetch subscription status');
-//       }
-//     } catch (error) {
-//       console.error('Error fetching subscription status:', error);
-//       return null;
-//     }
-//   }
+  /**
+   * Confirm payment with Stripe
+   * @param paymentIntentId - Payment intent ID to confirm
+   * @param paymentMethodId - Payment method ID from Stripe
+   * @returns ConfirmPaymentResponse
+   */
+  async confirmPayment(
+    paymentIntentId: string,
+    paymentMethodId: string
+  ): Promise<ConfirmPaymentResponse> {
+    try {
+      const response = await fetch(`${this.apiUrl}/api/stripe/confirm-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentIntentId,
+          paymentMethodId,
+        }),
+      });
 
-//   // Cancel subscription
-//   async cancelSubscription(subscriptionId: string): Promise<boolean> {
-//     try {
-//       const response = await fetch(`${this.apiUrl}/api/stripe/cancel-subscription`, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ subscriptionId }),
-//       });
+      const data = await response.json();
 
-//       if (response.ok) {
-//         const data = await response.json();
-//         if (data.success) {
-//           Alert.alert('Success', 'Subscription cancelled successfully.');
-//           return true;
-//         } else {
-//           throw new Error(data.message || 'Failed to cancel subscription');
-//         }
-//       } else {
-//         throw new Error('Network error cancelling subscription');
-//       }
-//     } catch (error) {
-//       console.error('Error cancelling subscription:', error);
-//       Alert.alert('Error', 'Failed to cancel subscription. Please try again.');
-//       return false;
-//     }
-//   }
-// }
+      if (response.ok && data.success) {
+        return data;
+      } else {
+        throw new Error(data.message || data.error || 'Payment confirmation failed');
+      }
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get subscription history for a user
+   * @param userId - User ID to fetch subscription history for
+   * @returns Array of subscription history items
+   */
+  async getSubscriptionHistory(userId: string): Promise<SubscriptionHistoryItem[]> {
+    try {
+      const response = await fetch(
+        `${this.apiUrl}/api/user/subscription-history?user_id=${userId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        return data.data || [];
+      } else {
+        throw new Error(data.message || data.error || 'Failed to fetch subscription history');
+      }
+    } catch (error) {
+      console.error('Error fetching subscription history:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get subscription status from Stripe
+   * @param subscriptionId - Stripe subscription ID (optional)
+   * @param customerId - Stripe customer ID (optional)
+   * @returns Subscription status data
+   */
+  async getSubscriptionStatus(
+    subscriptionId?: string,
+    customerId?: string
+  ): Promise<any> {
+    try {
+      let url = `${this.apiUrl}/api/stripe/subscription-status?`;
+      
+      if (subscriptionId) {
+        url += `subscription_id=${subscriptionId}`;
+      } else if (customerId) {
+        url += `customer_id=${customerId}`;
+      } else {
+        throw new Error('Either subscription_id or customer_id is required');
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        return data;
+      } else {
+        throw new Error(data.message || data.error || 'Failed to fetch subscription status');
+      }
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+      throw error;
+    }
+  }
+
+}
+
+// Export singleton instance
+export const stripeService = StripeService.getInstance();

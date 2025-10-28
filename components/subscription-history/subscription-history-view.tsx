@@ -11,7 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   RefreshCw,
   Receipt,
@@ -21,74 +25,96 @@ import {
   AlertCircle,
   Download,
   Eye,
+  XCircle,
+  MessageCircle,
+  MapPin,
+  ShoppingCart,
+  Check,
 } from "lucide-react";
+import { stripeService, type SubscriptionHistoryItem } from "@/lib/StripeService";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
+import { generateReceiptPDF } from "@/lib/pdfService";
 
 interface SubscriptionHistory {
   id: string;
   plan_name: string;
-  status: "active" | "expired" | "cancelled" | "pending";
+  status: string;
   start_date: string;
-  end_date: string;
   amount: number;
   currency: string;
-  payment_method: string;
-  receipt_url?: string;
+  transaction_id: string;
+  invoice_number: string;
+  billing_details: {
+    firstName: string;
+    lastName: string;
+    address: string;
+  };
 }
 
 export function SubscriptionHistoryView() {
+  const { userId, isAuthenticated } = useAuth();
   const [subscriptions, setSubscriptions] = useState<SubscriptionHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedReceipt, setSelectedReceipt] =
-    useState<SubscriptionHistory | null>(null);
 
   const fetchSubscriptionHistory = async () => {
+    if (!userId) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/user/subscription-history');
-      // const data = await response.json();
+      const historyData = await stripeService.getSubscriptionHistory(userId);
+      
+      // Transform backend data to display format
+      const transformedSubscriptions: SubscriptionHistory[] = historyData.map((item: SubscriptionHistoryItem, index: number) => {
+        // Parse sub_details if it's a string
+        let billingDetails = {
+          firstName: "",
+          lastName: "",
+          address: "",
+        };
 
-      // Mock data for now
-      const mockSubscriptions: SubscriptionHistory[] = [
-        {
-          id: "sub_1",
-          plan_name: "EcoShare Pro Monthly",
-          status: "active",
-          start_date: "2024-01-15T00:00:00Z",
-          end_date: "2024-02-15T00:00:00Z",
-          amount: 9.99,
-          currency: "USD",
-          payment_method: "**** **** **** 4242",
-          receipt_url: "#",
-        },
-        {
-          id: "sub_2",
-          plan_name: "EcoShare Pro Yearly",
-          status: "expired",
-          start_date: "2023-12-15T00:00:00Z",
-          end_date: "2024-01-15T00:00:00Z",
-          amount: 99.99,
-          currency: "USD",
-          payment_method: "**** **** **** 4242",
-          receipt_url: "#",
-        },
-        {
-          id: "sub_3",
-          plan_name: "EcoShare Pro Monthly",
-          status: "cancelled",
-          start_date: "2023-11-15T00:00:00Z",
-          end_date: "2023-12-15T00:00:00Z",
-          amount: 9.99,
-          currency: "USD",
-          payment_method: "**** **** **** 4242",
-          receipt_url: "#",
-        },
-      ];
+        if (item.sub_details) {
+          try {
+            // Handle double-encoded JSON strings
+            let parsedDetails = item.sub_details;
+            if (typeof parsedDetails === "string") {
+              // Remove extra quotes if present
+              parsedDetails = parsedDetails.replace(/^"|"$/g, "");
+              parsedDetails = JSON.parse(parsedDetails);
+            }
+            billingDetails = parsedDetails as typeof billingDetails;
+          } catch (e) {
+            console.error("Error parsing sub_details:", e);
+          }
+        }
 
-      setSubscriptions(mockSubscriptions);
+        // Handle date - the database field is sub_dateTime, but API might return created_at
+        const subscriptionDate = item.sub_dateTime || item.created_at || new Date().toISOString();
+
+        // Generate transaction ID and invoice number
+        const transactionId = `TXN-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+        const invoiceNumber = `INV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+        return {
+          id: `sub_${index + 1}`,
+          plan_name: "Premium Plan",
+          status: item.sub_status || "Successful",
+          start_date: subscriptionDate,
+          amount: item.sub_amountDue / 100, // Convert cents to dollars
+          currency: "USD",
+          transaction_id: transactionId,
+          invoice_number: invoiceNumber,
+          billing_details: billingDetails,
+        };
+      });
+
+      setSubscriptions(transformedSubscriptions);
     } catch (err) {
       console.error("Error fetching subscription history:", err);
       setError(
@@ -96,21 +122,32 @@ export function SubscriptionHistoryView() {
           ? err.message
           : "Failed to load subscription history"
       );
+      toast.error("Failed to load subscription history");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSubscriptionHistory();
-  }, []);
+    if (isAuthenticated && userId) {
+      fetchSubscriptionHistory();
+    }
+  }, [userId, isAuthenticated]);
 
   const handleRefresh = () => {
     fetchSubscriptionHistory();
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    
     const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "N/A";
+    }
+    
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -126,38 +163,70 @@ export function SubscriptionHistoryView() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "expired":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      case "cancelled":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes("success")) {
+      return "bg-green-100 text-green-800 border-green-200";
+    } else if (statusLower.includes("fail") || statusLower.includes("cancel")) {
+      return "bg-red-100 text-red-800 border-red-200";
+    } else if (statusLower.includes("pending")) {
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    } else {
+      return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "active":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "expired":
-        return <AlertCircle className="h-4 w-4 text-gray-600" />;
-      case "cancelled":
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
-      case "pending":
-        return <Calendar className="h-4 w-4 text-yellow-600" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-600" />;
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes("success")) {
+      return <CheckCircle className="h-4 w-4 text-green-600" />;
+    } else if (statusLower.includes("fail") || statusLower.includes("cancel")) {
+      return <XCircle className="h-4 w-4 text-red-600" />;
+    } else if (statusLower.includes("pending")) {
+      return <Calendar className="h-4 w-4 text-yellow-600" />;
+    } else {
+      return <AlertCircle className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const handleViewReceipt = (subscription: SubscriptionHistory) => {
-    setSelectedReceipt(subscription);
+  const handlePrintReceipt = async (subscription: SubscriptionHistory) => {
+    try {
+      await generateReceiptPDF({
+        planName: subscription.plan_name,
+        amount: subscription.amount,
+        currency: subscription.currency,
+        date: formatDate(subscription.start_date),
+        status: subscription.status,
+        transactionId: subscription.transaction_id,
+        invoiceNumber: subscription.invoice_number,
+        billingDetails: subscription.billing_details,
+      });
+      toast.success("Receipt downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate receipt PDF");
+    }
   };
+
+  const premiumFeatures = [
+    {
+      icon: MessageCircle,
+      title: "Chatbot Finds Listings Faster",
+      description:
+        "Discover relevant food waste and compostable materials listings instantly with our smart chatbot assistant",
+    },
+    {
+      icon: MapPin,
+      title: "See Listings Nearby You",
+      description:
+        "Unlock access to local listings and connect with providers and beneficiaries close to your location",
+    },
+    {
+      icon: ShoppingCart,
+      title: "Can Post Sale Listings",
+      description:
+        "Create and manage your own sale listings to reach more customers in your area",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -168,7 +237,7 @@ export function SubscriptionHistoryView() {
             Subscription History
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
-            View your past and current subscription plans and receipts
+            View your past and current subscription payments
           </p>
         </div>
 
@@ -205,13 +274,49 @@ export function SubscriptionHistoryView() {
           Array.from({ length: 3 }).map((_, i) => (
             <Card key={i} className="border-0 shadow-lg">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2 flex-1">
-                    <div className="h-5 bg-muted rounded animate-pulse w-48" />
-                    <div className="h-4 bg-muted rounded animate-pulse w-32" />
-                    <div className="h-4 bg-muted rounded animate-pulse w-40" />
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-3">
+                    {/* Plan Name and Status */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 bg-muted rounded-full animate-pulse" />
+                        <div className="h-6 bg-muted rounded animate-pulse w-32" />
+                      </div>
+                      <div className="h-6 bg-muted rounded-full animate-pulse w-20" />
+                    </div>
+
+                    {/* Dates */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 bg-muted rounded animate-pulse" />
+                      <div className="h-4 bg-muted rounded animate-pulse w-48" />
+                    </div>
+
+                    {/* Payment Details */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 bg-muted rounded animate-pulse" />
+                        <div className="h-4 bg-muted rounded animate-pulse w-32" />
+                      </div>
+                      <div className="h-5 bg-muted rounded animate-pulse w-20" />
+                    </div>
+
+                    {/* Premium Features */}
+                    <div className="mt-4 pt-4 border-t space-y-2">
+                      <div className="h-4 bg-muted rounded animate-pulse w-36 mb-3" />
+                      {Array.from({ length: 3 }).map((_, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <div className="h-4 w-4 bg-muted rounded-full animate-pulse flex-shrink-0" />
+                          <div className="h-4 bg-muted rounded animate-pulse w-48" />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="h-6 bg-muted rounded animate-pulse w-20" />
+
+                  {/* Actions */}
+                  <div className="flex flex-col gap-2">
+                    <div className="h-9 bg-muted rounded animate-pulse w-32" />
+                    <div className="h-9 bg-muted rounded animate-pulse w-32" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -255,8 +360,7 @@ export function SubscriptionHistoryView() {
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {formatDate(subscription.start_date)} -{" "}
-                          {formatDate(subscription.end_date)}
+                          Subscribed on {formatDate(subscription.start_date)}
                         </span>
                       </div>
                     </div>
@@ -265,7 +369,10 @@ export function SubscriptionHistoryView() {
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
                         <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        <span>{subscription.payment_method}</span>
+                        <span>
+                          {subscription.billing_details.firstName}{" "}
+                          {subscription.billing_details.lastName}
+                        </span>
                       </div>
                       <div className="text-lg font-semibold text-green-600">
                         {formatCurrency(
@@ -274,70 +381,72 @@ export function SubscriptionHistoryView() {
                         )}
                       </div>
                     </div>
+
+                    {/* Premium Features */}
+                    <div className="mt-4 pt-4 border-t space-y-2">
+                      <h4 className="text-sm font-semibold text-muted-foreground mb-3">
+                        Premium Features:
+                      </h4>
+                      {premiumFeatures.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <feature.icon className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          <span className="text-muted-foreground">
+                            {feature.title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleViewReceipt(subscription)}
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           View Receipt
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
+                      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle className="flex items-center gap-2">
                             <Receipt className="h-5 w-5 text-green-600" />
-                            Receipt - {subscription.plan_name}
+                            Subscription Receipt
                           </DialogTitle>
+                          <DialogDescription>
+                            Your payment receipt for EcoShare Premium
+                          </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="border rounded-lg p-4 space-y-3">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Plan:
-                              </span>
-                              <span className="font-medium">
+
+                        <div className="space-y-6 py-4">
+                          {/* Receipt Details */}
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Plan</span>
+                              <span className="font-semibold">
                                 {subscription.plan_name}
                               </span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Period:
-                              </span>
-                              <span className="font-medium">
-                                {formatDate(subscription.start_date)} -{" "}
-                                {formatDate(subscription.end_date)}
+                            
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Amount</span>
+                              <span className="font-semibold text-green-600">
+                                {formatCurrency(subscription.amount, subscription.currency)}/month
                               </span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Amount:
-                              </span>
-                              <span className="font-medium text-green-600">
-                                {formatCurrency(
-                                  subscription.amount,
-                                  subscription.currency
-                                )}
+                            
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Date</span>
+                              <span className="font-semibold">
+                                {formatDate(subscription.start_date)}
                               </span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Payment Method:
-                              </span>
-                              <span className="font-medium">
-                                {subscription.payment_method}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Status:
-                              </span>
+                            
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Status</span>
                               <Badge
                                 variant="outline"
                                 className={getStatusColor(subscription.status)}
@@ -345,24 +454,73 @@ export function SubscriptionHistoryView() {
                                 {subscription.status}
                               </Badge>
                             </div>
+                            
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Transaction ID</span>
+                              <span className="text-sm font-mono">
+                                {subscription.transaction_id}
+                              </span>
+                            </div>
+                            
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Invoice #</span>
+                              <span className="text-sm font-mono">
+                                {subscription.invoice_number}
+                              </span>
+                            </div>
                           </div>
 
-                          <div className="flex gap-2 pt-4">
+                          {/* Billing Information */}
+                          <div className="p-4 bg-muted rounded-lg space-y-1">
+                            <Label className="text-sm font-medium">
+                              Billing Information
+                            </Label>
+                            <p className="font-medium">
+                              {subscription.billing_details.firstName}{" "}
+                              {subscription.billing_details.lastName}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {subscription.billing_details.address}
+                            </p>
+                          </div>
+
+                          {/* Thank You Message */}
+                          <div className="text-center p-4 border rounded-lg">
+                            <p className="text-sm font-medium mb-1">
+                              Thank you for choosing EcoShare Premium!
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Your support helps us create a more sustainable future.
+                            </p>
+                          </div>
+                        </div>
+
+                        <DialogFooter className="gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => handlePrintReceipt(subscription)}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download PDF
+                          </Button>
+                          <DialogClose asChild>
                             <Button
-                              variant="outline"
-                              className="flex-1"
-                              onClick={() => setSelectedReceipt(null)}
+                              className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               Close
                             </Button>
-                            <Button className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
-                              <Download className="h-4 w-4 mr-2" />
-                              Download PDF
-                            </Button>
-                          </div>
-                        </div>
+                          </DialogClose>
+                        </DialogFooter>
                       </DialogContent>
                     </Dialog>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePrintReceipt(subscription)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
                   </div>
                 </div>
               </CardContent>

@@ -12,6 +12,8 @@ interface ListingCardProps {
   onContact?: (listing: Listing) => void;
   onViewDetails?: (listing: Listing) => void;
   isOwner?: boolean;
+  hideContactButton?: boolean;
+  compact?: boolean;
 }
 
 export function ListingCard({
@@ -19,6 +21,8 @@ export function ListingCard({
   onContact,
   onViewDetails,
   isOwner = false,
+  hideContactButton = false,
+  compact = false,
 }: ListingCardProps) {
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
@@ -68,9 +72,9 @@ export function ListingCard({
   const tags = parseTags(listing.tags);
 
   return (
-    <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 py-0">
+    <Card className={`group overflow-hidden transition-all duration-300 py-0 ${compact ? 'hover:shadow-md' : 'hover:shadow-lg hover:-translate-y-1'}`}>
       <div className="relative">
-        <div className="aspect-video overflow-hidden">
+        <div className={compact ? "h-32 overflow-hidden" : "aspect-video overflow-hidden"}>
           <img
             src={listing.imageURL}
             alt={listing.title}
@@ -84,7 +88,7 @@ export function ListingCard({
 
         {/* Type badge */}
         <Badge
-          className={`absolute top-3 left-3 ${getTypeColor(
+          className={`absolute ${compact ? 'top-2 left-2 text-xs px-2 py-0.5' : 'top-3 left-3'} ${getTypeColor(
             listing.type
           )} font-medium`}
         >
@@ -92,73 +96,77 @@ export function ListingCard({
         </Badge>
       </div>
 
-      <CardContent className="p-4 flex flex-col h-full">
-        <div className="flex-1 space-y-3">
+      <CardContent className={compact ? "p-2.5 flex flex-col h-full" : "p-4 flex flex-col h-full"}>
+        <div className={`flex-1 ${compact ? 'space-y-1.5' : 'space-y-3'}`}>
         {/* Title and Price */}
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-lg text-card-foreground line-clamp-2 leading-tight">
+          <h3 className={`font-semibold text-card-foreground line-clamp-2 leading-tight ${compact ? 'text-sm' : 'text-lg'}`}>
             {listing.title}
           </h3>
           <div className="text-right shrink-0">
             {listing.type.toLowerCase() === "sale" && (
-              <div className="text-xl font-bold text-card-foreground">
+              <div className={`font-bold text-card-foreground ${compact ? 'text-base' : 'text-xl'}`}>
                 {formatPrice(listing.price || 0, listing.type)}
               </div>
             )}
             {listing.quantity > 0 && (
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-0.5">
                 <Package className="h-3 w-3" />
-                {listing.quantity} available
+                {listing.quantity}
               </div>
             )}
           </div>
         </div>
 
-        {/* Description */}
-        <div className="h-10 flex items-start">
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-            {listing.description}
-          </p>
-        </div>
+        {/* Description - hide in compact mode */}
+        {!compact && (
+          <div className="h-10 flex items-start">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+              {listing.description}
+            </p>
+          </div>
+        )}
 
-        {/* Tags */}
+        {/* Tags - show only first tag in compact mode */}
         {tags.length > 0 && (
           <div className="flex gap-1 overflow-hidden">
-            {tags.slice(0, 2).map((tag, index) => (
+            {tags.slice(0, compact ? 1 : 2).map((tag, index) => (
               <Badge
                 key={index}
                 variant="secondary"
-                className="text-xs bg-muted text-muted-foreground hover:bg-muted/80 flex-shrink-0"
+                className={`${compact ? 'text-[10px] px-1.5 py-0' : 'text-xs'} bg-muted text-muted-foreground hover:bg-muted/80 flex-shrink-0`}
               >
                 {tag}
               </Badge>
             ))}
-            {tags.length > 2 && (
+            {tags.length > (compact ? 1 : 2) && (
               <Badge
                 variant="secondary"
-                className="text-xs bg-muted text-muted-foreground flex-shrink-0"
+                className={`${compact ? 'text-[10px] px-1.5 py-0' : 'text-xs'} bg-muted text-muted-foreground flex-shrink-0`}
               >
-                +{tags.length - 2}
+                +{tags.length - (compact ? 1 : 2)}
               </Badge>
             )}
           </div>
         )}
 
         {/* Location and Time */}
-        <div className="space-y-2 text-xs text-muted-foreground">
+        <div className={`text-xs text-muted-foreground ${compact ? 'space-y-0.5' : 'space-y-2'}`}>
           <div className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            <span className="line-clamp-1">{listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}</span>
+            <MapPin className="h-3 w-3 flex-shrink-0" />
+            <span className="line-clamp-1 text-[11px]">{listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>Posted {formatDate(listing.postedDate)}</span>
-          </div>
+          {!compact && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>Posted {formatDate(listing.postedDate)}</span>
+            </div>
+          )}
         </div>
 
         {/* User Info */}
-        <div className="flex items-center gap-2 pt-2 border-t border-border">
-          <Avatar className="h-8 w-8">
+        <div className={`flex items-center gap-2 ${compact ? 'pt-1.5 border-t border-border' : 'pt-2 border-t border-border'}`}>
+          <Avatar className={compact ? "h-6 w-6" : "h-8 w-8"}>
             <AvatarImage src={listing.User?.profileURL} />
             <AvatarFallback className="text-xs bg-muted">
               {listing.User?.firstName?.[0]}
@@ -166,13 +174,13 @@ export function ListingCard({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-card-foreground truncate">
+            <p className={`font-medium text-card-foreground truncate ${compact ? 'text-xs' : 'text-sm'}`}>
               {listing.User?.firstName} {listing.User?.lastName}
             </p>
-            <div className="flex items-center gap-1">
-              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs text-muted-foreground">
-                {listing.User?.ratings || 0} rating
+            <div className="flex items-center gap-0.5">
+              <Star className={`fill-yellow-400 text-yellow-400 ${compact ? 'h-2.5 w-2.5' : 'h-3 w-3'}`} />
+              <span className={compact ? 'text-[10px] text-muted-foreground' : 'text-xs text-muted-foreground'}>
+                {listing.User?.ratings || 0}
               </span>
             </div>
           </div>
@@ -180,11 +188,11 @@ export function ListingCard({
         </div>
 
         {/* Action Buttons */}
-        <div className={`flex gap-2 pt-2 ${isOwner ? "justify-center" : ""}`}>
+        <div className={`flex gap-2 ${compact ? 'pt-1.5' : 'pt-2'} ${isOwner || hideContactButton ? "justify-center" : ""}`}>
           <Button
             variant="outline"
-            size="sm"
-            className="border-border hover:bg-muted/50 flex-1"
+            size={compact ? "sm" : "sm"}
+            className={`${hideContactButton ? "flex-1" : "flex-1"} border-border hover:bg-muted/50 ${compact ? 'text-xs h-8 px-3' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               onViewDetails?.(listing);
@@ -192,16 +200,16 @@ export function ListingCard({
           >
             View Details
           </Button>
-          {!isOwner && (
+          {!isOwner && !hideContactButton && (
             <Button
               size="sm"
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              className={`flex-1 bg-green-600 hover:bg-green-700 text-white ${compact ? 'text-xs h-8 px-3' : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
                 onContact?.(listing);
               }}
             >
-              <MessageCircle className="h-4 w-4 mr-1" />
+              <MessageCircle className={compact ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />
               {listing.type === "Wanted" ? "Offer Item" : "Request Item"}
             </Button>
           )}

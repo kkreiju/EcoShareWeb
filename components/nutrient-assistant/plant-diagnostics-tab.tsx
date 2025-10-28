@@ -1,37 +1,23 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Camera,
   Sparkles,
   AlertCircle,
   RotateCcw,
-  Leaf,
-  Droplets,
-  Zap,
-  Sun,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WebCamera } from "@shivantra/react-web-camera";
-
-interface DiagnosisResult {
-  prediction: string;
-  confidence: number;
-  nutrientNeeds: string;
-  compostSuggestions: string;
-}
+import { PlantDiagnosticsResultModal, DiagnosisResult } from "./plant-diagnostics-result-modal";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/lib/supabase/api";
 
 export function PlantDiagnosticsTab() {
+  const { user } = useAuth();
+  const [userData, setUserData] = useState<any>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +25,29 @@ export function PlantDiagnosticsTab() {
     useState<DiagnosisResult | null>(null);
   const [showResultsDialog, setShowResultsDialog] = useState(false);
   const cameraRef = useRef<any>(null);
+
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user?.email) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("User")
+          .select("user_id")
+          .eq("user_email", user.email)
+          .single();
+
+        if (!error && data) {
+          setUserData(data);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+
+    fetchUserData();
+  }, [user?.email]);
 
   const handleStartCamera = () => {
     setCameraActive(true);
@@ -95,6 +104,7 @@ export function PlantDiagnosticsTab() {
           },
           body: JSON.stringify({
             image: base64Image,
+            userId: userData?.user_id || "",
           }),
         });
 
@@ -103,14 +113,25 @@ export function PlantDiagnosticsTab() {
         }
 
         const result = await response.json();
+        console.log("API Response:", result);
 
         if (result.success) {
-          // Set diagnosis results
+          // Set comprehensive diagnosis results
           setDiagnosisResult({
-            prediction: result.data.prediction,
+            plantName: result.data.prediction,
             confidence: result.data.confidence,
+            // New comprehensive data
+            plantNeeds: result.data.plant_needs,
+            finalMix: result.data.combined_analysis?.final_mix,
+            matchQuality: result.data.combined_analysis?.match_quality,
+            matchesPlantNeeds: result.data.combined_analysis?.matches_plant_needs,
+            assessment: result.data.combined_analysis?.assessment,
+            recommendations: result.data.recommendations,
+            listings: result.data.listings,
+            // Backward compatibility
             nutrientNeeds: result.diagnosis.nutrientNeeds,
             compostSuggestions: result.diagnosis.compostSuggestions,
+            capturedImage: base64Image,
           });
 
           // Show results dialog
@@ -139,190 +160,157 @@ export function PlantDiagnosticsTab() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold text-green-800 dark:text-green-200">
-          Plant Diagnostics
-        </h2>
-        <p className="text-muted-foreground">
-          Capture a plant to analyze nutrient needs and get compost recommendations
-        </p>
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mb-4">
+          <Camera className="h-8 w-8 text-green-600" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-foreground">
+            Plant Nutrient Diagnostics
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Take a photo of your plant to get instant AI-powered nutrient analysis and personalized recommendations
+          </p>
+        </div>
       </div>
 
-      {/* Error Message */}
+      {/* Error Display */}
       {error && (
-        <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="max-w-md mx-auto">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="font-medium">Error</span>
+            </div>
+            <p className="text-sm text-destructive/80 mt-1">{error}</p>
+          </div>
+        </div>
       )}
 
-      {/* Camera Interface */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            {!cameraActive ? (
-              /* Camera Start Interface */
-              <div className="text-center space-y-4">
-                <div className="p-4 bg-muted rounded-full w-fit mx-auto">
-                  <Camera className="h-10 w-10 text-muted-foreground" />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Ready to analyze your plant
-                  </p>
-                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Point the camera at a plant for nutrient analysis
-                  </p>
-                </div>
-
-                <Button
-                  onClick={handleStartCamera}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                >
-                  <Camera className="h-4 w-4 mr-2" />
-                  Start Camera
-                </Button>
-              </div>
-            ) : (
-              /* Active Camera Interface */
-              <div className="space-y-4">
-                {/* Camera View */}
-                <div className="relative mx-auto max-w-md">
-                  <WebCamera
-                    ref={cameraRef}
-                    style={{
-                      width: "100%",
-                      height: "300px",
-                      borderRadius: "8px",
-                      border: "1px solid #e5e7eb",
-                      boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
-                    }}
-                  />
-
-                  {/* Overlay guide */}
-                  <div className="absolute inset-0 border-2 border-green-500 rounded-lg pointer-events-none opacity-30" />
-                </div>
-
-                {/* Instructions */}
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Position the plant in the center
-                  </p>
-                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Ensure good lighting and keep the plant centered for best
-                    results
-                  </p>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={handleStopCamera}
-                    disabled={isCapturing}
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-
-                  <Button
-                    onClick={handleCapture}
-                    disabled={isCapturing}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                  >
-                    {isCapturing ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Analyzing...
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" />
-                        Capture Plant
-                      </div>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results Dialog */}
-      <Dialog open={showResultsDialog} onOpenChange={setShowResultsDialog}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Leaf className="h-5 w-5 text-green-600" />
-              Plant Analysis for {diagnosisResult?.prediction}
-            </DialogTitle>
-          </DialogHeader>
-
-          {diagnosisResult && (
+      {/* Camera Section */}
+      <div className="bg-card border rounded-lg p-8 shadow-sm">
+        <div className="text-center space-y-8">
+          {!cameraActive ? (
             <div className="space-y-6">
-              {/* Plant Identification */}
-              <div className="text-center p-6 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Leaf className="h-8 w-8 text-green-600" />
-                  <span className="text-xl font-semibold">
-                    {diagnosisResult.prediction}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Analysis completed successfully
+              <div className="space-y-4">
+                <h2 className="text-2xl font-semibold text-foreground">
+                  Ready to Start Analysis
+                </h2>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Position your plant clearly in frame for the best results. Our AI will analyze the leaves, stems, and overall health.
                 </p>
               </div>
 
-              {/* Nutrient Needs */}
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                  Nutrient Needs
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {diagnosisResult.nutrientNeeds
-                    .split(",")
-                    .map((nutrient, index) => (
-                      <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                        {nutrient.trim()}
-                      </Badge>
-                    ))}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Button onClick={handleStartCamera} size="lg" className="px-8">
+                  <Camera className="mr-2 h-5 w-5" />
+                  Open Camera
+                </Button>
+                <div className="text-sm text-muted-foreground">
+                  Make sure your plant is well-lit
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h2 className="text-2xl font-semibold text-foreground">
+                  Capture Your Plant
+                </h2>
+                <p className="text-muted-foreground">
+                  Position the camera and click analyze when ready
+                </p>
+              </div>
+
+              {/* Camera Preview */}
+              <div className="max-w-2xl mx-auto">
+                <div className="relative rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/25">
+                  <WebCamera
+                    ref={cameraRef}
+                    className="w-full"
+                    style={{ aspectRatio: "4/3" }}
+                  />
+                  <div className="absolute inset-0 border-2 border-green-500/50 rounded-lg pointer-events-none" />
                 </div>
               </div>
 
-              {/* Compost Suggestions */}
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                  Recommended Compost Materials
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {diagnosisResult.compostSuggestions
-                    .split(",")
-                    .map((compost, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="bg-green-100 text-green-800"
-                      >
-                        {compost.trim()}
-                      </Badge>
-                    ))}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end pt-4 border-t">
-                <Button onClick={() => setShowResultsDialog(false)}>
-                  Close
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+                <Button
+                  onClick={handleCapture}
+                  disabled={isCapturing}
+                  size="lg"
+                  className="flex-1"
+                >
+                  {isCapturing ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Analyzing...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Analyze Plant
+                    </div>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleStopCamera}
+                  variant="outline"
+                  disabled={isCapturing}
+                  size="lg"
+                  className="flex-1"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Cancel
                 </Button>
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
+
+      {/* Instructions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full">
+            <span className="text-sm font-semibold text-green-600">1</span>
+          </div>
+          <h3 className="font-semibold">Position Plant</h3>
+          <p className="text-sm text-muted-foreground">
+            Make sure your plant is well-lit and clearly visible in the frame
+          </p>
+        </div>
+
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full">
+            <span className="text-sm font-semibold text-green-600">2</span>
+          </div>
+          <h3 className="font-semibold">Take Photo</h3>
+          <p className="text-sm text-muted-foreground">
+            Capture a clear image showing the leaves and overall plant health
+          </p>
+        </div>
+
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full">
+            <span className="text-sm font-semibold text-green-600">3</span>
+          </div>
+          <h3 className="font-semibold">Get Results</h3>
+          <p className="text-sm text-muted-foreground">
+            Receive detailed nutrient analysis and compost recommendations
+          </p>
+        </div>
+      </div>
+
+      {/* Results Modal */}
+      <PlantDiagnosticsResultModal
+        open={showResultsDialog}
+        onOpenChange={setShowResultsDialog}
+        result={diagnosisResult}
+      />
     </div>
   );
 }

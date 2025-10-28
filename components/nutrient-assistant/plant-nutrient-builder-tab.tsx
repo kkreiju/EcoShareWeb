@@ -1,44 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Wrench, Sparkles, Check, X, ChevronDown } from "lucide-react";
+import { Sparkles, Check } from "lucide-react";
+import { PlantNutrientBuilderResultModal } from "./plant-nutrient-builder-result-modal";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/lib/supabase/api";
 
-const PLANT_NAMES = [
+const PLANT_OPTIONS = [
   "Avocado",
   "Banana",
-  "Bellpepper",
-  "Bittergourd",
+  "Bell Pepper",
+  "Bitter Gourd",
   "Cabbage",
   "Calamansi",
   "Carrot",
   "Chayote",
   "Eggplant",
   "Mango",
-  "Papapaya",
+  "Papaya",
   "Pechay",
   "Pineapple",
   "Spinach",
@@ -47,7 +29,7 @@ const PLANT_NAMES = [
   "Tomato",
 ];
 
-const COMPOST_NAMES = [
+const COMPOSTABLE_MATERIALS = [
   "Banana Peels",
   "Coffee Grounds",
   "Crushed Eggshell",
@@ -62,6 +44,8 @@ const COMPOST_NAMES = [
 ];
 
 export function PlantNutrientBuilderTab() {
+  const { user } = useAuth();
+  const [userData, setUserData] = useState<any>(null);
   const [selectedPlant, setSelectedPlant] = useState<string>("");
   const [selectedCompostMaterials, setSelectedCompostMaterials] = useState<
     string[]
@@ -69,6 +53,29 @@ export function PlantNutrientBuilderTab() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [compostPlan, setCompostPlan] = useState<any>(null);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
+
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user?.email) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("User")
+          .select("user_id")
+          .eq("user_email", user.email)
+          .single();
+
+        if (!error && data) {
+          setUserData(data);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+
+    fetchUserData();
+  }, [user?.email]);
 
   const handleCompostToggle = (material: string) => {
     setSelectedCompostMaterials((prev) => {
@@ -90,7 +97,10 @@ export function PlantNutrientBuilderTab() {
   };
 
   const handleGenerate = async () => {
-    if (!selectedPlant || selectedCompostMaterials.length === 0) return;
+    if (!selectedPlant) {
+      toast.error("Please select a plant");
+      return;
+    }
 
     setIsGenerating(true);
 
@@ -102,7 +112,8 @@ export function PlantNutrientBuilderTab() {
         },
         body: JSON.stringify({
           plant: selectedPlant,
-          available_materials: selectedCompostMaterials,
+          available_materials: selectedCompostMaterials.length === 0 ? ["N/A"] : selectedCompostMaterials,
+          userId: userData?.user_id || "",
         }),
       });
 
@@ -112,256 +123,185 @@ export function PlantNutrientBuilderTab() {
 
       const result = await response.json();
 
-      if (result.success) {
+      if (result.success && result.compostData) {
         setCompostPlan(result.compostData);
         setShowPlanDialog(true);
       } else {
-        throw new Error(result.message || "Failed to generate compost plan");
+        toast.error("Failed to generate analysis. Please try again.");
       }
-
-      setIsGenerating(false);
     } catch (error) {
       console.error("Error generating compost plan:", error);
+      toast.error("Action failed. Please try again.");
+    } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold text-green-800 dark:text-green-200">
-          Nutrient Plant Builder
-        </h2>
-        <p className="text-muted-foreground">
-          Select your plant and available compost materials to generate a personalized nutrient plan
-        </p>
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full mb-4">
+          <Sparkles className="h-8 w-8 text-blue-600" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-foreground">
+            Nutrient Builder
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Create personalized compost plans by selecting your plant type and available materials
+          </p>
+        </div>
       </div>
 
-      {/* Form Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Plant Selection */}
-        <Card className="border-2 border-dashed border-green-200 dark:border-green-800">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              Select Plant
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Choose one plant type for your nutrient plan
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              {PLANT_NAMES.map((plant) => (
-                <div key={plant} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={plant}
-                    checked={selectedPlant === plant}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedPlant(plant);
-                      } else {
-                        setSelectedPlant("");
-                      }
-                    }}
-                  />
-                  <Label
-                    htmlFor={plant}
-                    className="text-sm cursor-pointer leading-tight"
-                  >
-                    {plant}
-                  </Label>
-                </div>
+      {/* Form Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Plant Selection Card */}
+        <div className="bg-card border rounded-lg p-6 shadow-sm">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="inline-flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full">
+                <span className="text-sm font-semibold text-green-600">1</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Choose Your Plant</h2>
+                <p className="text-sm text-muted-foreground">Select the plant you want to create nutrients for</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {PLANT_OPTIONS.map((plant) => (
+                <button
+                  key={plant}
+                  onClick={() => setSelectedPlant(plant)}
+                  disabled={isGenerating}
+                  className={`px-4 py-2 rounded-full border flex items-center gap-2 transition-all duration-200 ${
+                    selectedPlant === plant
+                      ? "bg-green-500 border-green-500 text-white shadow-md"
+                      : "bg-muted border-border text-foreground hover:bg-muted/80 hover:shadow-sm"
+                  }`}
+                >
+                  <span className="text-sm font-medium">{plant}</span>
+                  {selectedPlant === plant && <Check className="h-3.5 w-3.5" />}
+                </button>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Materials Selection */}
-        <Card className="border-2 border-dashed border-green-200 dark:border-green-800">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              Compost Materials
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Select up to 3 materials you have available
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              {COMPOST_NAMES.map((material) => (
-                <div key={material} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={material}
-                    checked={selectedCompostMaterials.includes(material)}
+        {/* Materials Selection Card */}
+        <div className="bg-card border rounded-lg p-6 shadow-sm">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="inline-flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                <span className="text-sm font-semibold text-blue-600">2</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-foreground">Available Materials</h2>
+                  <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                    {selectedCompostMaterials.length}/3 selected
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">Choose up to 3 compostable materials you have</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {COMPOSTABLE_MATERIALS.map((material) => (
+                <button
+                  key={material}
+                  onClick={() => handleCompostToggle(material)}
                     disabled={
+                    isGenerating ||
+                    (!selectedCompostMaterials.includes(material) &&
+                      selectedCompostMaterials.length >= 3)
+                  }
+                  style={{
+                    opacity:
                       !selectedCompostMaterials.includes(material) &&
                       selectedCompostMaterials.length >= 3
-                    }
-                    onCheckedChange={() => handleCompostToggle(material)}
-                  />
-                  <Label
-                    htmlFor={material}
-                    className="text-sm cursor-pointer leading-tight"
-                  >
-                    {material}
-                  </Label>
-                </div>
+                        ? 0.5
+                        : 1,
+                  }}
+                  className={`px-4 py-2 rounded-full border flex items-center gap-2 transition-all duration-200 ${
+                    selectedCompostMaterials.includes(material)
+                      ? "bg-blue-500 border-blue-500 text-white shadow-md"
+                      : "bg-muted border-border text-foreground hover:bg-muted/80 hover:shadow-sm"
+                  }`}
+                >
+                  <span className="text-sm font-medium">{material}</span>
+                  {selectedCompostMaterials.includes(material) && (
+                    <Check className="h-3.5 w-3.5" />
+                  )}
+                </button>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Selected Items Summary */}
-      {(selectedPlant || selectedCompostMaterials.length > 0) && (
-        <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
-          <CardContent className="pt-4 pb-4">
-            <div className="space-y-2">
-              {selectedPlant && (
-                <div>
-                  <h3 className="font-medium text-green-800 dark:text-green-200 mb-1">
-                    Selected Plant
-                  </h3>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {selectedPlant}
-                  </Badge>
-                </div>
-              )}
-
-              {selectedCompostMaterials.length > 0 && (
-                <div>
-                  <h3 className="font-medium text-green-800 dark:text-green-200 mb-1">
-                    Selected Materials ({selectedCompostMaterials.length}/3)
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedCompostMaterials.map((material) => (
-                      <Badge
-                        key={material}
-                        variant="secondary"
-                        className="bg-green-100 text-green-800 hover:bg-green-200"
-                      >
-                        {material}
-                        <button
-                          onClick={() => removeCompostMaterial(material)}
-                          className="ml-2 hover:bg-green-300 rounded-full p-0.5"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Generate Button */}
-      <div className="flex justify-center">
+      <div className="text-center py-8">
         <Button
           onClick={handleGenerate}
-          disabled={
-            !selectedPlant ||
-            selectedCompostMaterials.length === 0 ||
-            isGenerating
-          }
+          disabled={!selectedPlant || isGenerating}
           size="lg"
-          className="px-8 py-3 text-lg font-medium"
+          className="px-12 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
         >
           {isGenerating ? (
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Generating Plan...
+              Generating Analysis...
             </div>
           ) : (
             <div className="flex items-center gap-3">
               <Sparkles className="h-5 w-5" />
-              Generate Nutrient Plan
+              Create Nutrient Plan
             </div>
           )}
         </Button>
       </div>
 
-      {/* Compost Plan Results Dialog */}
-      <Dialog open={showPlanDialog} onOpenChange={setShowPlanDialog}>
-        <DialogContent className="sm:max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Check className="h-5 w-5 text-green-600" />
-              Nutrient Plan for {selectedPlant}
-            </DialogTitle>
-          </DialogHeader>
-
-          {compostPlan && (
-            <div className="space-y-6">
-              {/* Materials Used */}
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                  Materials Used
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedCompostMaterials.map((material) => (
-                    <Badge key={material} variant="secondary">
-                      {material}
-                    </Badge>
-                  ))}
+      {/* Instructions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full">
+            <span className="text-sm font-semibold text-green-600">1</span>
                 </div>
+          <h3 className="font-semibold">Select Plant</h3>
+          <p className="text-sm text-muted-foreground">
+            Choose the specific plant you want to create nutrients for
+          </p>
               </div>
 
-              {/* Recommendations */}
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                  Recommendations
-                </h3>
-                <ScrollArea className="h-96">
-                  <div className="space-y-4">
-                    {compostPlan?.recommendations?.map((recommendation: any, index: number) => (
-                      <div key={index} className="border rounded-lg p-4 space-y-3">
-                        <h4 className="font-medium text-green-700">
-                          {recommendation.compostable}
-                        </h4>
-
-                        {/* Nutrient Values */}
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            N: {recommendation.nutrients?.Nitrogen || 0}
-                          </Badge>
-                          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                            P: {recommendation.nutrients?.Phosphorus || 0}
-                          </Badge>
-                          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                            K: {recommendation.nutrients?.Potassium || 0}
-                          </Badge>
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+            <span className="text-sm font-semibold text-blue-600">2</span>
                         </div>
-
-                        {/* Explanation */}
+          <h3 className="font-semibold">Pick Materials</h3>
                         <p className="text-sm text-muted-foreground">
-                          {recommendation.explanation}
+            Select compostable materials you currently have available
                         </p>
                       </div>
-                    )) || (
-                      <div className="text-center py-8 text-muted-foreground">
-                        No recommendations available
+
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+            <span className="text-sm font-semibold text-purple-600">3</span>
                       </div>
-                    )}
+          <h3 className="font-semibold">Get Results</h3>
+          <p className="text-sm text-muted-foreground">
+            Receive AI-powered analysis and personalized recommendations
+          </p>
                   </div>
-                </ScrollArea>
               </div>
 
-              {/* Actions */}
-              <div className="flex justify-end pt-4 border-t">
-                <Button onClick={() => setShowPlanDialog(false)}>
-                  Close
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Result Modal */}
+      <PlantNutrientBuilderResultModal
+        open={showPlanDialog}
+        onOpenChange={setShowPlanDialog}
+        compostData={compostPlan}
+      />
     </div>
   );
 }

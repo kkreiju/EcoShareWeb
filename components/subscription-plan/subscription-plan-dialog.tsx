@@ -59,8 +59,8 @@ export function SubscriptionPlanDialog({
 
   const handlePaymentSuccess = () => {
     setShowPayment(false);
-    // TODO: Handle successful payment (update user status, redirect, etc.)
-    console.log("Payment successful - user is now premium");
+    // Reload the page to refresh user subscription status
+    window.location.reload();
   };
 
   const handlePaymentClose = () => {

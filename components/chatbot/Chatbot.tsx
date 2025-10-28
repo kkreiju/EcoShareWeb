@@ -8,39 +8,141 @@ import { ChatbotHeader } from "./ChatbotHeader";
 import { ChatbotMessages, ChatMessage } from "./ChatbotMessages";
 import { ChatbotInput } from "./ChatbotInput";
 import { ChatbotService } from "@/lib/chatbotService";
+import { useAuth } from "@/hooks/use-auth";
+import { Listing } from "@/lib/DataClass";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+
+// Storage key for chat messages
+const CHAT_MESSAGES_KEY = "ecoshare_chatbot_messages";
 
 export function Chatbot() {
+  const { user, userId, isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "👋 Hi! I'm your EcoShare assistant. How can I help you today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [isFindListingMode, setIsFindListingMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userData, setUserData] = useState<any>(null);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
 
-  // Update welcome message when find listing mode changes
+  // Load saved messages from localStorage on mount
   useEffect(() => {
-    if (messages.length === 1 && messages[0].id === "welcome") {
-      const welcomeMessage = isFindListingMode
-        ? "🔍 I'm in Find Listing mode! Ask me to help you find specific items or browse categories."
-        : "👋 Hi! I'm your EcoShare assistant. How can I help you today?";
-      setMessages([
-        {
-          id: "welcome",
-          role: "assistant",
-          content: welcomeMessage,
-          timestamp: new Date(),
-        },
-      ]);
+    const loadMessages = () => {
+      try {
+        const savedMessages = localStorage.getItem(CHAT_MESSAGES_KEY);
+        if (savedMessages) {
+          const parsedMessages = JSON.parse(savedMessages);
+          // Convert timestamp strings back to Date objects
+          const messagesWithDates = parsedMessages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          }));
+          setMessages(messagesWithDates);
+        } else {
+          // No saved messages, show default welcome message
+          setMessages([
+            {
+              id: "welcome",
+              role: "assistant",
+              content: "👋 Hi! I'm your EcoShare assistant. How can I help you today?",
+              timestamp: new Date(),
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error loading chat messages:", error);
+        // Fallback to default message on error
+        setMessages([
+          {
+            id: "welcome",
+            role: "assistant",
+            content: "👋 Hi! I'm your EcoShare assistant. How can I help you today?",
+            timestamp: new Date(),
+          },
+        ]);
+      } finally {
+        setMessagesLoaded(true);
+      }
+    };
+
+    loadMessages();
+  }, []);
+
+  // Save messages to localStorage whenever they change (but not on initial load)
+  useEffect(() => {
+    if (messagesLoaded && messages.length > 0) {
+      try {
+        localStorage.setItem(CHAT_MESSAGES_KEY, JSON.stringify(messages));
+      } catch (error) {
+        console.error("Error saving chat messages:", error);
+      }
     }
-  }, [isFindListingMode]);
+  }, [messages, messagesLoaded]);
+
+  // Fetch user data including membership status
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (userId && user?.email) {
+        try {
+          const supabase = createClient();
+          const { data, error } = await supabase
+            .from("User")
+            .select("user_id, user_email, user_membershipStatus")
+            .eq("user_email", user.email)
+            .single();
+
+          if (!error && data) {
+            console.log("User data fetched:", data); // Debug log
+            setUserData(data);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [userId, user?.email]);
+
+
+  const fetchListingById = async (listingId: string): Promise<Listing | null> => {
+    try {
+      const response = await fetch("/api/listing/view-listing", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch listings: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const listings = data.data || [];
+
+      // Find the specific listing by ID
+      const foundListing = listings.find((l: Listing) => l.list_id === listingId);
+      
+      if (foundListing) {
+        // Transform the listing data similar to mobile app
+        return {
+          ...foundListing,
+          location: foundListing.locationName?.trim() || "Unknown location",
+          images: foundListing.images || (foundListing.imageURL ? [foundListing.imageURL] : []),
+          rating: foundListing.User?.ratings ? Number(foundListing.User.ratings) : 0,
+          description: foundListing.description || "",
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.warn(`Failed to fetch listing ${listingId}:`, error);
+      return null;
+    }
+  };
 
   const handleSend = async () => {
     const trimmed = input.trim();
@@ -59,7 +161,13 @@ export function Chatbot() {
     setError(null);
 
     try {
-      const response = await ChatbotService.sendMessage(trimmed);
+      // Use userId or "anonymous" as sessionId
+      const sessionId = userId || user?.id || "anonymous";
+      const response = await ChatbotService.sendMessage(
+        trimmed,
+        sessionId,
+        userId
+      );
 
       const botMsg: ChatMessage = {
         id: crypto.randomUUID(),
@@ -69,6 +177,60 @@ export function Chatbot() {
       };
 
       setMessages((prev) => [...prev, botMsg]);
+
+      // Handle listings data if present
+      if (response.listings) {
+        // Check if user is premium before showing listings
+        const isPremium = userData?.user_membershipStatus === "Premium";
+        
+        console.log("Checking premium status:", {
+          userData,
+          membershipStatus: userData?.user_membershipStatus,
+          isPremium
+        }); // Debug log
+        
+        if (!isPremium) {
+          // Show premium upsell message for free users
+          const premiumMessage: ChatMessage = {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "🌟 The 'Find Listings' feature is exclusive to Premium members. Upgrade your account to get personalized listing recommendations!",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, premiumMessage]);
+        } else {
+          // Premium user - proceed with showing listings
+          try {
+            const listingIds = JSON.parse(response.listings);
+            if (Array.isArray(listingIds) && listingIds.length > 0) {
+              // Fetch full listing data for each ID
+              const fetchedListings: Listing[] = [];
+              for (const listingId of listingIds) {
+                const listing = await fetchListingById(listingId);
+                if (listing && listing.quantity > 0) {
+                  fetchedListings.push(listing);
+                }
+              }
+
+              if (fetchedListings.length > 0) {
+                // Create a message with listings attached
+                const listingsMessage: ChatMessage = {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  content: `I found ${fetchedListings.length} relevant listing${
+                    fetchedListings.length > 1 ? "s" : ""
+                  } for you:`,
+                  timestamp: new Date(),
+                  listings: fetchedListings,
+                };
+                setMessages((prev) => [...prev, listingsMessage]);
+              }
+            }
+          } catch (parseError) {
+            console.warn("Failed to parse listings data:", parseError);
+          }
+        }
+      }
     } catch (err) {
       console.error("Error getting chatbot response:", err);
       const errorMessage =
@@ -104,8 +266,26 @@ export function Chatbot() {
     // Allow Shift+Enter for new line (default textarea behavior)
   };
 
-  const handleToggleFindMode = () => {
-    setIsFindListingMode(!isFindListingMode);
+  const handleClearHistory = () => {
+    // Clear messages and reset to welcome message
+    const welcomeMessage: ChatMessage = {
+      id: "welcome",
+      role: "assistant",
+      content: "👋 Hi! I'm your EcoShare assistant. How can I help you today?",
+      timestamp: new Date(),
+    };
+    setMessages([welcomeMessage]);
+    
+    // Clear localStorage
+    try {
+      localStorage.removeItem(CHAT_MESSAGES_KEY);
+      toast.success("Chat history cleared", {
+        description: "Your conversation history has been cleared.",
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error("Error clearing chat history:", error);
+    }
   };
 
   return (
@@ -120,10 +300,9 @@ export function Chatbot() {
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-full sm:w-[400px] p-0">
+      <SheetContent side="right" className="w-full sm:w-[380px] md:w-[400px] p-0 flex flex-col">
         <ChatbotHeader
           isTyping={isTyping}
-          isFindListingMode={isFindListingMode}
         />
         <ChatbotMessages messages={messages} isTyping={isTyping} />
         {error && (
@@ -136,8 +315,7 @@ export function Chatbot() {
           onInputChange={setInput}
           onSend={handleSend}
           onKeyPress={handleKeyPress}
-          isFindListingMode={isFindListingMode}
-          onToggleFindMode={handleToggleFindMode}
+          onClearConversation={handleClearHistory}
           isTyping={isTyping}
         />
       </SheetContent>

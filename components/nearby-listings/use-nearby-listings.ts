@@ -87,6 +87,11 @@ export function useNearbyListings({
       const data: ListingsResponse = await response.json();
       let filteredData = data.data || [];
 
+      // Filter out the current user's own listings to show only other users' listings
+      if (userData?.user_id) {
+        filteredData = filteredData.filter((listing: any) => listing.user_id !== userData.user_id);
+      }
+
       if (userLocation) {
         filteredData = filteredData.filter(listing => listing.latitude && listing.longitude);
         filteredData.sort((a, b) => {
@@ -108,7 +113,7 @@ export function useNearbyListings({
     } finally {
       setIsLoading(false);
     }
-  }, [userLocation]);
+  }, [userLocation, userData]);
 
   useEffect(() => {
     fetchNearbyListings();
