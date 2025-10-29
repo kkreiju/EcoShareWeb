@@ -180,7 +180,7 @@ export function ListingCard({
             <div className="flex items-center gap-0.5">
               <Star className={`fill-yellow-400 text-yellow-400 ${compact ? 'h-2.5 w-2.5' : 'h-3 w-3'}`} />
               <span className={compact ? 'text-[10px] text-muted-foreground' : 'text-xs text-muted-foreground'}>
-                {listing.User?.ratings || 0}
+                {Number(listing.User?.ratings || 0).toFixed(1)}
               </span>
             </div>
           </div>

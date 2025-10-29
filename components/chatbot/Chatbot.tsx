@@ -181,7 +181,7 @@ export function Chatbot() {
       // Handle listings data if present
       if (response.listings) {
         // Check if user is premium before showing listings
-        const isPremium = userData?.user_membershipStatus === "Premium";
+        const isPremium = userData?.user_membershipStatus?.toLowerCase() === "premium";
         
         console.log("Checking premium status:", {
           userData,

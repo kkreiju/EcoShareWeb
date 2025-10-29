@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Message } from "./MessagesView";
@@ -10,8 +11,18 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, currentUserId }: MessageListProps) {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
   return (
-    <ScrollArea className="h-full">
+    <ScrollArea className="h-full" ref={scrollAreaRef}>
       <div className="p-4 space-y-2">
         {messages.map((m, index) => {
           const isMe = m.senderId === currentUserId;
@@ -35,15 +46,14 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
                     isMe ? "text-primary-foreground" : "text-muted-foreground"
                   )}
                 >
-                  {new Date(m.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {/* API returns formatted time like "2:30 PM", display as-is */}
+                  {m.timestamp}
                 </p>
               </div>
             </div>
           );
         })}
+        <div ref={messagesEndRef} />
       </div>
     </ScrollArea>
   );

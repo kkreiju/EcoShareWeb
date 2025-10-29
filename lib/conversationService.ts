@@ -1,5 +1,48 @@
 import type { Message } from "@/components/messages/MessagesView";
 
+// Helper function to parse relative timestamps from API
+function parseRelativeTimestamp(timestamp: string): string {
+  if (!timestamp) return new Date().toISOString();
+
+  const lowerTimestamp = timestamp.toLowerCase().trim();
+  const now = new Date();
+
+  // Handle "now" as current time
+  if (lowerTimestamp === 'now') {
+    return now.toISOString();
+  }
+
+  // Try direct date parsing first (MM/DD/YYYY format, etc.)
+  const directDate = new Date(timestamp);
+  if (!isNaN(directDate.getTime())) {
+    return directDate.toISOString();
+  }
+
+  // Handle "X m ago" (minutes ago)
+  const minutesMatch = lowerTimestamp.match(/^(\d+)\s*m(?:in(?:ute)?s?)?\s+ago$/);
+  if (minutesMatch) {
+    const minutes = parseInt(minutesMatch[1]);
+    return new Date(now.getTime() - minutes * 60 * 1000).toISOString();
+  }
+
+  // Handle "X h ago" (hours ago)
+  const hoursMatch = lowerTimestamp.match(/^(\d+)\s*h(?:ours?)?\s+ago$/);
+  if (hoursMatch) {
+    const hours = parseInt(hoursMatch[1]);
+    return new Date(now.getTime() - hours * 60 * 60 * 1000).toISOString();
+  }
+
+  // Handle "X d ago" (days ago)
+  const daysMatch = lowerTimestamp.match(/^(\d+)\s*d(?:ays?)?\s+ago$/);
+  if (daysMatch) {
+    const days = parseInt(daysMatch[1]);
+    return new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  // If nothing matches, return current time
+  return now.toISOString();
+}
+
 export interface ConversationResponse {
   id: string;
   name: string;
@@ -64,17 +107,24 @@ export class ConversationService {
       const data: ConversationResponse[] = await response.json();
 
       // Transform the API response to match our Conversation interface
-      return data.map(conv => ({
+      const transformedConversations = data.map(conv => ({
         ...conv,
         user: {
           id: conv.id, // Using conversation id as user id for now
           name: conv.name,
           avatar: conv.avatar,
         },
-        lastTimestamp: conv.timestamp,
+        lastTimestamp: parseRelativeTimestamp(conv.timestamp),
         unreadCount: 0, // TODO: Add unread count from API
-        messages: [], // TODO: Fetch messages separately when conversation is selected
+        messages: [], // Messages are fetched separately when conversation is selected
       }));
+
+      // Sort by most recent message (newest first)
+      return transformedConversations.sort((a, b) => {
+        const timeA = new Date(a.lastTimestamp).getTime();
+        const timeB = new Date(b.lastTimestamp).getTime();
+        return timeB - timeA;
+      });
     } catch (error) {
       console.error('Error fetching conversations:', error);
       throw error;
@@ -97,11 +147,13 @@ export class ConversationService {
       const data: MessageResponse[] = await response.json();
 
       // Transform the API response to match our Message interface
+      // Note: API returns formatted timestamp like "2:30 PM", not ISO format
+      // For now, use today's date with the time from API for proper sorting
       return data.map(msg => ({
         id: msg.id,
         senderId: msg.isSent ? userId : 'other', // If isSent is true, it's from current user
         content: msg.text,
-        timestamp: msg.timestamp, // API returns formatted timestamp like "2:30 PM"
+        timestamp: msg.timestamp, // Keep the formatted time from API (e.g., "2:30 PM")
         status: msg.isSent ? "sent" : "read", // Assume sent messages are sent, received are read
       }));
     } catch (error) {

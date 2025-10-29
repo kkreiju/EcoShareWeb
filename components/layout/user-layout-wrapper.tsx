@@ -15,6 +15,7 @@ interface UserLayoutWrapperProps {
     name: string;
     email: string;
     avatar: string;
+    membershipStatus: string;
   };
 }
 

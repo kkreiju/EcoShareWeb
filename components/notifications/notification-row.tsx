@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { CheckCheck, Clock } from "lucide-react";
+import { CheckCheck, Clock, Eye } from "lucide-react";
 
 interface Notification {
   notif_id: string;
@@ -17,6 +17,7 @@ interface NotificationRowProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
   onNotificationClick?: (notification: Notification) => void;
+  onReviewRequest?: (notification: Notification) => void;
   isMobile?: boolean;
 }
 
@@ -59,17 +60,22 @@ const formatDate = (date: Date) => {
   return date.toLocaleDateString();
 };
 
-export function NotificationRow({ notification, onMarkAsRead, onNotificationClick, isMobile = false }: NotificationRowProps) {
+export function NotificationRow({ notification, onMarkAsRead, onNotificationClick, onReviewRequest, isMobile = false }: NotificationRowProps) {
+  // Check if this is a review request notification
+  const isReviewRequest = 
+    notification.notif_message.toLowerCase().includes('request your listing') ||
+    notification.notif_message.toLowerCase().includes('has request') ||
+    notification.notif_message.toLowerCase().includes('requested your listing');
+
   // Mobile Card Layout
   if (isMobile) {
     return (
       <div 
-        className={`p-4 border-b last:border-b-0 cursor-pointer transition-colors duration-200 ${
+        className={`p-4 border-b last:border-b-0 transition-colors duration-200 ${
           !notification.notif_isRead
-            ? 'bg-blue-50/30 dark:bg-blue-950/30 hover:bg-blue-50/50 dark:hover:bg-blue-950/40'
-            : 'hover:bg-muted/50'
+            ? 'bg-blue-50/30 dark:bg-blue-950/30'
+            : ''
         }`}
-        onClick={() => onNotificationClick?.(notification)}
       >
         <div className="flex items-start justify-between">
           {/* Content */}
@@ -94,22 +100,42 @@ export function NotificationRow({ notification, onMarkAsRead, onNotificationClic
               {notification.notif_message}
             </p>
 
-            {/* Mark as Read Button */}
-            {!notification.notif_isRead && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMarkAsRead(notification.notif_id);
-                }}
-                className="h-8 px-2 text-xs hover:bg-muted"
-                title="Mark as read"
-              >
-                <CheckCheck className="h-3 w-3 mr-1" />
-                Mark read
-              </Button>
-            )}
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              {/* Review Request Button */}
+              {isReviewRequest && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReviewRequest?.(notification);
+                  }}
+                  className="h-8 px-2 text-xs hover:bg-muted"
+                  title="Review request"
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  Review
+                </Button>
+              )}
+
+              {/* Mark as Read Button */}
+              {!notification.notif_isRead && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMarkAsRead(notification.notif_id);
+                  }}
+                  className="h-8 px-2 text-xs hover:bg-muted"
+                  title="Mark as read"
+                >
+                  <CheckCheck className="h-3 w-3 mr-1" />
+                  Mark read
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -119,12 +145,11 @@ export function NotificationRow({ notification, onMarkAsRead, onNotificationClic
   // Desktop Table Layout
   return (
     <TableRow
-      className={`cursor-pointer transition-colors duration-200 ${
+      className={`transition-colors duration-200 ${
         !notification.notif_isRead
-          ? 'bg-blue-50/30 border-l-4 border-l-blue-500 hover:bg-blue-50/50 dark:bg-blue-950/30 dark:hover:bg-blue-950/40'
-          : 'hover:bg-muted/50'
+          ? 'bg-blue-50/30 border-l-4 border-l-blue-500 dark:bg-blue-950/30'
+          : ''
       }`}
-      onClick={() => onNotificationClick?.(notification)}
     >
       {/* Main Content */}
       <TableCell className="py-4">
@@ -154,20 +179,39 @@ export function NotificationRow({ notification, onMarkAsRead, onNotificationClic
 
       {/* Actions */}
       <TableCell className="py-4 text-right">
-        {!notification.notif_isRead && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onMarkAsRead(notification.notif_id);
-            }}
-            className="h-8 w-8 p-0 hover:bg-muted"
-            title="Mark as read"
-          >
-            <CheckCheck className="h-4 w-4" />
-          </Button>
-        )}
+        <div className="flex items-center justify-end gap-2">
+          {/* Review Request Button */}
+          {isReviewRequest && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReviewRequest?.(notification);
+              }}
+              className="h-8 w-8 p-0 hover:bg-muted"
+              title="Review request"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Mark as Read Button */}
+          {!notification.notif_isRead && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkAsRead(notification.notif_id);
+              }}
+              className="h-8 w-8 p-0 hover:bg-muted"
+              title="Mark as read"
+            >
+              <CheckCheck className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </TableCell>
     </TableRow>
   );

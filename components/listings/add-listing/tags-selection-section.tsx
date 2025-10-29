@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tag } from "lucide-react";
 
@@ -30,17 +29,17 @@ export function TagsSelectionSection({
   error,
 }: TagsSelectionSectionProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Tag className="h-5 w-5" />
-          Tags *
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      {/* Tags Selection Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Tag className="h-4 w-4" style={{ color: "#A78BFA" }} />
+          <span className="text-sm font-medium">Tags</span>
+        </div>
+
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Select all tags that apply to your item
+            Select all tags that apply to your item *
           </p>
           <div className="flex flex-wrap gap-2">
             {availableTags.map((tag) => (
@@ -62,7 +61,7 @@ export function TagsSelectionSection({
             <p className="text-sm text-red-500">{error}</p>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

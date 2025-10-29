@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { UseFormRegister, UseFormSetValue, FieldErrors } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,14 +39,15 @@ export function LocationSelectionSection({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
-          Location *
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-6">
+      {/* Location Selection Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <MapPin className="h-4 w-4" style={{ color: "#EF4444" }} />
+          <span className="text-sm font-medium">Location</span>
+        </div>
+
+        <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
             type="button"
@@ -111,7 +111,8 @@ export function LocationSelectionSection({
             className="w-full"
           />
         )}
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 }

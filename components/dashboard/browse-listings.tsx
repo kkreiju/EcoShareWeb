@@ -60,7 +60,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
       try {
         const { data, error } = await supabase
           .from("User")
-          .select("user_id")
+          .select("user_id, user_membershipStatus")
           .eq("user_email", user.email)
           .single();
 
@@ -369,6 +369,7 @@ export function BrowseListings({ className = "" }: BrowseListingsProps) {
           isLoading={isLoading}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          userMembershipStatus={userData?.user_membershipStatus?.toLowerCase()}
         />
 
         {/* Error State */}

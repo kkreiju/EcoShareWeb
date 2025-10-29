@@ -1,7 +1,6 @@
 "use client";
 
 import { UseFormRegister, FieldErrors } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Clock } from "lucide-react";
@@ -16,14 +15,14 @@ export function PickupInfoSection({
   errors,
 }: PickupInfoSectionProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Pickup Information
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-6">
+      {/* Pickup Information Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="h-4 w-4" style={{ color: "#FFD93D" }} />
+          <span className="text-sm font-medium">Pickup Information</span>
+        </div>
+
         {/* Pickup Times */}
         <div className="space-y-2">
           <Label htmlFor="pickupTimes">Available Pickup Times *</Label>
@@ -53,7 +52,7 @@ export function PickupInfoSection({
             <p className="text-sm text-red-500">{errors.pickupInstructions.message as string}</p>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

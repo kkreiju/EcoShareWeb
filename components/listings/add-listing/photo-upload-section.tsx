@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, Camera, X } from "lucide-react";
 
@@ -21,14 +20,14 @@ export function PhotoUploadSection({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Camera className="h-5 w-5" />
-          Photos
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      {/* Photo Upload Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Camera className="h-4 w-4" style={{ color: "#6BCB77" }} />
+          <span className="text-sm font-medium">Photo Upload</span>
+        </div>
+
         <div className="space-y-4">
           {/* Hidden file input - always available */}
           <input
@@ -93,7 +92,7 @@ export function PhotoUploadSection({
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

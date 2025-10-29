@@ -36,6 +36,7 @@ interface ListingFiltersComponentProps {
   isLoading?: boolean;
   viewMode?: "grid" | "list";
   onViewModeChange?: (mode: "grid" | "list") => void;
+  userMembershipStatus?: string;
 }
 
 export function ListingFiltersComponent({
@@ -45,6 +46,7 @@ export function ListingFiltersComponent({
   isLoading = false,
   viewMode = "grid",
   onViewModeChange,
+  userMembershipStatus,
 }: ListingFiltersComponentProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -321,18 +323,20 @@ export function ListingFiltersComponent({
           </Button>
         </div>
 
-        {/* Desktop Nearby Button */}
-        <div className="hidden md:block">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="relative"
-            onClick={() => router.push("/user/nearby-listings")}
-          >
-            <MapPin className="w-4 h-4 text-red-500" />
-            Nearby Listings
-          </Button>
-        </div>
+        {/* Desktop Nearby Button - Only show for premium users */}
+        {userMembershipStatus?.toLowerCase() === "premium" && (
+          <div className="hidden md:block">
+            <Button
+              variant="outline"
+              size="sm"
+              className="relative"
+              onClick={() => router.push("/user/nearby-listings")}
+            >
+              <MapPin className="w-4 h-4 text-red-500" />
+              Nearby Listings
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

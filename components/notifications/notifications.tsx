@@ -3,10 +3,17 @@
 import { useState, useEffect } from "react";
 import { NotificationHeader } from "./notification-header";
 import { NotificationTable, NotificationTableSkeleton } from "./notification-table";
-import { NotificationStats, NotificationStatsSkeleton } from "./notification-stats";
 import { ReviewRequestsModal } from "@/components/listings/review-requests-modal";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // Notification interface matching API response
 interface Notification {
@@ -23,6 +30,10 @@ export function Notifications() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isReviewRequestsModalOpen, setIsReviewRequestsModalOpen] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Fetch notifications when component mounts
   useEffect(() => {
@@ -58,6 +69,9 @@ export function Notifications() {
           return new Date(b.notif_dateTime).getTime() - new Date(a.notif_dateTime).getTime();
         });
         setNotifications(sortedNotifications);
+
+        // Reset to page 1 when notifications are refreshed
+        setCurrentPage(1);
       } else {
         throw new Error(data.message || 'Failed to fetch notifications');
       }
@@ -70,6 +84,20 @@ export function Notifications() {
   };
 
   const unreadCount = notifications.filter(n => !n.notif_isRead).length;
+
+  // Pagination calculations
+  const totalPages = Math.ceil(notifications.length / itemsPerPage);
+
+  // Ensure current page is valid when notifications change
+  const validCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
+  const startIndex = (validCurrentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageNotifications = notifications.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
 
   const markAllAsRead = async () => {
     if (!userId || unreadCount === 0) return;
@@ -153,29 +181,17 @@ export function Notifications() {
     }
   };
 
-  const handleNotificationClick = async (notification: Notification) => {
+  const handleReviewRequest = async (notification: Notification) => {
     // First mark the notification as read if it's unread
     if (!notification.notif_isRead) {
       await markAsRead(notification.notif_id);
     }
 
-    // Check if this is a review request notification based on the message content
-    const isReviewRequest = notification.notif_message.toLowerCase().includes('review') || 
-                           notification.notif_message.toLowerCase().includes('request') ||
-                           notification.tran_id; // Has transaction ID
-
-    if (isReviewRequest) {
-      // Open the review requests modal
-      setIsReviewRequestsModalOpen(true);
-      toast.success("Opening review requests...", {
-        duration: 2000,
-      });
-    } else {
-      // For other notification types, you can add different handling here
-      toast.info("Notification opened", {
-        duration: 2000,
-      });
-    }
+    // Open the review requests modal
+    setIsReviewRequestsModalOpen(true);
+    toast.success("Opening review requests...", {
+      duration: 2000,
+    });
   };
 
   if (isLoading) {
@@ -187,8 +203,6 @@ export function Notifications() {
         />
 
         <NotificationTableSkeleton />
-
-        <NotificationStatsSkeleton />
       </div>
     );
   }
@@ -223,16 +237,65 @@ export function Notifications() {
       />
 
       <NotificationTable
-        notifications={notifications}
+        notifications={currentPageNotifications}
         onMarkAsRead={markAsRead}
-        onNotificationClick={handleNotificationClick}
+        onReviewRequest={handleReviewRequest}
         isLoading={isLoading}
       />
 
-      <NotificationStats
-        totalCount={notifications.length}
-        unreadCount={unreadCount}
-      />
+      {/* Footer with pagination and stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
+        {/* Left: Page info */}
+        <div className="text-sm text-muted-foreground order-2 sm:order-1">
+          Showing {startIndex + 1}-{Math.min(endIndex, notifications.length)} of {notifications.length} notifications
+          {totalPages > 1 && ` (Page ${validCurrentPage} of ${totalPages})`}
+        </div>
+
+        {/* Center: Stats */}
+        <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-2 order-1 sm:order-2">
+          <span>Total: {notifications.length}</span>
+          <span>•</span>
+          <span>Unread: {unreadCount}</span>
+          <span>•</span>
+          <span>Read: {notifications.length - unreadCount}</span>
+        </div>
+
+        {/* Right: Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center sm:justify-end order-3">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(Math.max(1, validCurrentPage - 1))}
+                    className={validCurrentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {/* Page numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={validCurrentPage === page}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(Math.min(totalPages, validCurrentPage + 1))}
+                    className={validCurrentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+      </div>
 
       <ReviewRequestsModal
         isOpen={isReviewRequestsModalOpen}

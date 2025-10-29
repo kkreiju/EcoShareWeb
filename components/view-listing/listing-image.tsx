@@ -219,7 +219,7 @@ export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatD
                     </div>
                     <div className="text-sm text-muted-foreground flex items-center gap-1">
                       <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                      {listing.User?.ratings || 0} rating
+                      {Number(listing.User?.ratings || 0).toFixed(1)} rating
                     </div>
                   </div>
                 </div>

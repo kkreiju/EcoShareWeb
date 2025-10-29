@@ -96,10 +96,12 @@ export function MessagesView() {
     }
   };
 
-  const fetchMessages = async (conversationId: string) => {
+  const fetchMessages = async (conversationId: string, showLoading = true) => {
     if (!currentUserId) return;
 
-    setMessagesLoading(true);
+    if (showLoading) {
+      setMessagesLoading(true);
+    }
     setMessagesError(null);
     try {
       const messages = await ConversationService.getMessages(
@@ -122,7 +124,9 @@ export function MessagesView() {
       );
       console.error("Error fetching messages:", err);
     } finally {
-      setMessagesLoading(false);
+      if (showLoading) {
+        setMessagesLoading(false);
+      }
     }
   };
 
@@ -151,60 +155,67 @@ export function MessagesView() {
     const tempId = `temp_${Date.now()}_${Math.random()
       .toString(36)
       .slice(2, 9)}`;
+    
+    // Format timestamp to match API format (e.g., "2:30 PM")
+    const now = new Date();
+    const formattedTime = now.toLocaleTimeString('en-US', {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    
     const optimisticMsg: Message = {
       id: tempId,
       senderId: currentUserId,
       content: text,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      timestamp: formattedTime,
       status: "sent",
     };
 
-    setConversations((prev) =>
-      prev.map((c) => {
+    setConversations((prev) => {
+      const updated = prev.map((c) => {
         if (c.id !== activeConversation.id) return c;
-        const updated = { ...c };
-        updated.messages = [...c.messages, optimisticMsg];
-        updated.lastMessage = text;
-        updated.lastTimestamp = new Date().toISOString();
-        return updated;
-      })
-    );
+        const updatedConv = { ...c };
+        updatedConv.messages = [...c.messages, optimisticMsg];
+        updatedConv.lastMessage = text;
+        updatedConv.lastTimestamp = new Date().toISOString();
+        return updatedConv;
+      });
+      
+      // Sort conversations by most recent (move current conversation to top)
+      return updated.sort((a, b) => {
+        const timeA = new Date(a.lastTimestamp).getTime();
+        const timeB = new Date(b.lastTimestamp).getTime();
+        return timeB - timeA;
+      });
+    });
 
     try {
-      const response = await ConversationService.sendMessage(
+      await ConversationService.sendMessage(
         activeConversation.id,
         text,
         currentUserId
       );
 
-      // Replace optimistic message with real message from API
-      setConversations((prev) =>
-        prev.map((c) => {
+      // Remove temporary message - the real one will come from the next fetch
+      setConversations((prev) => {
+        const updated = prev.map((c) => {
           if (c.id !== activeConversation.id) return c;
-          const updated = { ...c };
-          // Replace the optimistic message with the real one
-          const messageIndex = c.messages.findIndex((msg) => msg.id === tempId);
-          if (messageIndex !== -1) {
-            const newMessages = [...c.messages];
-            newMessages[messageIndex] = {
-              id: response.id,
-              senderId: response.mess_senderId,
-              content: response.mess_content,
-              timestamp: new Date(response.mess_sentAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              status: "sent" as const,
-            };
-            updated.messages = newMessages;
-          }
-          return updated;
-        })
-      );
-      // No need to refresh messages since we updated the specific message
+          const updatedConv = { ...c };
+          updatedConv.messages = c.messages.filter((msg) => msg.id !== tempId);
+          return updatedConv;
+        });
+        
+        // Sort conversations by most recent (move current conversation to top)
+        return updated.sort((a, b) => {
+          const timeA = new Date(a.lastTimestamp).getTime();
+          const timeB = new Date(b.lastTimestamp).getTime();
+          return timeB - timeA;
+        });
+      });
+
+      // Fetch messages to get the real message from the server (without showing skeleton)
+      await fetchMessages(activeConversation.id, false);
     } catch (err) {
       setSendError(
         err instanceof Error ? err.message : "Failed to send message"

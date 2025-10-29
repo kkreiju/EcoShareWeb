@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ListingForm } from "./add-listing";
-import { Gift, DollarSign, Plus, Search } from "lucide-react";
+import { Gift, DollarSign, Plus, Search, Lock } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { createClient } from "@/lib/supabase/client";
 
 interface AddListingDialogProps {
   children: React.ReactNode;
@@ -24,9 +26,42 @@ export function AddListingDialog({ children, onListingCreated }: AddListingDialo
   const [open, setOpen] = useState(false);
   const [showListingForm, setShowListingForm] = useState(false);
   const [listingType, setListingType] = useState<"free" | "wanted" | "sale" | null>(null);
+  const [membershipStatus, setMembershipStatus] = useState<string>("Free");
+  const { user } = useAuth();
+
+  // Fetch membership status
+  useEffect(() => {
+    const fetchMembershipStatus = async () => {
+      if (!user?.email) return;
+
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("User")
+          .select("user_membershipStatus")
+          .eq("user_email", user.email)
+          .single();
+
+        if (data && !error) {
+          setMembershipStatus(data.user_membershipStatus || "Free");
+        }
+      } catch (error) {
+        console.error("Error fetching membership status:", error);
+      }
+    };
+
+    fetchMembershipStatus();
+  }, [user?.email]);
 
   const handleSelectType = (type: "free" | "wanted" | "sale") => {
     console.log("Selected listing type:", type);
+
+    // Check if sale listing is premium feature
+    if (type === "sale" && membershipStatus?.toLowerCase() !== "premium") {
+      // Could show a premium upgrade prompt here
+      return;
+    }
+
     setOpen(false);
 
     if (type === "free" || type === "sale" || type === "wanted") {
@@ -76,22 +111,50 @@ export function AddListingDialog({ children, onListingCreated }: AddListingDialo
 
           {/* Sale Listing Card */}
           <Card
-            className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary/50 active:scale-95 touch-manipulation min-h-[200px] sm:min-h-[180px]"
-            onClick={() => handleSelectType("sale")}
+            className={`transition-all duration-200 min-h-[200px] sm:min-h-[180px] ${
+              membershipStatus?.toLowerCase() === "premium"
+                ? "cursor-pointer hover:shadow-lg hover:border-primary/50 active:scale-95 touch-manipulation"
+                : "opacity-60 cursor-not-allowed"
+            }`}
+            onClick={() => membershipStatus?.toLowerCase() === "premium" && handleSelectType("sale")}
           >
             <CardHeader className="text-center pb-1 sm:pb-2">
-              <div className="mx-auto mb-2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                <DollarSign className="h-5 w-5 sm:h-6 sm:w-6" />
+              <div className="relative mx-auto mb-2">
+                <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full ${
+                  membershipStatus?.toLowerCase() === "premium"
+                    ? "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                    : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                }`}>
+                  <DollarSign className="h-5 w-5 sm:h-6 sm:w-6" />
+                </div>
+                {membershipStatus?.toLowerCase() !== "premium" && (
+                  <div className="absolute -top-1 -right-1 bg-amber-500 text-white rounded-full p-1">
+                    <Lock className="h-3 w-3" />
+                  </div>
+                )}
               </div>
-              <CardTitle className="text-base sm:text-lg">Sale</CardTitle>
+              <CardTitle className="text-base sm:text-lg flex items-center justify-center gap-2">
+                Sale
+                {membershipStatus?.toLowerCase() !== "premium" && (
+                  <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-xs">
+                    Premium
+                  </Badge>
+                )}
+              </CardTitle>
               <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 text-xs mx-auto block w-fit">
                 Sell your items
               </Badge>
             </CardHeader>
             <CardContent className="text-center px-3 sm:px-4 pt-1">
               <CardDescription className="text-xs sm:text-sm leading-relaxed">
-                Sell your eco-friendly items and services. Set your price and connect with
-                buyers interested in sustainable products and services.
+                {membershipStatus?.toLowerCase() === "premium" ? (
+                  "Sell your eco-friendly items and services. Set your price and connect with buyers interested in sustainable products and services."
+                ) : (
+                  <>
+                    Sell your eco-friendly items and services.{" "}
+                    <span className="text-amber-600 font-medium">Premium feature required.</span>
+                  </>
+                )}
               </CardDescription>
             </CardContent>
           </Card>

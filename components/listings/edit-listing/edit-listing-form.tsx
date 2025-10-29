@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Upload } from "lucide-react";
 import { Listing } from "@/lib/DataClass";
 import { GoogleMapsProvider } from "./google-maps-provider";
@@ -217,19 +218,21 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:w-full sm:max-w-[800px] max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-green">
-        <DialogHeader>
-          <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-            <span className="truncate">Edit Listing</span>
-          </DialogTitle>
-          <DialogDescription className="text-sm sm:text-base text-muted-foreground">
-            Update your {listing.type} listing details
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0">
+        <ScrollArea className="max-h-[80vh] px-6">
+          <div className="space-y-6 py-6">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5 text-blue-600" />
+                Edit Listing
+              </DialogTitle>
+              <DialogDescription>
+                Update your {listing.type} listing details
+              </DialogDescription>
+            </DialogHeader>
 
-        <GoogleMapsProvider>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-w-0">
+            <GoogleMapsProvider>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-w-0">
             <PhotoUploadSection
               onImageUpload={handleImageUpload}
               uploadedImage={uploadedImage}
@@ -273,8 +276,10 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
               submitText="Update Listing"
               cancelText="Cancel"
             />
-          </form>
-        </GoogleMapsProvider>
+              </form>
+            </GoogleMapsProvider>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

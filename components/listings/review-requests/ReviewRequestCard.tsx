@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -53,36 +52,37 @@ export function ReviewRequestCard({ request, onAccept, onDecline, showActions = 
   };
 
   return (
-    <Card className={`${request.status === "Pending" ? "border-l-4 border-l-primary/50" : "border-muted"} ${compact ? "p-3" : ""}`}>
-      <CardHeader className={compact ? "pb-2 px-3" : ""}>
-        <div className={`flex justify-between gap-3 ${compact ? "items-center" : "items-start"}`}>
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Avatar className={`flex-shrink-0 ${compact ? "h-8 w-8" : "h-10 w-10"}`}>
-              <AvatarImage src={request.userAvatar} />
-              <AvatarFallback className="bg-primary/10">
-                <User className={`h-3 w-3 ${compact ? "" : "h-4 w-4"}`} />
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className={`font-semibold truncate ${compact ? "text-xs" : "text-sm sm:text-base"}`}>
-                  {request.userName}
-                </h4>
-                <Badge
-                  variant={request.status === "Pending" ? "secondary" : request.status === "Accepted" ? "default" : "secondary"}
-                  className={`${compact ? "text-[10px] px-1 py-0" : "text-xs"} ${request.status !== "Pending" ? getStatusColor() : ""}`}
-                >
-                  {getStatusText()}
-                </Badge>
-              </div>
-              <p className={`text-muted-foreground mt-1 ${compact ? "text-[10px]" : "text-xs"}`}>
-                {new Date(request.requestDate).toLocaleDateString()}
-              </p>
+    <div className={`bg-muted/30 rounded-lg border p-4 space-y-4 ${request.status === "Pending" ? "border-l-4 border-l-amber-400" : "border-muted"} ${compact ? "p-3" : ""}`}>
+      {/* Header with Avatar and User Info */}
+      <div className={`flex justify-between gap-3 ${compact ? "items-center" : "items-start"}`}>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <Avatar className={`flex-shrink-0 ${compact ? "h-8 w-8" : "h-10 w-10"}`}>
+            <AvatarImage src={request.userAvatar} />
+            <AvatarFallback className="bg-primary/10">
+              <User className={`h-3 w-3 ${compact ? "" : "h-4 w-4"}`} />
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className={`font-semibold truncate ${compact ? "text-xs" : "text-sm sm:text-base"}`}>
+                {request.userName}
+              </h4>
+              <Badge
+                variant={request.status === "Pending" ? "secondary" : request.status === "Accepted" ? "default" : "secondary"}
+                className={`${compact ? "text-[10px] px-1 py-0" : "text-xs"} ${request.status !== "Pending" ? getStatusColor() : ""}`}
+              >
+                {getStatusText()}
+              </Badge>
             </div>
+            <p className={`text-muted-foreground mt-1 ${compact ? "text-[10px]" : "text-xs"}`}>
+              {new Date(request.requestDate).toLocaleDateString()}
+            </p>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className={compact ? "pt-0 px-3" : "space-y-4"}>
+      </div>
+
+      {/* Content Section */}
+      <div className={compact ? "space-y-2" : "space-y-4"}>
         <div className="flex items-center gap-2 flex-wrap">
           <h5 className={`font-medium flex-1 min-w-0 truncate ${compact ? "text-xs" : "text-sm sm:text-base"}`}>
             {request.listingTitle}
@@ -145,7 +145,7 @@ export function ReviewRequestCard({ request, onAccept, onDecline, showActions = 
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

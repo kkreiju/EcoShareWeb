@@ -33,13 +33,13 @@ export function ReviewRequestsSection({
 }: ReviewRequestsSectionProps) {
   return (
     <div className="space-y-6">
-      {/* Pending Requests */}
+      {/* Pending Requests Section */}
       {pendingRequests.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Pending Requests ({pendingRequests.length})
-          </h3>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Clock className="h-4 w-4" style={{ color: "#F59E0B" }} />
+            <span className="text-sm font-medium">Pending Requests ({pendingRequests.length})</span>
+          </div>
           <div className="space-y-4">
             {pendingRequests.map((request) => (
               <ReviewRequestCard
@@ -60,35 +60,40 @@ export function ReviewRequestsSection({
         <Separator className="my-6" />
       )}
 
-      {/* Completed Requests */}
+      {/* Completed Requests Section */}
       {completedRequests.length > 0 && (
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="completed" className="border-none">
-            <AccordionTrigger className="py-2 px-0 hover:no-underline">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <CheckCircle className="h-4 w-4" />
-                <span className="font-medium">
-                  Completed Requests ({completedRequests.length})
-                </span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-2">
-              <div className="space-y-2 opacity-75 max-w-2xl mx-auto">
-                {completedRequests.map((request) => (
-                  <ReviewRequestCard
-                    key={request.id}
-                    request={request}
-                    onAccept={onAccept}
-                    onDecline={onDecline}
-                    showActions={false}
-                    processingAction={processingRequests.get(request.id)}
-                    compact={true}
-                  />
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <CheckCircle className="h-4 w-4" style={{ color: "#10B981" }} />
+            <span className="text-sm font-medium">Completed Requests ({completedRequests.length})</span>
+          </div>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="completed" className="border-none">
+              <AccordionTrigger className="py-2 px-0 hover:no-underline">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <span className="font-medium">
+                    View completed requests
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-2">
+                <div className="space-y-2 opacity-75">
+                  {completedRequests.map((request) => (
+                    <ReviewRequestCard
+                      key={request.id}
+                      request={request}
+                      onAccept={onAccept}
+                      onDecline={onDecline}
+                      showActions={false}
+                      processingAction={processingRequests.get(request.id)}
+                      compact={true}
+                    />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
       )}
     </div>
   );

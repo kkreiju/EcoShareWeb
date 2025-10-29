@@ -43,18 +43,21 @@ export function ConversationList({
               onClick={() => onSelect(c.id)}
             >
               <Avatar className="h-9 w-9 flex-shrink-0">
-                <AvatarImage src={c.user.avatar} />
-                <AvatarFallback>{c.user.name[0]}</AvatarFallback>
+                {c.user.avatar && 
+                 c.user.avatar !== "null" && 
+                 c.user.avatar !== "undefined" && 
+                 c.user.avatar.trim() !== "" ? (
+                  <AvatarImage src={c.user.avatar} />
+                ) : null}
+                <AvatarFallback>{c.user.name[0].toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 text-left">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-medium truncate">{c.user.name}</p>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <p className="text-[10px] text-muted-foreground whitespace-nowrap">
-                      {new Date(c.lastTimestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {/* Display relative time from API (e.g., "2h ago", "now") */}
+                      {c.timestamp}
                     </p>
                     {c.unreadCount ? (
                       <Badge

@@ -25,10 +25,11 @@ interface NotificationTableProps {
   notifications: Notification[];
   onMarkAsRead: (id: string) => void;
   onNotificationClick?: (notification: Notification) => void;
+  onReviewRequest?: (notification: Notification) => void;
   isLoading?: boolean;
 }
 
-export function NotificationTable({ notifications, onMarkAsRead, onNotificationClick, isLoading = false }: NotificationTableProps) {
+export function NotificationTable({ notifications, onMarkAsRead, onNotificationClick, onReviewRequest, isLoading = false }: NotificationTableProps) {
   return (
     <Card>
       <CardContent className="p-0">
@@ -44,6 +45,7 @@ export function NotificationTable({ notifications, onMarkAsRead, onNotificationC
                   notification={notification}
                   onMarkAsRead={onMarkAsRead}
                   onNotificationClick={onNotificationClick}
+                  onReviewRequest={onReviewRequest}
                   isMobile={true}
                 />
               ))}
@@ -56,7 +58,7 @@ export function NotificationTable({ notifications, onMarkAsRead, onNotificationC
                   <TableRow>
                     <TableHead className="min-w-0">Notification</TableHead>
                     <TableHead className="hidden md:table-cell w-32">Time</TableHead>
-                    <TableHead className="w-20 text-right">Actions</TableHead>
+                    <TableHead className="w-24 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -66,6 +68,7 @@ export function NotificationTable({ notifications, onMarkAsRead, onNotificationC
                       notification={notification}
                       onMarkAsRead={onMarkAsRead}
                       onNotificationClick={onNotificationClick}
+                      onReviewRequest={onReviewRequest}
                       isMobile={false}
                     />
                   ))}

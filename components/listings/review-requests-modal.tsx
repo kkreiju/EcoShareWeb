@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -254,26 +255,28 @@ export function ReviewRequestsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] w-[95vw] max-h-[90vh] overflow-y-auto scrollbar-green">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6" />
-            Review Requests
-          </DialogTitle>
-          <DialogDescription className="text-sm sm:text-base text-muted-foreground flex items-center justify-between">
-            <span>Manage requests from users interested in your listings</span>
-            <button
-              onClick={fetchReviewRequests}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-4"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0">
+        <ScrollArea className="max-h-[80vh] px-6">
+          <div className="space-y-6 py-6">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" style={{ color: "#0EA5E9" }} />
+                Review Requests
+              </DialogTitle>
+              <DialogDescription className="flex items-center justify-between">
+                <span>Manage requests from users interested in your listings</span>
+                <button
+                  onClick={fetchReviewRequests}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-4"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
+              </DialogDescription>
+            </DialogHeader>
 
-        <div className="px-4 pb-4">
+            <div className="space-y-6">
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -306,7 +309,9 @@ export function ReviewRequestsModal({
               processingRequests={processingRequests}
             />
           )}
-        </div>
+            </div>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

@@ -18,6 +18,7 @@ import {
   MapPin,
   ShoppingCart,
   Check,
+  Lock,
 } from "lucide-react";
 import { PaymentDialog } from "./payment-dialog";
 
@@ -102,19 +103,27 @@ export function SubscriptionPlanDialog({
           {/* Features List */}
           <div className="space-y-4">
             {premiumFeatures.map((feature, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <feature.icon className="h-4 w-4 text-primary" />
+              <div key={index} className="flex items-start gap-3 p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800/30">
+                <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 mt-0.5 relative">
+                  <feature.icon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <div className="absolute -top-1 -right-1 bg-amber-500 text-white rounded-full p-0.5">
+                    <Lock className="h-2.5 w-2.5" />
+                  </div>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-sm leading-tight mb-1">
-                    {feature.title}
-                  </h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-semibold text-sm leading-tight text-amber-800 dark:text-amber-200">
+                      {feature.title}
+                    </h4>
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5">
+                      Premium
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
-                <Check className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                <Lock className="h-5 w-5 text-amber-500 flex-shrink-0 mt-1" />
               </div>
             ))}
           </div>

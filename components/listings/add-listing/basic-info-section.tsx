@@ -1,10 +1,10 @@
 "use client";
 
 import { UseFormRegister, FieldErrors } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { FileText, Package } from "lucide-react";
 
 interface BasicInfoSectionProps {
   register: UseFormRegister<any>;
@@ -18,11 +18,14 @@ export function BasicInfoSection({
   listingType,
 }: BasicInfoSectionProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Basic Information</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-6">
+      {/* Basic Information Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Package className="h-4 w-4" style={{ color: "#4D96FF" }} />
+          <span className="text-sm font-medium">Basic Information</span>
+        </div>
+
         {/* Title */}
         <div className="space-y-2">
           <Label htmlFor="title">Title *</Label>
@@ -86,7 +89,7 @@ export function BasicInfoSection({
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

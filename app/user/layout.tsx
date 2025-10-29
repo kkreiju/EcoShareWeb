@@ -17,7 +17,7 @@ export default async function UserLayout({
   const userData = await supabase
     .from("User")
     .select(
-      "user_id, user_email, user_firstName, user_middleName, user_lastName, user_isVerified, user_ratings, user_transactionCount, user_profileURL"
+      "user_id, user_email, user_firstName, user_middleName, user_lastName, user_isVerified, user_ratings, user_transactionCount, user_profileURL, user_membershipStatus"
     )
     .eq("user_email", data.user.email)
     .single();
@@ -36,6 +36,7 @@ export default async function UserLayout({
     name: fullName,
     email: data.user.email || "",
     avatar: avatarUrl,
+    membershipStatus: userData.data?.user_membershipStatus || "Free",
   };
 
   return (

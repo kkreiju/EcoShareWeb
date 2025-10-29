@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Upload } from "lucide-react";
 import { GoogleMapsProvider } from "./google-maps-provider";
 import { PhotoUploadSection } from "./photo-upload-section";
@@ -19,6 +20,7 @@ import { PickupInfoSection } from "./pickup-info-section";
 import { TagsSelectionSection } from "./tags-selection-section";
 import { LocationSelectionSection } from "./location-selection-section";
 import { FormActions } from "./form-actions";
+import { NonCompostableMaterialModal } from "./non-compostable-material-modal";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/api";
 import { toast } from "sonner";
@@ -48,6 +50,7 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>("");
+  const [showNonCompostableModal, setShowNonCompostableModal] = useState(false);
   const [currentLatitude, setCurrentLatitude] = useState<number | null>(null);
   const [currentLongitude, setCurrentLongitude] = useState<number | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
@@ -195,7 +198,20 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      const errorMessage = errorData.message || `HTTP error! status: ${response.status}`;
+
+      // Check if this is an image verification error (non-compostable material)
+      if (errorMessage.includes("Image verification failed")) {
+        // Return a special object to indicate non-compostable material
+        return {
+          success: false,
+          error: "non-compostable",
+          message: errorMessage
+        };
+      }
+
+      // For other errors, throw as usual
+      throw new Error(errorMessage);
     }
 
     return await response.json();
@@ -317,6 +333,13 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
 
       const result = await createListing(data);
 
+      // Check if this is a non-compostable material response
+      if (result.error === "non-compostable") {
+        console.log("Non-compostable material detected");
+        setShowNonCompostableModal(true);
+        return;
+      }
+
       console.log("Listing created successfully:", result);
 
       // Show success message
@@ -335,7 +358,7 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
     } catch (error) {
       console.error("Error creating listing:", error);
 
-      // Show error message
+      // Show error message for other errors
       toast.error("Failed to create listing", {
         description: error instanceof Error ? error.message : "Please check your connection and try again.",
         duration: 5000,
@@ -364,27 +387,29 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
   return (
     <GoogleMapsProvider apiKey="AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA">
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[95vw] sm:w-full sm:max-w-[800px] max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-green">
-          <DialogHeader>
-            <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-              <Upload className={`h-5 w-5 sm:h-6 sm:w-6 ${
-                listingType === "sale" ? "text-red-600" :
-                listingType === "wanted" ? "text-yellow-600" :
-                "text-green-600"
-              }`} />
-              <span className="truncate">Create {listingType === "sale" ? "Sale" : listingType === "wanted" ? "Wanted" : "Free"} Listing</span>
-            </DialogTitle>
-            <DialogDescription className="text-sm sm:text-base">
-              {listingType === "sale"
-                ? "Sell your eco-friendly items and services to interested buyers"
-                : listingType === "wanted"
-                ? "Post what you're looking for and connect with people who can help"
-                : "Share items you no longer need with the community"
-              }
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0">
+          <ScrollArea className="max-h-[80vh] px-6">
+            <div className="space-y-6 py-6">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Upload className={`h-5 w-5 ${
+                    listingType === "sale" ? "text-red-600" :
+                    listingType === "wanted" ? "text-yellow-600" :
+                    "text-green-600"
+                  }`} />
+                  Create {listingType === "sale" ? "Sale" : listingType === "wanted" ? "Wanted" : "Free"} Listing
+                </DialogTitle>
+                <DialogDescription>
+                  {listingType === "sale"
+                    ? "Sell your eco-friendly items and services to interested buyers"
+                    : listingType === "wanted"
+                    ? "Post what you're looking for and connect with people who can help"
+                    : "Share items you no longer need with the community"
+                  }
+                </DialogDescription>
+              </DialogHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-w-0">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-w-0">
             <PhotoUploadSection
               uploadedImage={uploadedImage}
               onImageUpload={handleImageUpload}
@@ -426,9 +451,20 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
               listingType={listingType}
               isSubmitting={isSubmitting}
             />
-          </form>
+              </form>
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      <NonCompostableMaterialModal
+        open={showNonCompostableModal}
+        onOpenChange={setShowNonCompostableModal}
+        onTryAgain={() => {
+          // Just close the modal - user can try uploading a different image
+          setShowNonCompostableModal(false);
+        }}
+      />
     </GoogleMapsProvider>
   );
 }
