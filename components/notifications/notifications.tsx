@@ -53,7 +53,11 @@ export function Notifications() {
       const data = await response.json();
 
       if (data.success) {
-        setNotifications(data.data || []);
+        // Sort notifications by date descending (newest first)
+        const sortedNotifications = (data.data || []).sort((a: Notification, b: Notification) => {
+          return new Date(b.notif_dateTime).getTime() - new Date(a.notif_dateTime).getTime();
+        });
+        setNotifications(sortedNotifications);
       } else {
         throw new Error(data.message || 'Failed to fetch notifications');
       }
@@ -87,9 +91,14 @@ export function Notifications() {
       const data = await response.json();
 
       if (data.success) {
-        // Update local state
+        // Update local state - only mark the notifications that were actually marked as read by the API
+        const updatedNotificationIds = (data.data || []).map((n: any) => n.notif_id);
         setNotifications(prev =>
-          prev.map(notification => ({ ...notification, notif_isRead: true }))
+          prev.map(notification =>
+            updatedNotificationIds.includes(notification.notif_id)
+              ? { ...notification, notif_isRead: true }
+              : notification
+          )
         );
 
         toast.success(`Successfully marked ${data.message.match(/\d+/)?.[0] || 'all'} notifications as read`, {

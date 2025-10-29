@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState, useEffect } from "react";
 import {
   Bell,
   GalleryVerticalEnd,
@@ -21,6 +22,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/use-auth";
 
 // This is sample data.
 const data = {
@@ -73,7 +75,42 @@ export function AppSidebar({
 }: React.ComponentProps<typeof Sidebar> & {
   user?: { name: string; email: string; avatar: string };
 }) {
+  const { userId, isAuthenticated } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
   const userData = user || data.user;
+
+  // Fetch unread notification count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (!isAuthenticated || !userId) return;
+
+      try {
+        const response = await fetch(`/api/notification/get-notification?user_id=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            const count = (data.data || []).filter((n: any) => !n.notif_isRead).length;
+            setUnreadCount(count);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching unread notification count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, userId]);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -85,7 +122,7 @@ export function AppSidebar({
           items={data.nutrientAssistant}
           groupLabel="Nutrient Assistant"
         />
-        <NavMain items={data.mainNav} groupLabel="Main Menu" />
+        <NavMain items={data.mainNav} groupLabel="Main Menu" unreadCount={unreadCount} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

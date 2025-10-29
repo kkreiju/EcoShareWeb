@@ -12,6 +12,8 @@ export { TransactionTableHeader } from "./transaction-table-header";
 export { TransactionRow } from "./transaction-row";
 export { TransactionActions } from "./transaction-actions";
 export { CameraCaptureModal } from "./camera-capture-modal";
+export { ViewTransactionImageModal } from "./view-transaction-image-modal";
+export { TransactionRatingModal } from "./transaction-rating-modal";
 
 // Badge utilities
 export {

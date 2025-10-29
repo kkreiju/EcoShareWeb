@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AccountSettingsHeader } from "./account-settings-header";
 import { ProfileSection } from "./profile-section";
 import { SecuritySection } from "./security-section";
+import { NotificationPreferencesSection } from "./notification-preferences-section";
 import { AccountSettingsSkeleton } from "./loading-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
@@ -127,8 +128,8 @@ export function AccountSettingsView() {
     }
   };
 
-  const handleRefresh = () => {
-    fetchUserProfile();
+  const handleRefresh = async () => {
+    await fetchUserProfile();
   };
 
   // Show loading state while auth is loading
@@ -193,6 +194,14 @@ export function AccountSettingsView() {
             <SecuritySection
               userProfile={userProfile}
               onUpdate={handleProfileUpdate}
+            />
+          )}
+
+          {activeSection === "notifications" && (
+            <NotificationPreferencesSection
+              userProfile={userProfile}
+              onUpdate={handleProfileUpdate}
+              onRefresh={handleRefresh}
             />
           )}
         </div>

@@ -44,6 +44,7 @@ interface TransactionRowProps {
   type: "contributor" | "receiver";
   onComplete?: (transactionId: string, imageBase64: string) => void;
   onCancel?: (transactionId: string) => void;
+  onViewDetails?: (listingId: string) => void;
 }
 
 export function TransactionRow({
@@ -52,6 +53,7 @@ export function TransactionRow({
   type,
   onComplete,
   onCancel,
+  onViewDetails,
 }: TransactionRowProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -175,8 +177,10 @@ export function TransactionRow({
           transactionId={transaction.tran_id}
           transactionStatus={transaction.tran_status}
           listingTitle={transaction.listing.list_title}
+          listingId={transaction.list_id}
           onComplete={onComplete}
           onCancel={onCancel}
+          onViewDetails={onViewDetails}
         />
       </TableCell>
     </TableRow>

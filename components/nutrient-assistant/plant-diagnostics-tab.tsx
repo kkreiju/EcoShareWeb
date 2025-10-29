@@ -8,10 +8,12 @@ import {
   Sparkles,
   AlertCircle,
   RotateCcw,
+  ArrowRight,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WebCamera } from "@shivantra/react-web-camera";
 import { PlantDiagnosticsResultModal, DiagnosisResult } from "./plant-diagnostics-result-modal";
+import { PlantDiagnosticsNonPlantModal } from "./plant-diagnostics-non-plant-modal";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/api";
 
@@ -24,6 +26,9 @@ export function PlantDiagnosticsTab() {
   const [diagnosisResult, setDiagnosisResult] =
     useState<DiagnosisResult | null>(null);
   const [showResultsDialog, setShowResultsDialog] = useState(false);
+  const [showNonPlantDialog, setShowNonPlantDialog] = useState(false);
+  const [capturedImageData, setCapturedImageData] = useState<string | null>(null);
+  const [photoTaken, setPhotoTaken] = useState(false);
   const cameraRef = useRef<any>(null);
 
   // Fetch user data
@@ -57,6 +62,16 @@ export function PlantDiagnosticsTab() {
   const handleStopCamera = () => {
     setCameraActive(false);
     setError(null);
+  };
+
+  const handleTryAgain = () => {
+    setShowNonPlantDialog(false);
+    setShowResultsDialog(false);
+    setDiagnosisResult(null);
+    setCapturedImageData(null);
+    setPhotoTaken(false);
+    setError(null);
+    setCameraActive(true);
   };
 
   // Convert image to base64
@@ -93,29 +108,57 @@ export function PlantDiagnosticsTab() {
       const capturedImage = await cameraRef.current.capture();
 
       if (capturedImage) {
-        // Convert image to base64 for API
+        // Convert image to base64 and show it (freeze the camera view)
         const base64Image = await imageToBase64(capturedImage);
+        setCapturedImageData(base64Image);
+        setPhotoTaken(true);
+        setIsCapturing(false);
+      }
+    } catch (err) {
+      console.error("Error capturing image:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to capture image. Please try again."
+      );
+      setIsCapturing(false);
+    }
+  };
 
-        // Send to API for analysis
-        const response = await fetch("/api/ai/diagnostics", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            image: base64Image,
-            userId: userData?.user_id || "",
-          }),
-        });
+  const handleAnalyze = async () => {
+    if (!capturedImageData) return;
 
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status}`);
-        }
+    try {
+      setIsCapturing(true);
+      setError(null);
 
-        const result = await response.json();
-        console.log("API Response:", result);
+      // Send to API for analysis
+      const response = await fetch("/api/ai/diagnostics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image: capturedImageData,
+          userId: userData?.user_id || "",
+        }),
+      });
 
-        if (result.success) {
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("API Response:", result);
+
+      if (result.success) {
+        // Check if the result is "others" (not a plant)
+        if (result.data.prediction?.toLowerCase() === 'others' ||
+            result.data.prediction?.toLowerCase() === 'other' ||
+            result.data.prediction?.toLowerCase() === 'unknown') {
+          // Show non-plant modal
+          setShowNonPlantDialog(true);
+        } else {
           // Set comprehensive diagnosis results
           setDiagnosisResult({
             plantName: result.data.prediction,
@@ -129,21 +172,21 @@ export function PlantDiagnosticsTab() {
             recommendations: result.data.recommendations,
             listings: result.data.listings,
             // Backward compatibility
-            nutrientNeeds: result.diagnosis.nutrientNeeds,
-            compostSuggestions: result.diagnosis.compostSuggestions,
-            capturedImage: base64Image,
+            nutrientNeeds: result.diagnosis?.nutrientNeeds || '',
+            compostSuggestions: result.diagnosis?.compostSuggestions || '',
+            capturedImage: capturedImageData,
           });
 
           // Show results dialog
           setShowResultsDialog(true);
-        } else {
-          throw new Error(result.message || "Analysis failed");
         }
-
-        setIsCapturing(false);
+      } else {
+        throw new Error(result.message || "Analysis failed");
       }
+
+      setIsCapturing(false);
     } catch (err) {
-      console.error("Error capturing/analyzing image:", err);
+      console.error("Error analyzing image:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -151,6 +194,12 @@ export function PlantDiagnosticsTab() {
       );
       setIsCapturing(false);
     }
+  };
+
+  const handleRetake = () => {
+    setCapturedImageData(null);
+    setPhotoTaken(false);
+    setError(null);
   };
 
   const handleCameraError = (error: any) => {
@@ -217,55 +266,105 @@ export function PlantDiagnosticsTab() {
             <div className="space-y-6">
               <div className="space-y-4">
                 <h2 className="text-2xl font-semibold text-foreground">
-                  Capture Your Plant
+                  {photoTaken ? "Review Your Photo" : "Capture Your Plant"}
                 </h2>
                 <p className="text-muted-foreground">
-                  Position the camera and click analyze when ready
+                  {photoTaken
+                    ? "Check your photo and analyze it, or take a new one"
+                    : "Position the camera and take a photo when ready"
+                  }
                 </p>
               </div>
 
               {/* Camera Preview */}
               <div className="max-w-2xl mx-auto">
                 <div className="relative rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/25">
-                  <WebCamera
-                    ref={cameraRef}
-                    className="w-full"
-                    style={{ aspectRatio: "4/3" }}
-                  />
+                  {photoTaken && capturedImageData ? (
+                    <img
+                      src={capturedImageData}
+                      alt="Captured plant"
+                      className="w-full"
+                      style={{ aspectRatio: "4/3" }}
+                    />
+                  ) : (
+                    <WebCamera
+                      ref={cameraRef}
+                      className="w-full"
+                      style={{ aspectRatio: "4/3" }}
+                    />
+                  )}
                   <div className="absolute inset-0 border-2 border-green-500/50 rounded-lg pointer-events-none" />
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-                <Button
-                  onClick={handleCapture}
-                  disabled={isCapturing}
-                  size="lg"
-                  className="flex-1"
-                >
-                  {isCapturing ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Analyzing...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      Analyze Plant
-                    </div>
-                  )}
-                </Button>
-                <Button
-                  onClick={handleStopCamera}
-                  variant="outline"
-                  disabled={isCapturing}
-                  size="lg"
-                  className="flex-1"
-                >
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Cancel
-                </Button>
+              <div className="flex flex-col gap-4 max-w-md mx-auto">
+                {photoTaken ? (
+                  // Photo taken - show Retake and Analyze buttons
+                  <>
+                    <Button
+                      onClick={handleRetake}
+                      variant="outline"
+                      size="lg"
+                      className="w-full group-hover:bg-gray-600 group-hover:text-white transition-colors"
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Retake Photo
+                    </Button>
+                    <Button
+                      onClick={handleAnalyze}
+                      disabled={isCapturing}
+                      size="lg"
+                      className="w-full group-hover:bg-green-600 group-hover:text-white transition-colors"
+                    >
+                      {isCapturing ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Analyzing...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4" />
+                          Analyze Plant
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </div>
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  // No photo taken - show Take Photo and Cancel buttons
+                  <>
+                    <Button
+                      onClick={handleCapture}
+                      disabled={isCapturing}
+                      size="lg"
+                      className="w-full group-hover:bg-green-600 group-hover:text-white transition-colors"
+                    >
+                      {isCapturing ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Taking Photo...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4" />
+                          Take Photo
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </div>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={handleStopCamera}
+                      variant="outline"
+                      disabled={isCapturing}
+                      size="lg"
+                      className="w-full group-hover:bg-gray-600 group-hover:text-white transition-colors"
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -310,6 +409,13 @@ export function PlantDiagnosticsTab() {
         open={showResultsDialog}
         onOpenChange={setShowResultsDialog}
         result={diagnosisResult}
+      />
+
+      {/* Non-Plant Modal */}
+      <PlantDiagnosticsNonPlantModal
+        open={showNonPlantDialog}
+        onOpenChange={setShowNonPlantDialog}
+        onTryAgain={handleTryAgain}
       />
     </div>
   );

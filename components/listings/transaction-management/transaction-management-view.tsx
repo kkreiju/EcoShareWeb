@@ -368,6 +368,10 @@ export function TransactionManagementView() {
     }
   };
 
+  const handleViewDetails = (listingId: string) => {
+    window.open(`/user/listing/${listingId}`, '_blank');
+  };
+
   return (
     <div className="space-y-4">
       <TransactionHeader 
@@ -385,6 +389,7 @@ export function TransactionManagementView() {
         isLoading={isLoading}
         onComplete={handleComplete}
         onCancel={handleCancel}
+        onViewDetails={handleViewDetails}
       />
     </div>
   );

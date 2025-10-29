@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Package, MapPin, Calendar, Clock, AlertCircle, Flag, MessageCircle, Star } from "lucide-react";
+import { Package, MapPin, Calendar, Clock, AlertCircle, Flag, MessageCircle, Star, ArrowRight } from "lucide-react";
 import { Listing } from "@/lib/DataClass";
 
 interface ListingImageProps {
@@ -228,22 +228,24 @@ export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatD
               {/* Action Buttons */}
               {!isOwner && (
                 <div className="pt-6">
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-4">
                     <Button
                       size="lg"
                       onClick={onContact}
-                      className="flex-1 font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl transform hover:-translate-y-0.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                      className="w-full group-hover:bg-green-600 group-hover:text-white transition-colors"
                     >
-                      <MessageCircle className="w-5 h-5 mr-3" />
+                      <MessageCircle className="w-4 h-4 mr-2" />
                       {listing.type === "Wanted" ? "Offer Item" : "Request Item"}
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
 
                     <Button
                       size="lg"
-                      className="flex-1 font-medium text-white shadow-lg transition-all duration-200 hover:shadow-xl transform hover:-translate-y-0.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                      variant="outline"
+                      className="w-full group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 transition-colors"
                       onClick={onReport}
                     >
-                      <Flag className="w-5 h-5 mr-3" />
+                      <Flag className="w-4 h-4 mr-2" />
                       Report Item
                     </Button>
                   </div>

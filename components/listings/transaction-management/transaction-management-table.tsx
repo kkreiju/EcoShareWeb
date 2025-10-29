@@ -43,6 +43,7 @@ interface TransactionManagementTableProps {
   type: "contributor" | "receiver";
   onComplete?: (transactionId: string, imageBase64: string) => void;
   onCancel?: (transactionId: string) => void;
+  onViewDetails?: (listingId: string) => void;
 }
 
 export function TransactionManagementTable({
@@ -50,6 +51,7 @@ export function TransactionManagementTable({
   type,
   onComplete,
   onCancel,
+  onViewDetails,
 }: TransactionManagementTableProps) {
   if (transactions.length === 0) {
     return <TransactionEmptyState type={type} />;
@@ -68,6 +70,7 @@ export function TransactionManagementTable({
               type={type}
               onComplete={onComplete}
               onCancel={onCancel}
+              onViewDetails={onViewDetails}
             />
           ))}
         </TableBody>

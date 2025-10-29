@@ -6,10 +6,12 @@ export { AccountSettingsView as AccountSettingsPageView } from "./account-settin
 export { AccountSettingsHeader } from "./account-settings-header";
 export { ProfileSection } from "./profile-section";
 export { SecuritySection } from "./security-section";
+export { NotificationPreferencesSection } from "./notification-preferences-section";
 
 // Loading skeletons
 export {
   AccountSettingsSkeleton,
   ProfileSectionSkeleton,
   SecuritySectionSkeleton,
+  NotificationPreferencesSkeleton,
 } from "./loading-skeleton";

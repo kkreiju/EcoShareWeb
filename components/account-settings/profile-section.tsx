@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, Upload, Save, X } from "lucide-react";
+import { User, Mail, Phone, Upload, Save, X, Star, ShoppingCart, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { UserProfile } from "./types";
@@ -17,6 +18,25 @@ interface ProfileSectionProps {
   userProfile: UserProfile;
   onUpdate: (data: Partial<UserProfile>) => Promise<void>;
 }
+
+const getMembershipBadgeVariant = (status?: string) => {
+  switch (status?.toLowerCase()) {
+    case "premium":
+    case "gold":
+      return "default"; // gold/yellow
+    case "pro":
+      return "secondary"; // blue
+    case "vip":
+      return "destructive"; // red/purple
+    default:
+      return "outline"; // gray for free/basic
+  }
+};
+
+const getMembershipDisplayName = (status?: string) => {
+  if (!status) return "Free";
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+};
 
 export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
   const { user } = useAuth();
@@ -91,42 +111,45 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
               <User className="h-5 w-5" />
               Profile Information
             </CardTitle>
-            {!isEditing ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="w-full sm:w-auto"
-              >
-                Edit Profile
-              </Button>
-            ) : (
-              <div className="flex gap-2 w-full sm:w-auto">
+            {/* Desktop: Show edit/save buttons in header */}
+            <div className="hidden sm:block">
+              {!isEditing ? (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleCancel}
-                  disabled={isSaving}
-                  className="flex-1 sm:flex-none"
+                  onClick={() => setIsEditing(true)}
+                  className="w-auto"
                 >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
+                  Edit Profile
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={
-                    isSaving ||
-                    !formData.user_firstName.trim() ||
-                    !formData.user_lastName.trim()
-                  }
-                  className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {isSaving ? "Saving..." : "Save"}
-                </Button>
-              </div>
-            )}
+              ) : (
+                <div className="flex gap-2 w-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCancel}
+                    disabled={isSaving}
+                    className="flex-none"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={
+                      isSaving ||
+                      !formData.user_firstName.trim() ||
+                      !formData.user_lastName.trim()
+                    }
+                    className="flex-none bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSaving ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -154,6 +177,31 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
                   Change Avatar
                 </Button>
               )}
+            </div>
+          </div>
+
+          {/* Membership Status & Stats */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-muted/30 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-yellow-600" />
+              <Badge variant={getMembershipBadgeVariant(userProfile.user_membershipStatus)}>
+                <Crown className="h-3 w-3 mr-1" />
+                {getMembershipDisplayName(userProfile.user_membershipStatus)}
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1">
+                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                <span className="font-medium">{userProfile.user_ratings?.toFixed(1) || "0.0"}</span>
+                <span className="text-muted-foreground">rating</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <ShoppingCart className="h-4 w-4 text-green-600" />
+                <span className="font-medium">{userProfile.user_transactionCount || 0}</span>
+                <span className="text-muted-foreground">transactions</span>
+              </div>
             </div>
           </div>
 
@@ -262,6 +310,43 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
             ) : (
               <div className="p-3 bg-muted rounded-md text-sm min-h-[80px]">
                 {formData.user_bio || "No bio provided"}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile: Show edit/save buttons at bottom */}
+          <div className="block sm:hidden pt-6 border-t">
+            {!isEditing ? (
+              <Button
+                variant="outline"
+                onClick={() => setIsEditing(true)}
+                className="w-full"
+              >
+                Edit Profile
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isSaving}
+                  className="flex-1"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={
+                    isSaving ||
+                    !formData.user_firstName.trim() ||
+                    !formData.user_lastName.trim()
+                  }
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
               </div>
             )}
           </div>

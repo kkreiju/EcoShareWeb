@@ -117,7 +117,7 @@ export function PlantDiagnosticsResultModal({
     .filter((item) => item.length > 0);
 
   const handleListingClick = (listing: CompostListing) => {
-    router.push(`/user/listing?id=${listing.list_id}`);
+    window.open(`/user/listing/${listing.list_id}`, '_blank');
   };
 
   const getConfidenceColor = (confidence: number) => {

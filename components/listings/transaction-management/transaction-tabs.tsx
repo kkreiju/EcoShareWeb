@@ -53,6 +53,7 @@ interface TransactionTabsProps {
   isLoading: boolean;
   onComplete: (transactionId: string, imageBase64: string) => void;
   onCancel: (transactionId: string) => void;
+  onViewDetails?: (listingId: string) => void;
 }
 
 export function TransactionTabs({
@@ -62,6 +63,7 @@ export function TransactionTabs({
   isLoading,
   onComplete,
   onCancel,
+  onViewDetails,
 }: TransactionTabsProps) {
   return (
     <Card className="border border-border/50 bg-gradient-to-br from-background to-muted/20 shadow-lg hover:shadow-xl transition-all duration-200">
@@ -118,6 +120,7 @@ export function TransactionTabs({
                 type="contributor"
                 onComplete={onComplete}
                 onCancel={onCancel}
+                onViewDetails={onViewDetails}
               />
             )}
           </TabsContent>
@@ -138,6 +141,7 @@ export function TransactionTabs({
                 transactions={transactionData?.receiver || []}
                 type="receiver"
                 onCancel={onCancel}
+                onViewDetails={onViewDetails}
               />
             )}
           </TabsContent>

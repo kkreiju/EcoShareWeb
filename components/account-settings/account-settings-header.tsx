@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, User, Shield } from "lucide-react";
+import { RefreshCw, User, Shield, Bell } from "lucide-react";
 
 interface AccountSettingsHeaderProps {
   activeSection: string;
@@ -24,6 +24,12 @@ const sections = [
     label: "Security",
     icon: Shield,
     description: "Password and authentication settings",
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    icon: Bell,
+    description: "Manage your notification preferences",
   },
 ];
 
@@ -74,18 +80,17 @@ export function AccountSettingsHeader({
           onValueChange={onSectionChange}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 bg-muted/50 h-auto p-1 gap-1">
             {sections.map((section) => {
               const Icon = section.icon;
               return (
                 <TabsTrigger
                   key={section.id}
                   value={section.id}
-                  className="flex items-center gap-2 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-foreground"
+                  className="flex items-center justify-center gap-2 text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm h-10 sm:h-9 px-3 sm:px-4"
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="hidden sm:inline">{section.label}</span>
-                  <span className="sm:hidden">{section.label.slice(0, 4)}</span>
+                  <span className="truncate">{section.label}</span>
                 </TabsTrigger>
               );
             })}

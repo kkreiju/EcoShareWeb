@@ -25,7 +25,15 @@ const routeNames: Record<string, string> = {
 export function DynamicBreadcrumb() {
   const pathname = usePathname();
 
-  const currentPageName = routeNames[pathname] || "Page";
+  // Check if we're on a listing detail page
+  const isListingDetail = pathname.startsWith('/user/listing/') && pathname !== '/user/listing';
+
+  let currentPageName = routeNames[pathname] || "Page";
+
+  // Handle listing detail pages
+  if (isListingDetail) {
+    currentPageName = "Listing Details";
+  }
 
   return (
     <Breadcrumb>
@@ -36,9 +44,21 @@ export function DynamicBreadcrumb() {
         {pathname !== "/user/dashboard" && (
           <>
             <BreadcrumbSeparator className="hidden md:block" />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{currentPageName}</BreadcrumbPage>
-            </BreadcrumbItem>
+            {isListingDetail ? (
+              <>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="/user/listings">Listings</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{currentPageName}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </>
+            ) : (
+              <BreadcrumbItem>
+                <BreadcrumbPage>{currentPageName}</BreadcrumbPage>
+              </BreadcrumbItem>
+            )}
           </>
         )}
       </BreadcrumbList>

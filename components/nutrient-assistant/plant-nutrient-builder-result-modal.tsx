@@ -143,7 +143,7 @@ export function PlantNutrientBuilderResultModal({
   const { matches_plant_needs, final_mix, match_quality, assessment } = combined_analysis;
 
   const handleListingClick = (listing: CompostListing) => {
-    router.push(`/user/listing?id=${listing.list_id}`);
+    window.open(`/user/listing/${listing.list_id}`, '_blank');
   };
 
   return (

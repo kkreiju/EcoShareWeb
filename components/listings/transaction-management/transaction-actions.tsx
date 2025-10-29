@@ -1,23 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Check, X, Eye, Camera } from "lucide-react";
+import { MoreHorizontal, X, Eye, Camera, Image as ImageIcon, Star, CheckCircle } from "lucide-react";
 import { CameraCaptureModal } from "./camera-capture-modal";
+import { ViewTransactionImageModal } from "./view-transaction-image-modal";
+import { TransactionRatingModal } from "./transaction-rating-modal";
 
 interface TransactionActionsProps {
   type: "contributor" | "receiver";
   transactionId: string;
   transactionStatus: string;
   listingTitle: string;
+  listingId: string;
   onComplete?: (transactionId: string, imageBase64: string) => void;
   onCancel?: (transactionId: string) => void;
+  onViewDetails?: (listingId: string) => void;
 }
 
 export function TransactionActions({
@@ -25,11 +30,49 @@ export function TransactionActions({
   transactionId,
   transactionStatus,
   listingTitle,
+  listingId,
   onComplete,
   onCancel,
+  onViewDetails,
 }: TransactionActionsProps) {
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [isViewImageModalOpen, setIsViewImageModalOpen] = useState(false);
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
+  const [checkingRating, setCheckingRating] = useState(false);
+
+  const status = transactionStatus.toLowerCase();
+  const isOngoing = status === "ongoing";
+  const isCompleted = status === "completed";
+  const isCancelled = status === "cancelled";
+
+  // Check if transaction has been rated (only for completed receiver transactions)
+  useEffect(() => {
+    if (isCompleted && type === "receiver") {
+      checkRatingStatus();
+    }
+  }, [isCompleted, type, transactionId]);
+
+  const checkRatingStatus = async () => {
+    setCheckingRating(true);
+    try {
+      const response = await fetch(
+        `/api/transaction/rating/check-rating?tran_id=${transactionId}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setHasRated(data.hasRated);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking rating status:", error);
+    } finally {
+      setCheckingRating(false);
+    }
+  };
 
   const handleCompleteClick = () => {
     setIsCameraModalOpen(true);
@@ -46,6 +89,20 @@ export function TransactionActions({
       }
     }
   };
+
+  const handleRatingSubmitted = () => {
+    setHasRated(true);
+  };
+
+  const handleViewDetails = () => {
+    if (onViewDetails) {
+      onViewDetails(listingId);
+    } else {
+      // Fallback: open in new tab directly
+      window.open(`/user/listing/${listingId}`, '_blank');
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -60,31 +117,80 @@ export function TransactionActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          {/* Show Complete button only for contributor (sold items) */}
-          {type === "contributor" && onComplete && transactionStatus.toLowerCase() !== "completed" && (
-            <DropdownMenuItem
-              onClick={handleCompleteClick}
-              className="text-green-600 focus:text-green-600 focus:bg-green-50 dark:focus:bg-green-950/20"
-              disabled={isUploading}
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Complete
-            </DropdownMenuItem>
+          {/* Show Complete button only for contributor (sold items) with Ongoing status */}
+          {type === "contributor" && isOngoing && onComplete && (
+            <>
+              <DropdownMenuItem
+                onClick={handleCompleteClick}
+                className="text-green-600 focus:text-green-600 focus:bg-green-50 dark:focus:bg-green-950/20"
+                disabled={isUploading}
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Complete Transaction
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
           )}
 
-          {/* Show Cancel button for both contributor and receiver */}
-          {onCancel && transactionStatus.toLowerCase() !== "cancelled" && (
-            <DropdownMenuItem
-              onClick={() => onCancel(transactionId)}
-              className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20"
-              disabled={isUploading}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </DropdownMenuItem>
+          {/* Show Cancel button only for Ongoing transactions */}
+          {isOngoing && onCancel && (
+            <>
+              <DropdownMenuItem
+                onClick={() => onCancel(transactionId)}
+                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20"
+                disabled={isUploading}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel Transaction
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
           )}
 
-          <DropdownMenuItem className="focus:bg-blue-50 dark:focus:bg-blue-950/20">
+          {/* Show View Completion Image for completed transactions */}
+          {isCompleted && (
+            <>
+              <DropdownMenuItem
+                onClick={() => setIsViewImageModalOpen(true)}
+                className="focus:bg-blue-50 dark:focus:bg-blue-950/20"
+              >
+                <ImageIcon className="h-4 w-4 mr-2" />
+                View Completion Image
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+
+          {/* Show Rate Transaction for completed receiver transactions */}
+          {isCompleted && type === "receiver" && (
+            <>
+              {checkingRating ? (
+                <DropdownMenuItem disabled>
+                  <Star className="h-4 w-4 mr-2" />
+                  Checking...
+                </DropdownMenuItem>
+              ) : hasRated ? (
+                <DropdownMenuItem disabled className="text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Already Rated
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() => setIsRatingModalOpen(true)}
+                  className="text-yellow-600 focus:text-yellow-600 focus:bg-yellow-50 dark:focus:bg-yellow-950/20"
+                >
+                  <Star className="h-4 w-4 mr-2" />
+                  Rate Transaction
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+            </>
+          )}
+
+          <DropdownMenuItem
+            onClick={handleViewDetails}
+            className="focus:bg-blue-50 dark:focus:bg-blue-950/20"
+          >
             <Eye className="h-4 w-4 mr-2" />
             View Details
           </DropdownMenuItem>
@@ -98,6 +204,21 @@ export function TransactionActions({
         transactionId={transactionId}
         listingTitle={listingTitle}
         isUploading={isUploading}
+      />
+
+      <ViewTransactionImageModal
+        isOpen={isViewImageModalOpen}
+        onClose={() => setIsViewImageModalOpen(false)}
+        transactionId={transactionId}
+        listingTitle={listingTitle}
+      />
+
+      <TransactionRatingModal
+        isOpen={isRatingModalOpen}
+        onClose={() => setIsRatingModalOpen(false)}
+        transactionId={transactionId}
+        listingTitle={listingTitle}
+        onRatingSubmitted={handleRatingSubmitted}
       />
     </>
   );

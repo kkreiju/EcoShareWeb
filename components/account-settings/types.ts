@@ -8,4 +8,6 @@ export interface UserProfile {
   user_profileURL?: string;
   user_ratings?: number;
   user_transactionCount?: number;
+  user_preferences?: string | string[];
+  user_membershipStatus?: string;
 }
