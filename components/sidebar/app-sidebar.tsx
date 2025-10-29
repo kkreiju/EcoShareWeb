@@ -57,12 +57,6 @@ const data = {
       icon: List,
     },
     {
-      title: "Nearby Listings",
-      url: "/user/nearby-listings",
-      icon: Search,
-      premium: true,
-    },
-    {
       title: "Messages",
       url: "/user/messages",
       icon: MessageCircle,
@@ -118,10 +112,6 @@ export function AppSidebar({
     return () => clearInterval(interval);
   }, [isAuthenticated, userId]);
 
-  // Filter navigation items based on membership status
-  const isPremium = user?.membershipStatus?.toLowerCase() === "premium";
-  const filteredMainNav = data.mainNav.filter(item => !item.premium || isPremium);
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -132,7 +122,7 @@ export function AppSidebar({
           items={data.nutrientAssistant}
           groupLabel="Nutrient Assistant"
         />
-        <NavMain items={filteredMainNav} groupLabel="Main Menu" unreadCount={unreadCount} />
+        <NavMain items={data.mainNav} groupLabel="Main Menu" unreadCount={unreadCount} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />
