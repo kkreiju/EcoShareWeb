@@ -35,6 +35,7 @@ export function NavUser({
     name: string;
     email: string;
     avatar: string;
+    membershipStatus?: string;
   };
 }) {
   const { isMobile } = useSidebar();
@@ -85,15 +86,17 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <SubscriptionPlanDialog>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Sparkles />
-                  Subscribe to Pro
-                </DropdownMenuItem>
-              </SubscriptionPlanDialog>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            {user.membershipStatus?.toLowerCase() !== "premium" && (
+              <DropdownMenuGroup>
+                <SubscriptionPlanDialog>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Sparkles />
+                    Subscribe to Pro
+                  </DropdownMenuItem>
+                </SubscriptionPlanDialog>
+              </DropdownMenuGroup>
+            )}
+            {user.membershipStatus?.toLowerCase() !== "premium" && <DropdownMenuSeparator />}
             <DropdownMenuGroup>
               <DropdownMenuItem
                 onClick={() => router.push("/user/account-settings")}

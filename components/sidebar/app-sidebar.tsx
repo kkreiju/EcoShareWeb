@@ -125,7 +125,7 @@ export function AppSidebar({
         <NavMain items={data.mainNav} groupLabel="Main Menu" unreadCount={unreadCount} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} />
+        <NavUser user={{...userData, membershipStatus: user?.membershipStatus}} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

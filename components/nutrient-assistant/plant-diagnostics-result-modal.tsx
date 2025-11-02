@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import {
   Leaf,
   Droplets,
-  Award,
   Target,
   TrendingUp,
   CheckCircle,
@@ -120,17 +119,6 @@ export function PlantDiagnosticsResultModal({
     window.open(`/user/listing/${listing.list_id}`, '_blank');
   };
 
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence > 70) return "text-green-600";
-    if (confidence > 50) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const getConfidenceBgColor = (confidence: number) => {
-    if (confidence > 70) return "bg-green-600";
-    if (confidence > 50) return "bg-yellow-600";
-    return "bg-red-600";
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,33 +167,26 @@ export function PlantDiagnosticsResultModal({
                   </h3>
                 </div>
 
-                {/* Analysis Confidence */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Award className="h-4 w-4" style={{ color: "#FFD93D" }} />
-                    <span className="text-sm font-medium">Analysis Confidence</span>
-                  </div>
+                {/* Compost Suggestions */}
+                {compostSuggestions.length > 0 && compostSuggestions[0] !== "" && (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-4">
-                      <span className={`text-3xl font-bold ${getConfidenceColor(result.confidence)}`}>
-                        {result.confidence.toFixed(1)}%
-                      </span>
-                      <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${getConfidenceBgColor(result.confidence)} transition-all`}
-                          style={{ width: `${result.confidence}%` }}
-                        />
-                      </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Leaf className="h-4 w-4" style={{ color: "#6BCB77" }} />
+                      <span className="text-sm font-medium">Compost Suggestions</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {result.confidence > 70
-                        ? "High confidence in plant identification"
-                        : result.confidence > 50
-                        ? "Moderate confidence in plant identification"
-                        : "Low confidence in plant identification"}
-                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {compostSuggestions.map((item, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="secondary"
+                          className="bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300"
+                        >
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -328,27 +309,6 @@ export function PlantDiagnosticsResultModal({
 
               {/* Right Column - Recommendations */}
               <div className="space-y-6">
-                {/* Compost Suggestions */}
-                {compostSuggestions.length > 0 && compostSuggestions[0] !== "" && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Leaf className="h-4 w-4" style={{ color: "#6BCB77" }} />
-                      <span className="text-sm font-medium">Compost Suggestions</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {compostSuggestions.map((item, idx) => (
-                        <Badge
-                          key={idx}
-                          variant="secondary"
-                          className="bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300"
-                        >
-                          {item}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Compost Recommendations */}
             {result.recommendations && result.recommendations.length > 0 && (
                   <div className="space-y-4">
