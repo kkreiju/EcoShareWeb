@@ -7,6 +7,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RefreshCw, Users, AlertCircle } from "lucide-react";
 import { AdminUsersTable } from "./admin-users-table";
 import { AdminUsersSkeleton } from "./loading-skeleton";
+import {
+  getAdminId,
+  getUsers,
+  manageUser,
+  mapMembershipStatusToUserStatus,
+  getActionForStatusChange,
+  type BackendUser,
+} from "@/lib/services/adminService";
+import { toast } from "sonner";
 
 interface User {
   user_id: string;
@@ -16,6 +25,21 @@ interface User {
   user_profileURL?: string;
   user_createdAt: string;
   user_status: "active" | "inactive" | "suspended";
+  user_membershipStatus: string; // Keep original for status changes
+}
+
+// Map backend user to frontend user
+function mapBackendUserToFrontend(user: BackendUser): User {
+  return {
+    user_id: user.user_id,
+    user_email: user.user_email,
+    firstName: user.user_firstName || "",
+    lastName: user.user_lastName || "",
+    user_profileURL: user.user_profileURL || undefined,
+    user_createdAt: (user as any).created_at || (user as any).user_createdAt || new Date().toISOString(),
+    user_status: mapMembershipStatusToUserStatus(user.user_membershipStatus),
+    user_membershipStatus: user.user_membershipStatus, // Keep original
+  };
 }
 
 export function AdminUsersView() {
@@ -28,51 +52,26 @@ export function AdminUsersView() {
       setIsLoading(true);
       setError(null);
 
-      // NOTE: Currently using mock data. Replace with actual API call when backend is ready:
-      // const response = await fetch('/api/admin/users');
-      // const data = await response.json();
+      // Get admin ID
+      const adminId = await getAdminId();
+      if (!adminId) {
+        throw new Error("Admin access required. Please log in as an admin.");
+      }
 
-      // Mock data for now
-      const mockUsers: User[] = [
-        {
-          user_id: "1",
-          user_email: "john.doe@example.com",
-          firstName: "John",
-          lastName: "Doe",
-          user_profileURL: "/avatars/john.jpg",
-          user_createdAt: "2024-01-15T10:30:00Z",
-          user_status: "active",
-        },
-        {
-          user_id: "2",
-          user_email: "jane.smith@example.com",
-          firstName: "Jane",
-          lastName: "Smith",
-          user_createdAt: "2024-01-20T14:15:00Z",
-          user_status: "active",
-        },
-        {
-          user_id: "3",
-          user_email: "bob.johnson@example.com",
-          firstName: "Bob",
-          lastName: "Johnson",
-          user_createdAt: "2024-01-25T09:45:00Z",
-          user_status: "inactive",
-        },
-        {
-          user_id: "4",
-          user_email: "alice.brown@example.com",
-          firstName: "Alice",
-          lastName: "Brown",
-          user_createdAt: "2024-01-30T16:20:00Z",
-          user_status: "suspended",
-        },
-      ];
+      // Fetch users from API
+      const response = await getUsers(adminId);
 
-      setUsers(mockUsers);
+      // Map backend users to frontend format
+      const mappedUsers = (response.users || []).map(mapBackendUserToFrontend);
+
+      setUsers(mappedUsers);
     } catch (err) {
       console.error("Error fetching users:", err);
-      setError(err instanceof Error ? err.message : "Failed to load users");
+      const errorMessage = err instanceof Error ? err.message : "Failed to load users";
+      setError(errorMessage);
+      toast.error("Failed to load users", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -91,21 +90,58 @@ export function AdminUsersView() {
     newStatus: User["user_status"]
   ) => {
     try {
-      // NOTE: Currently updating local state only. Replace with actual API call when backend is ready:
-      // await fetch(`/api/admin/users/${userId}/status`, {
-      //   method: 'PUT',
-      //   body: JSON.stringify({ status: newStatus }),
-      // });
+      // Get admin ID
+      const adminId = await getAdminId();
+      if (!adminId) {
+        throw new Error("Admin access required.");
+      }
+
+      // Find the user to get current membership status
+      const user = users.find((u) => u.user_id === userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // Determine the action based on current status and desired status
+      const action = getActionForStatusChange(user.user_membershipStatus, newStatus);
+      if (!action) {
+        throw new Error("Invalid status change");
+      }
+
+      // Call API to manage user
+      await manageUser(adminId, userId, action);
 
       // Update local state
       setUsers((prev) =>
-        prev.map((user) =>
-          user.user_id === userId ? { ...user, user_status: newStatus } : user
+        prev.map((u) =>
+          u.user_id === userId
+            ? {
+                ...u,
+                user_status: newStatus,
+                // Update membership status based on action
+                user_membershipStatus:
+                  newStatus === "suspended"
+                    ? "Suspend"
+                    : newStatus === "active"
+                    ? action === "ActivatePremium"
+                      ? "Premium"
+                      : "Free"
+                    : u.user_membershipStatus, // Keep current if inactive
+              }
+            : u
         )
       );
+
+      toast.success("User status updated", {
+        description: `User ${user.firstName} ${user.lastName} has been ${newStatus}.`,
+      });
     } catch (err) {
       console.error("Error updating user status:", err);
-      setError("Failed to update user status");
+      const errorMessage = err instanceof Error ? err.message : "Failed to update user status";
+      setError(errorMessage);
+      toast.error("Failed to update user status", {
+        description: errorMessage,
+      });
     }
   };
 

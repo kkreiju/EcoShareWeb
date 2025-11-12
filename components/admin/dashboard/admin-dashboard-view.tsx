@@ -18,6 +18,8 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
+import { getAdminId, getReports, type BackendReport } from "@/lib/services/adminService";
+import { toast } from "sonner";
 
 interface DashboardStats {
   totalReports: number;
@@ -36,6 +38,52 @@ interface RecentReport {
   priority: "high" | "medium" | "low";
 }
 
+// Map backend report status to frontend status
+function mapReportStatus(status: string): "pending" | "investigating" | "resolved" | "dismissed" {
+  const statusLower = status.toLowerCase();
+  if (statusLower.includes("pending")) return "pending";
+  if (statusLower.includes("investigat")) return "investigating";
+  if (statusLower.includes("resolve")) return "resolved";
+  if (statusLower.includes("dismiss")) return "dismissed";
+  return "pending"; // default
+}
+
+// Map backend report to frontend RecentReport
+function mapBackendReportToFrontend(report: BackendReport): RecentReport {
+  // Determine report type based on available fields
+  const hasListId = report.list_id || report.reported_listing_id;
+  const type: "user" | "listing" = hasListId ? "listing" : "user";
+
+  // Extract reason from report_description or rep_reason
+  const reason = report.rep_reason || report.report_description || "No reason provided";
+
+  // Extract reported content
+  const reported_content = report.reported_user_id || report.list_id || report.report_id || "Unknown";
+
+  // Extract reporter name (may need to fetch separately, for now use ID)
+  const reporter_name = report.reporter_id || report.user_id || "Unknown Reporter";
+
+  // Extract date
+  const report_date = report.report_date || report.created_at || new Date().toISOString();
+
+  // Map status
+  const status = mapReportStatus(report.rep_status || report.report_status || "Pending");
+
+  // Determine priority (default to medium if not available)
+  const priority: "high" | "medium" | "low" = "medium";
+
+  return {
+    report_id: report.report_id,
+    type,
+    reason,
+    reported_content,
+    reporter_name,
+    report_date,
+    status,
+    priority,
+  };
+}
+
 export function AdminDashboardView() {
   const [stats, setStats] = useState<DashboardStats>({
     totalReports: 0,
@@ -51,66 +99,44 @@ export function AdminDashboardView() {
       setIsLoading(true);
       setError(null);
 
-      // NOTE: Currently using mock data. Replace with actual API calls when backend is ready:
-      // const statsResponse = await fetch('/api/admin/dashboard/stats');
-      // const reportsResponse = await fetch('/api/admin/dashboard/recent-reports');
+      // Get admin ID
+      const adminId = await getAdminId();
+      if (!adminId) {
+        throw new Error("Admin access required. Please log in as an admin.");
+      }
 
-      // Mock stats data
-      const mockStats: DashboardStats = {
-        totalReports: 24,
-        pendingReports: 8,
-        resolvedReports: 16,
-      };
+      // Fetch reports from API
+      const response = await getReports(adminId);
 
-      // Mock recent reports data
-      const mockRecentReports: RecentReport[] = [
-        {
-          report_id: "1",
-          type: "user",
-          reason: "Spam",
-          reported_content: "spam@example.com",
-          reporter_name: "John Doe",
-          report_date: "2024-01-20T10:30:00Z",
-          status: "pending",
-          priority: "high",
-        },
-        {
-          report_id: "2",
-          type: "listing",
-          reason: "Fraud",
-          reported_content: "Fake iPhone for Sale",
-          reporter_name: "Jane Smith",
-          report_date: "2024-01-19T14:20:00Z",
-          status: "investigating",
-          priority: "high",
-        },
-        {
-          report_id: "3",
-          type: "user",
-          reason: "Harassment",
-          reported_content: "harass@example.com",
-          reporter_name: "Bob Johnson",
-          report_date: "2024-01-18T09:15:00Z",
-          status: "resolved",
-          priority: "medium",
-        },
-        {
-          report_id: "4",
-          type: "listing",
-          reason: "Inappropriate Content",
-          reported_content: "Questionable Item",
-          reporter_name: "Alice Brown",
-          report_date: "2024-01-17T16:45:00Z",
-          status: "dismissed",
-          priority: "low",
-        },
-      ];
+      // Calculate stats
+      const allReports = response.reports || [];
+      const pendingReports = allReports.filter(
+        (r) => mapReportStatus(r.rep_status || r.report_status || "Pending") === "pending"
+      );
+      const resolvedReports = allReports.filter(
+        (r) => mapReportStatus(r.rep_status || r.report_status || "Pending") === "resolved"
+      );
 
-      setStats(mockStats);
-      setRecentReports(mockRecentReports);
+      setStats({
+        totalReports: allReports.length,
+        pendingReports: pendingReports.length,
+        resolvedReports: resolvedReports.length,
+      });
+
+      // Map and sort reports (most recent first), limit to 10
+      const mappedReports = allReports
+        .map(mapBackendReportToFrontend)
+        .sort((a, b) => new Date(b.report_date).getTime() - new Date(a.report_date).getTime())
+        .slice(0, 10);
+
+      setRecentReports(mappedReports);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
-      setError(err instanceof Error ? err.message : "Failed to load dashboard");
+      const errorMessage = err instanceof Error ? err.message : "Failed to load dashboard";
+      setError(errorMessage);
+      toast.error("Failed to load dashboard", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }

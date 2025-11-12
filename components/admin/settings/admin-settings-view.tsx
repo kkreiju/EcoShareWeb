@@ -14,6 +14,8 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
+import { getAdminId } from "@/lib/services/adminService";
+import { toast } from "sonner";
 
 export function AdminSettingsView() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -50,27 +52,50 @@ export function AdminSettingsView() {
     setIsLoading(true);
 
     try {
-      // NOTE: Currently using mock implementation. Replace with actual API call when backend is ready:
-      // const response = await fetch('/api/admin/change-password', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     currentPassword,
-      //     newPassword,
-      //   }),
-      // });
+      // Get admin ID
+      const adminId = await getAdminId();
+      if (!adminId) {
+        throw new Error("Admin access required. Please log in as an admin.");
+      }
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Call change password API
+      const response = await fetch("/api/user/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: adminId,
+          oldPassword: currentPassword,
+          newPassword: newPassword,
+        }),
+      });
 
-      // Reset form on success
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setSuccess(true);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to change password");
+      }
+
+      if (data.success) {
+        // Reset form on success
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setSuccess(true);
+        toast.success("Password changed successfully", {
+          description: "Your password has been updated.",
+        });
+      } else {
+        throw new Error(data.message || "Failed to change password");
+      }
     } catch (err) {
       console.error("Error changing password:", err);
-      setError("Failed to change password. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to change password. Please try again.";
+      setError(errorMessage);
+      toast.error("Failed to change password", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }

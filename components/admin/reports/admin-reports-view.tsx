@@ -7,6 +7,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RefreshCw, Flag, Users, Package, AlertCircle } from "lucide-react";
 import { AdminReportsTable } from "./admin-reports-table";
 import { AdminReportsSkeleton } from "./loading-skeleton";
+import { getAdminId, getReports, type BackendReport } from "@/lib/services/adminService";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 interface ReportedUser {
   report_id: string;
@@ -42,6 +45,116 @@ interface ReportedListing {
 
 type Report = ReportedUser | ReportedListing;
 
+// Map backend report status to frontend status
+function mapReportStatus(status: string): "pending" | "investigating" | "resolved" | "dismissed" {
+  const statusLower = status.toLowerCase();
+  if (statusLower.includes("pending")) return "pending";
+  if (statusLower.includes("investigat")) return "investigating";
+  if (statusLower.includes("resolve")) return "resolved";
+  if (statusLower.includes("dismiss")) return "dismissed";
+  return "pending"; // default
+}
+
+// Fetch user details by ID
+async function fetchUserDetails(userId: string): Promise<{ name: string; email: string } | null> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("User")
+      .select("user_firstName, user_lastName, user_email")
+      .eq("user_id", userId)
+      .single();
+
+    if (error || !data) return null;
+
+    return {
+      name: `${data.user_firstName || ""} ${data.user_lastName || ""}`.trim() || "Unknown User",
+      email: data.user_email || "",
+    };
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    return null;
+  }
+}
+
+// Fetch listing details by ID
+async function fetchListingDetails(listingId: string): Promise<{ title: string; type: string; ownerId: string } | null> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("Listing")
+      .select("list_title, list_type, user_id")
+      .eq("list_id", listingId)
+      .single();
+
+    if (error || !data) return null;
+
+    return {
+      title: data.list_title || "Unknown Listing",
+      type: data.list_type || "unknown",
+      ownerId: data.user_id || "",
+    };
+  } catch (error) {
+    console.error("Error fetching listing details:", error);
+    return null;
+  }
+}
+
+// Map backend report to frontend report
+async function mapBackendReportToFrontend(report: BackendReport): Promise<Report> {
+  const hasListId = report.list_id || report.reported_listing_id;
+  const type: "user" | "listing" = hasListId ? "listing" : "user";
+
+  const reason = report.rep_reason || report.report_description || "No reason provided";
+  const description = report.rep_otherComments || report.report_description || "";
+  const report_date = report.report_date || report.created_at || new Date().toISOString();
+  const status = mapReportStatus(report.rep_status || report.report_status || "Pending");
+
+  const reporterId = report.reporter_id || report.user_id || "";
+  const reporterDetails = reporterId ? await fetchUserDetails(reporterId) : null;
+
+  if (type === "listing") {
+    const listingId = report.list_id || report.reported_listing_id || "";
+    const listingDetails = listingId ? await fetchListingDetails(listingId) : null;
+    const ownerDetails = listingDetails?.ownerId ? await fetchUserDetails(listingDetails.ownerId) : null;
+
+    return {
+      report_id: report.report_id,
+      reported_listing_id: listingId,
+      reported_listing_title: listingDetails?.title || "Unknown Listing",
+      reported_listing_type: listingDetails?.type || "unknown",
+      reported_owner_id: listingDetails?.ownerId || "",
+      reported_owner_name: ownerDetails?.name || "Unknown Owner",
+      reporter_id: reporterId,
+      reporter_email: reporterDetails?.email || "",
+      reporter_name: reporterDetails?.name || "Unknown Reporter",
+      reason,
+      description,
+      report_date,
+      status,
+      type: "listing",
+    };
+  } else {
+    const reportedUserId = report.reported_user_id || "";
+    const reportedUserDetails = reportedUserId ? await fetchUserDetails(reportedUserId) : null;
+
+    return {
+      report_id: report.report_id,
+      reported_user_id: reportedUserId,
+      reported_user_email: reportedUserDetails?.email || "",
+      reported_user_name: reportedUserDetails?.name || "Unknown User",
+      reporter_id: reporterId,
+      reporter_email: reporterDetails?.email || "",
+      reporter_name: reporterDetails?.name || "Unknown Reporter",
+      reason,
+      description,
+      report_date,
+      status,
+      type: "user",
+    };
+  }
+}
+
 export function AdminReportsView() {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,62 +165,28 @@ export function AdminReportsView() {
       setIsLoading(true);
       setError(null);
 
-      // NOTE: Currently using mock data. Replace with actual API call when backend is ready:
-      // const response = await fetch('/api/admin/reports');
-      // const data = await response.json();
+      // Get admin ID
+      const adminId = await getAdminId();
+      if (!adminId) {
+        throw new Error("Admin access required. Please log in as an admin.");
+      }
 
-      // Mock data for now
-      const mockReports: Report[] = [
-        {
-          report_id: "1",
-          reported_user_id: "user_123",
-          reported_user_email: "spam@example.com",
-          reported_user_name: "Spam User",
-          reporter_id: "reporter_456",
-          reporter_email: "gooduser@example.com",
-          reporter_name: "Good User",
-          reason: "Spam",
-          description: "This user is sending spam messages",
-          report_date: "2024-01-15T10:30:00Z",
-          status: "pending",
-          type: "user",
-        },
-        {
-          report_id: "2",
-          reported_listing_id: "listing_789",
-          reported_listing_title: "Fake iPhone for Sale",
-          reported_listing_type: "sale",
-          reported_owner_id: "owner_101",
-          reported_owner_name: "Scammer",
-          reporter_id: "reporter_202",
-          reporter_email: "victim@example.com",
-          reporter_name: "Victim User",
-          reason: "Fraud",
-          description: "This listing appears to be fraudulent",
-          report_date: "2024-01-16T14:20:00Z",
-          status: "investigating",
-          type: "listing",
-        },
-        {
-          report_id: "3",
-          reported_user_id: "user_345",
-          reported_user_email: "harass@example.com",
-          reported_user_name: "Harasser",
-          reporter_id: "reporter_678",
-          reporter_email: "harassed@example.com",
-          reporter_name: "Harassed User",
-          reason: "Harassment",
-          description: "This user is harassing other users",
-          report_date: "2024-01-17T09:15:00Z",
-          status: "resolved",
-          type: "user",
-        },
-      ];
+      // Fetch reports from API
+      const response = await getReports(adminId);
 
-      setReports(mockReports);
+      // Map backend reports to frontend format (with user/listing details)
+      const mappedReports = await Promise.all(
+        (response.reports || []).map(mapBackendReportToFrontend)
+      );
+
+      setReports(mappedReports);
     } catch (err) {
       console.error("Error fetching reports:", err);
-      setError(err instanceof Error ? err.message : "Failed to load reports");
+      const errorMessage = err instanceof Error ? err.message : "Failed to load reports";
+      setError(errorMessage);
+      toast.error("Failed to load reports", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -126,11 +205,9 @@ export function AdminReportsView() {
     newStatus: Report["status"]
   ) => {
     try {
-      // NOTE: Currently updating local state only. Replace with actual API call when backend is ready:
-      // await fetch(`/api/admin/reports/${reportId}/status`, {
-      //   method: 'PUT',
-      //   body: JSON.stringify({ status: newStatus }),
-      // });
+      // NOTE: Backend doesn't have a report status update endpoint yet
+      // For now, we'll update local state only and show a toast
+      // TODO: Implement backend endpoint for updating report status
 
       // Update local state
       setReports((prev) =>
@@ -140,9 +217,16 @@ export function AdminReportsView() {
             : report
         )
       );
+
+      toast.info("Report status updated locally", {
+        description: "Note: Backend API for updating report status is not yet available. Changes are local only.",
+      });
     } catch (err) {
       console.error("Error updating report status:", err);
       setError("Failed to update report status");
+      toast.error("Failed to update report status", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
     }
   };
 
