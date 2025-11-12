@@ -1,0 +1,260 @@
+"use client";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Package, MapPin, Calendar, Clock, AlertCircle, Flag, MessageCircle, Star, ArrowRight } from "lucide-react";
+import { Listing } from "@/lib/types";
+
+interface ListingImageProps {
+  listing: Listing;
+  getTypeColor: (type: string) => string;
+  formatPrice: (price: number, type: string) => string;
+  tags: string[];
+  formatDate: (dateString: string) => string;
+  isOwner: boolean;
+  onContact: () => void;
+  onReport: () => void;
+}
+
+export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatDate, isOwner, onContact, onReport }: ListingImageProps) {
+  return (
+    <Card className="py-0 min-h-[300px]">
+      <CardContent className="p-0 rounded-xl overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 h-full">
+          {/* Image Side */}
+          <div className="relative w-full h-full overflow-hidden">
+            <img
+              src={listing.imageURL || "/images/food-waste.jpg"}
+              alt={listing.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/images/food-waste.jpg";
+              }}
+            />
+            
+            {/* Type Badge */}
+            <Badge
+              className={`absolute top-4 left-4 ${getTypeColor(listing.type)} font-medium text-sm`}
+            >
+              {listing.type}
+            </Badge>
+            
+            {/* Enhanced Price Badge */}
+            {listing.type.toLowerCase() === "sale" && (
+              <div className="absolute top-4 right-4">
+                <div className="relative group">
+                  {/* Glow effect background */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
+
+                  {/* Main badge */}
+                  <div className="relative bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 rounded-xl px-4 py-2.5 shadow-lg border border-red-400/20 backdrop-blur-sm transform group-hover:scale-105 transition-all duration-300">
+                    {/* Inner highlight */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-xl"></div>
+
+                    {/* Price text */}
+                    <div className="relative flex items-center gap-1">
+                      <span className="text-white font-bold text-lg tracking-wide">
+                        {formatPrice(listing.price || 0, listing.type)}
+                      </span>
+
+                      {/* Small sparkle effect */}
+                      <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-pulse"></div>
+                    </div>
+
+                    {/* Subtle border glow */}
+                    <div className="absolute inset-0 rounded-xl ring-1 ring-white/20 group-hover:ring-white/30 transition-all duration-300"></div>
+                  </div>
+
+                  {/* Floating price label */}
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="bg-black/70 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap backdrop-blur-sm">
+                      Listed Price
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Details Side */}
+          <div className="p-8 h-full flex flex-col">
+            <div className="space-y-6">
+              {/* Title */}
+              <div>
+                <CardTitle className="text-2xl font-bold text-foreground mb-3">
+                  {listing.title}
+                </CardTitle>
+                
+                <div className="flex items-center gap-2">
+                  {listing.quantity > 0 && (
+                    <Badge variant="secondary" className="text-sm px-3 py-1">
+                      <Package className="h-4 w-4 mr-2" />
+                      {listing.quantity} available
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h3 className="font-semibold text-foreground mb-3 uppercase text-sm tracking-wide">
+                  Description
+                </h3>
+                <p className="text-muted-foreground leading-relaxed text-base">
+                  {listing.description}
+                </p>
+              </div>
+
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-foreground mb-3 uppercase text-sm tracking-wide">
+                    Tags
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag, index) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="text-sm px-3 py-1.5 border-primary/20 text-primary hover:bg-primary/5 font-medium"
+                      >
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Information */}
+              <div>
+                <h3 className="font-semibold text-foreground mb-4 uppercase text-sm tracking-wide">
+                  Additional Information
+                </h3>
+                <div className="space-y-4">
+                  {/* Location */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <MapPin className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-foreground text-sm uppercase tracking-wide mb-1">
+                        Location
+                      </div>
+                      <div className="text-sm text-muted-foreground break-words leading-relaxed">
+                        {listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Posted Date */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Calendar className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-foreground text-sm uppercase tracking-wide mb-1">
+                        Posted
+                      </div>
+                      <div className="text-sm text-muted-foreground leading-relaxed">
+                        {formatDate(listing.postedDate)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pickup Time */}
+                  {listing.pickupTimeAvailability && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Clock className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-foreground text-sm uppercase tracking-wide mb-1">
+                          Pickup Available
+                        </div>
+                        <div className="text-sm text-muted-foreground leading-relaxed">
+                          {listing.pickupTimeAvailability}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Instructions */}
+                  {listing.instructions && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-violet-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <AlertCircle className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-foreground text-sm uppercase tracking-wide mb-1">
+                          Pickup Instructions
+                        </div>
+                        <div className="text-sm text-muted-foreground leading-relaxed">
+                          {listing.instructions}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Posted By Section */}
+              <div className="pt-6">
+                <h3 className="font-semibold text-foreground mb-3 uppercase text-sm tracking-wide">
+                  Posted by
+                </h3>
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={listing.User?.profileURL} />
+                    <AvatarFallback className="text-sm">
+                      {listing.User?.firstName?.[0]}
+                      {listing.User?.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-foreground text-base truncate">
+                      {listing.User?.firstName} {listing.User?.lastName}
+                    </div>
+                    <div className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      {Number(listing.User?.ratings || 0).toFixed(1)} rating
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              {!isOwner && (
+                <div className="pt-6">
+                  <div className="flex flex-col gap-4">
+                    <Button
+                      size="lg"
+                      onClick={onContact}
+                      className="w-full group-hover:bg-green-600 group-hover:text-white transition-colors"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      {listing.type === "Wanted" ? "Offer Item" : "Request Item"}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 transition-colors"
+                      onClick={onReport}
+                    >
+                      <Flag className="w-4 h-4 mr-2" />
+                      Report Item
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

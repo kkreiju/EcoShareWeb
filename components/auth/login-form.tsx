@@ -27,12 +27,31 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
-      router.push("/user/dashboard");
+
+      // Check if user is admin and redirect accordingly
+      if (data?.user?.email) {
+        try {
+          const { data: userData } = await supabase
+            .from("User")
+            .select("user_id")
+            .eq("user_email", data.user.email)
+            .single();
+
+          const isAdmin = userData?.user_id && /^A\d{5}$/.test(userData.user_id);
+          router.push(isAdmin ? "/admin/dashboard" : "/user/dashboard");
+        } catch (err) {
+          // If we can't check admin status, default to user dashboard
+          console.error("Error checking admin status:", err);
+          router.push("/user/dashboard");
+        }
+      } else {
+        router.push("/user/dashboard");
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {

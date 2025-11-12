@@ -1,11 +1,11 @@
 "use client";
 
-import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { UserSidebar as AppSidebar } from "@/components/layout/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DynamicBreadcrumb } from "@/components/ui/dynamic-breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Chatbot } from "@/components/chatbot/Chatbot";
+import { Chatbot } from "@/components/features/chatbot/Chatbot";
 import { useSidebarState } from "@/hooks/use-sidebar-state";
 import { useEffect, useState } from "react";
 

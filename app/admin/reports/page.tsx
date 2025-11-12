@@ -1,4 +1,4 @@
-import { AdminReportsView } from "@/components/admin-reports";
+import { AdminReportsView } from "@/components/admin/reports";
 
 export default function AdminReportsPage() {
   return (

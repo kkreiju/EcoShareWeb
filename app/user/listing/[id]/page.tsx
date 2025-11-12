@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { ListingView } from "@/components/view-listing";
+import { ListingView } from "@/components/features/view-listing";
 
 export default function ListingDetailsPage() {
   const params = useParams();

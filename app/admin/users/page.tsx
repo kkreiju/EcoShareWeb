@@ -1,4 +1,4 @@
-import { AdminUsersView } from "@/components/admin-users";
+import { AdminUsersView } from "@/components/admin/users";
 
 export default function AdminUsersPage() {
   return (

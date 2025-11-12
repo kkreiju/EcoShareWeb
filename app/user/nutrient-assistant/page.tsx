@@ -1,4 +1,4 @@
-import { NutrientAssistantView } from "@/components/nutrient-assistant/nutrient-assistant-view";
+import { NutrientAssistantView } from "@/components/features/nutrient-assistant/nutrient-assistant-view";
 
 export default function NutrientAssistantPage() {
   return (

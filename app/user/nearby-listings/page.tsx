@@ -1,4 +1,4 @@
-import { NearbyListingsView } from "@/components/nearby-listings/nearby-listings-view";
+import { NearbyListingsView } from "@/components/features/nearby-listings/nearby-listings-view";
 
 export default async function NearbyListingsPage() {
   return (

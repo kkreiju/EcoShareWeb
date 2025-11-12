@@ -1,4 +1,4 @@
-import { AdminDashboardView } from "@/components/admin-dashboard";
+import { AdminDashboardView } from "@/components/admin/dashboard";
 
 export default function AdminDashboard() {
   return (

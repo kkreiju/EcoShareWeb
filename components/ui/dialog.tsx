@@ -7,15 +7,17 @@ import { XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 function Dialog({
+  suppressHydrationWarning = true,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+}: React.ComponentProps<typeof DialogPrimitive.Root> & { suppressHydrationWarning?: boolean }) {
+  return <DialogPrimitive.Root data-slot="dialog" suppressHydrationWarning={suppressHydrationWarning} {...(props as any)} />
 }
 
 function DialogTrigger({
+  suppressHydrationWarning = true,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+}: React.ComponentProps<typeof DialogPrimitive.Trigger> & { suppressHydrationWarning?: boolean }) {
+  return <DialogPrimitive.Trigger data-slot="dialog-trigger" suppressHydrationWarning={suppressHydrationWarning} {...(props as any)} />
 }
 
 function DialogPortal({

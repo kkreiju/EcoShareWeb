@@ -1,4 +1,4 @@
-import { AdminSettingsView } from "@/components/admin-settings";
+import { AdminSettingsView } from "@/components/admin/settings";
 
 export default function AdminSettingsPage() {
   return (

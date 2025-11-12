@@ -1,4 +1,4 @@
-import { SubscriptionHistoryView } from "@/components/subscription-history";
+import { SubscriptionHistoryView } from "@/components/features/subscription-history";
 
 export default function SubscriptionHistoryPage() {
   return (

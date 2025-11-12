@@ -1,4 +1,4 @@
-import { BrowseListings } from "@/components/dashboard/browse-listings";
+import { BrowseListings } from "@/components/features/dashboard/browse-listings";
 
 export default async function DashboardPage() {
   return (

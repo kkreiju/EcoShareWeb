@@ -1,6 +1,6 @@
 "use client";
 
-import { AppSidebarAdmin } from "@/components/sidebar-admin/app-sidebar-admin";
+import { AppSidebarAdmin } from "@/components/layout/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DynamicBreadcrumbAdmin } from "@/components/ui/dynamic-breadcrumb-admin";
 import { Separator } from "@/components/ui/separator";

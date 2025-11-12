@@ -1,4 +1,4 @@
-import { TransactionManagementView } from "@/components/listings/transaction-management";
+import { TransactionManagementView } from "@/components/features/listings/transaction-management";
 
 export default function TransactionManagementPage() {
   return (

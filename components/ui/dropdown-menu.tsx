@@ -7,9 +7,10 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 function DropdownMenu({
+  suppressHydrationWarning = true,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Root> & { suppressHydrationWarning?: boolean }) {
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" suppressHydrationWarning={suppressHydrationWarning} {...(props as any)} />
 }
 
 function DropdownMenuPortal({
@@ -21,12 +22,14 @@ function DropdownMenuPortal({
 }
 
 function DropdownMenuTrigger({
+  suppressHydrationWarning = true,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger> & { suppressHydrationWarning?: boolean }) {
   return (
     <DropdownMenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
-      {...props}
+      suppressHydrationWarning={suppressHydrationWarning}
+      {...(props as any)}
     />
   )
 }

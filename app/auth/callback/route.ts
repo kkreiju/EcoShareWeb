@@ -1,21 +1,24 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getDashboardUrl } from "@/lib/utils/admin";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
 
-  // if "next" is in param, use it as the redirect URL
-  let next = searchParams.get("next") ?? "/user/dashboard";
-  if (next.startsWith("/")) {
-    next = "/user/dashboard";
-  }
-
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error, data } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (!error) {
+    if (!error && data?.user?.email) {
+      // Get redirect URL from params or determine based on user role
+      let next = searchParams.get("next");
+      
+      // If no explicit next param or invalid path, determine dashboard based on user role
+      if (!next || !next.startsWith("/")) {
+        next = await getDashboardUrl(data.user.email);
+      }
+
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
 

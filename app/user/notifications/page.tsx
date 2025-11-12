@@ -1,4 +1,4 @@
-import { Notifications } from "@/components/notifications";
+import { Notifications } from "@/components/features/notifications";
 
 export default async function NotificationsPage() {
   return (

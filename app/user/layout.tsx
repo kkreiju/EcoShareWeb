@@ -22,6 +22,16 @@ export default async function UserLayout({
     .eq("user_email", data.user.email)
     .single();
 
+  // Check if user is an admin - redirect to admin dashboard
+  if (userData.data?.user_id && /^A\d{5}$/.test(userData.data.user_id)) {
+    redirect("/admin/dashboard");
+  }
+
+  // If user not found in User table or error, redirect to login
+  if (userData.error || !userData.data) {
+    redirect("/auth/login");
+  }
+
   // Safely construct full name with more defensive programming
   const firstName = userData.data?.user_firstName?.trim() || "";
   const lastName = userData.data?.user_lastName?.trim() || "";

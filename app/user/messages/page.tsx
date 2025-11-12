@@ -1,4 +1,4 @@
-import MessagesView from "@/components/messages/MessagesView";
+import MessagesView from "@/components/features/messages/MessagesView";
 
 export default async function MessagesPage() {
   return (
