@@ -1,7 +1,7 @@
 # Admin Panel Implementation Guide
 
 ## Overview
-This document describes the complete implementation of the admin panel for EcoShare, including all features, API integrations, and utilities.
+This document describes the complete implementation of the admin panel for EcoShare, including all features, API integrations, and utilities
 
 ## Architecture
 
