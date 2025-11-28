@@ -64,6 +64,16 @@ export interface VerifySession {
   expiresAt?: number;
 }
 
+// Unit Types
+export type QuantityUnit = "kg" | "g" | "bgs" | "sks";
+
+export const QUANTITY_UNITS: { value: QuantityUnit; label: string; fullName: string }[] = [
+  { value: "kg", label: "kg", fullName: "kilogram" },
+  { value: "g", label: "g", fullName: "gram" },
+  { value: "bgs", label: "bgs", fullName: "bags" },
+  { value: "sks", label: "sks", fullName: "sacks" },
+];
+
 // Listing Interfaces
 export interface Listing {
   user_id: string;
@@ -75,6 +85,7 @@ export interface Listing {
   tags?: string[];
   price?: number;
   quantity: number;
+  unit: QuantityUnit;
   pickupTimeAvailability: string;
   instructions?: string;
   locationName: string;

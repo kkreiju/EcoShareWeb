@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/api";
+import { QuantityUnit } from "@/lib/types";
 
 export type ListingFormData = {
   title: string;
   description: string;
   quantity: number;
+  unit: QuantityUnit;
   pickupTimes: string;
   pickupInstructions: string;
   tags: string[];
@@ -22,6 +24,7 @@ interface UseListingFormReturn {
   // Form state
   selectedTags: string[];
   uploadedImage: File | null;
+  selectedUnit: QuantityUnit;
   currentLocation: string;
   currentLatitude: number | null;
   currentLongitude: number | null;
@@ -30,10 +33,11 @@ interface UseListingFormReturn {
   showNonCompostableModal: boolean;
   userData: any;
   userDataLoading: boolean;
-  
+
   // Actions
   setSelectedTags: (tags: string[]) => void;
   setUploadedImage: (image: File | null) => void;
+  setSelectedUnit: (unit: QuantityUnit) => void;
   setCurrentLocation: (location: string) => void;
   setCurrentLatitude: (lat: number | null) => void;
   setCurrentLongitude: (lng: number | null) => void;
@@ -50,6 +54,7 @@ interface UseListingFormReturn {
 export function useListingForm(): UseListingFormReturn {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<QuantityUnit>("kg");
   const [currentLocation, setCurrentLocation] = useState<string>("");
   const [showNonCompostableModal, setShowNonCompostableModal] = useState(false);
   const [currentLatitude, setCurrentLatitude] = useState<number | null>(null);
@@ -98,6 +103,7 @@ export function useListingForm(): UseListingFormReturn {
   const resetForm = () => {
     setSelectedTags([]);
     setUploadedImage(null);
+    setSelectedUnit("kg");
     setCurrentLocation("");
     setCurrentLatitude(null);
     setCurrentLongitude(null);
@@ -107,6 +113,7 @@ export function useListingForm(): UseListingFormReturn {
   return {
     selectedTags,
     uploadedImage,
+    selectedUnit,
     currentLocation,
     currentLatitude,
     currentLongitude,
@@ -117,6 +124,7 @@ export function useListingForm(): UseListingFormReturn {
     userDataLoading,
     setSelectedTags,
     setUploadedImage,
+    setSelectedUnit,
     setCurrentLocation,
     setCurrentLatitude,
     setCurrentLongitude,

@@ -14,6 +14,7 @@ interface Listing {
   list_tags: string;
   list_price: number;
   list_quantity: number;
+  list_unit?: string;
   list_pickupTimeAvailability: string;
   list_pickupInstructions: string;
   list_locationName: string;
@@ -131,7 +132,7 @@ export function TransactionRow({
             <div className="font-semibold text-green-600 text-sm">Free</div>
           )}
           <div className="text-xs text-muted-foreground">
-            Qty: {transaction.tran_quantity}
+            Qty: {transaction.tran_quantity} {transaction.listing?.list_unit || 'kg'}
           </div>
         </div>
       </TableCell>

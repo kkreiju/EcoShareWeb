@@ -152,6 +152,7 @@ export function useManageListings(): UseManageListingsReturn {
           tags: apiListing.tags ? JSON.parse(apiListing.tags) : [],
           price: apiListing.price,
           quantity: apiListing.quantity,
+          unit: apiListing.unit,
           pickupTimeAvailability: apiListing.pickupTimeAvailability,
           instructions: apiListing.instructions,
           locationName: apiListing.locationName,

@@ -4,8 +4,10 @@ import { UseFormRegister, FieldErrors } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Package } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { QUANTITY_UNITS, QuantityUnit } from "@/lib/types";
 
 interface BasicInfoSectionProps {
   register: UseFormRegister<any>;
@@ -13,6 +15,8 @@ interface BasicInfoSectionProps {
   listingType?: "free" | "wanted" | "sale" | null;
   mode?: "add" | "edit";
   titleDisabled?: boolean;
+  selectedUnit?: QuantityUnit;
+  onUnitChange?: (unit: QuantityUnit) => void;
 }
 
 export function BasicInfoSection({
@@ -21,6 +25,8 @@ export function BasicInfoSection({
   listingType,
   mode = "add",
   titleDisabled = false,
+  selectedUnit = "kg",
+  onUnitChange,
 }: BasicInfoSectionProps) {
   const useCard = mode === "edit";
   const isTitleDisabled = titleDisabled || mode === "edit";
@@ -61,20 +67,41 @@ export function BasicInfoSection({
         )}
       </div>
 
-      {/* Quantity */}
-      <div className="space-y-2">
-        <Label htmlFor="quantity">Quantity *</Label>
-        <Input
-          id="quantity"
-          type="number"
-          min="1"
-          placeholder="e.g., 5 bags"
-          {...register("quantity", { valueAsNumber: true })}
-          className={errors.quantity ? "border-red-500" : ""}
-        />
-        {errors.quantity && (
-          <p className="text-sm text-red-500">{errors.quantity.message as string}</p>
-        )}
+      {/* Quantity and Unit */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="quantity">Quantity *</Label>
+          <Input
+            id="quantity"
+            type="number"
+            min="1"
+            placeholder="e.g., 5"
+            {...register("quantity", { valueAsNumber: true })}
+            className={errors.quantity ? "border-red-500" : ""}
+          />
+          {errors.quantity && (
+            <p className="text-sm text-red-500">{errors.quantity.message as string}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="unit">Unit *</Label>
+          <Select
+            value={selectedUnit}
+            onValueChange={(value: QuantityUnit) => onUnitChange?.(value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select unit" />
+            </SelectTrigger>
+            <SelectContent>
+              {QUANTITY_UNITS.map((unit) => (
+                <SelectItem key={unit.value} value={unit.value}>
+                  {unit.label} - {unit.fullName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Price - Only show for sale listings */}

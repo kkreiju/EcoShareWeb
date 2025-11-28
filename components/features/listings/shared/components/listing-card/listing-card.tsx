@@ -391,7 +391,7 @@ export function ListingCard({
               {listing.quantity > 0 && (
                 <div className="text-xs text-muted-foreground flex items-center gap-0.5">
                   <Package className="h-3 w-3" />
-                  {listing.quantity}
+                  {listing.quantity} {listing.unit || 'kg'}
                   {variant === "manage" && !compact && " available"}
                 </div>
               )}

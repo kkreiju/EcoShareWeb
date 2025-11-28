@@ -47,13 +47,11 @@ interface CombinedAnalysis {
 interface CompostRecommendation {
   compostable: string;
   explanation: string;
-  nutrient_score: number;
   nutrients: {
     Nitrogen: number;
     Phosphorus: number;
     Potassium: number;
   };
-  score: number;
 }
 
 interface CompostListing {
@@ -69,6 +67,7 @@ interface CompostListing {
   list_postedDate: string;
   list_price: number;
   list_quantity: number;
+  list_unit?: string;
   list_tags: string;
   list_title: string;
   list_type: string;
@@ -303,12 +302,6 @@ export function PlantNutrientBuilderResultModal({
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <h4 className="font-semibold text-base">{rec.compostable}</h4>
-                          <Badge
-                            variant={rec.score > 0.5 ? "default" : "secondary"}
-                            className={rec.score > 0.5 ? "bg-green-600" : ""}
-                          >
-                            Score: {(rec.score * 100).toFixed(0)}%
-                          </Badge>
                         </div>
 
                         <p className="text-sm text-muted-foreground">{rec.explanation}</p>
@@ -387,7 +380,7 @@ export function PlantNutrientBuilderResultModal({
                               )}
                             </div>
                             <span className="text-xs text-muted-foreground">
-                              Qty: {listing.list_quantity}
+                              Qty: {listing.list_quantity} {listing.list_unit || 'kg'}
                             </span>
                           </div>
                         </div>

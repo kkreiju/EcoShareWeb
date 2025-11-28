@@ -12,16 +12,17 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Upload } from "lucide-react";
-import { Listing } from "@/lib/types";
+import { Listing, QuantityUnit } from "@/lib/types";
 import { GoogleMapsProvider } from "../shared/google-maps-provider";
 import { PhotoUploadSection } from "./photo-upload-section";
-import { LocationSelectionSection } from "./location-selection-section";
+import { LocationSelectionSection } from "../add-listing/location-selection-section";
 import { BasicInfoSection, TagsSelectionSection, PickupInfoSection, FormActions, createEditListingSchema, parseTags } from "../shared";
 
 type EditListingFormData = {
   title: string;
   description: string;
   quantity: number;
+  unit: QuantityUnit;
   pickupTimes: string;
   pickupInstructions: string;
   tags: string[];
@@ -43,6 +44,7 @@ interface EditListingFormProps {
 export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdating = false }: EditListingFormProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<QuantityUnit>("kg");
   const [currentLocation, setCurrentLocation] = useState<string>("");
   const [currentLatitude, setCurrentLatitude] = useState<number | null>(null);
   const [currentLongitude, setCurrentLongitude] = useState<number | null>(null);
@@ -65,6 +67,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
       title: "",
       description: "",
       quantity: 1,
+      unit: "kg" as QuantityUnit,
       pickupTimes: "",
       pickupInstructions: "",
       tags: [],
@@ -80,6 +83,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
       const tags = parseTags(listing.tags);
 
       setSelectedTags(tags);
+      setSelectedUnit(listing.unit || "kg");
       setCurrentLocation(listing.locationName || "");
       setCurrentLatitude(listing.latitude || null);
       setCurrentLongitude(listing.longitude || null);
@@ -90,6 +94,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
         title: listing.title || "",
         description: listing.description || "",
         quantity: listing.quantity || 1,
+        unit: listing.unit || "kg",
         pickupTimes: listing.pickupTimeAvailability || "",
         pickupInstructions: listing.instructions || "",
         tags: tags,
@@ -115,6 +120,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
     if (!open) {
       setSelectedTags([]);
       setUploadedImage(null);
+      setSelectedUnit("kg");
       setCurrentLocation("");
       setCurrentLatitude(null);
       setCurrentLongitude(null);
@@ -148,6 +154,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
     try {
       const formData = {
         ...data,
+        unit: selectedUnit,
         tags: selectedTags,
         location: currentLocation,
         latitude: currentLatitude || undefined,
@@ -178,11 +185,15 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
           <div className="space-y-6 py-6">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5 text-blue-600" />
-                Edit Listing
+                <Upload className={`h-5 w-5 ${
+                  listing.type?.toLowerCase() === "sale" ? "text-red-600" :
+                  listing.type?.toLowerCase() === "wanted" ? "text-yellow-600" :
+                  "text-green-600"
+                }`} />
+                Edit {listing.type === "sale" ? "Sale" : listing.type === "wanted" ? "Wanted" : "Free"} Listing
               </DialogTitle>
               <DialogDescription>
-                Update your {listing.type} listing details
+                Update your {listing.type?.toLowerCase()} listing details
               </DialogDescription>
             </DialogHeader>
 
@@ -200,31 +211,82 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
               register={register}
               errors={errors}
               listingType={listing.type as "free" | "wanted" | "sale"}
-              mode="edit"
+              mode="add"
+              selectedUnit={selectedUnit}
+              onUnitChange={setSelectedUnit}
             />
 
             <PickupInfoSection
               register={register}
               errors={errors}
-              mode="edit"
+              mode="add"
             />
 
             <TagsSelectionSection
               selectedTags={selectedTags}
               onTagsChange={handleTagsChange}
               error={errors.tags?.message}
-              mode="edit"
+              mode="add"
               required={false}
             />
 
             <LocationSelectionSection
+              register={register}
+              setValue={setValue}
+              errors={errors}
               currentLocation={currentLocation}
               currentLatitude={currentLatitude}
               currentLongitude={currentLongitude}
-              onLocationSelect={handleLocationSelect}
               isLoadingLocation={isLoadingLocation}
-              setIsLoadingLocation={setIsLoadingLocation}
-              error={errors.location?.message}
+              onLocationUpdate={handleLocationSelect}
+              onGetCurrentLocation={() => {
+                if (!navigator.geolocation) {
+                  alert("Geolocation is not supported by this browser.");
+                  return;
+                }
+
+                setIsLoadingLocation(true);
+
+                navigator.geolocation.getCurrentPosition(
+                  async (position) => {
+                    const { latitude, longitude } = position.coords;
+
+                    try {
+                      // Reverse geocoding using Google Maps API
+                      const response = await fetch(
+                        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA`
+                      );
+
+                      if (response.ok) {
+                        const data = await response.json();
+                        if (data.results && data.results.length > 0) {
+                          const address = data.results[0].formatted_address;
+                          handleLocationSelect(address, latitude, longitude);
+                        } else {
+                          handleLocationSelect(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, latitude, longitude);
+                        }
+                      } else {
+                        handleLocationSelect(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, latitude, longitude);
+                      }
+                    } catch (error) {
+                      console.error("Error with reverse geocoding:", error);
+                      handleLocationSelect(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, latitude, longitude);
+                    } finally {
+                      setIsLoadingLocation(false);
+                    }
+                  },
+                  (error) => {
+                    console.error("Error getting location:", error);
+                    setIsLoadingLocation(false);
+                    alert("Unable to get your current location. Please try again or select location on map.");
+                  },
+                  {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000, // 5 minutes
+                  }
+                );
+              }}
             />
 
             <FormActions

@@ -167,6 +167,7 @@ export function useListingActions(
         tags: any;
         price: any;
         quantity: any;
+        unit: any;
         pickupTimeAvailability: any;
         instructions: any;
         locationName: any;
@@ -180,6 +181,7 @@ export function useListingActions(
         tags: formData.tags || [],
         price: formData.price || undefined,
         quantity: formData.quantity,
+        unit: formData.unit,
         pickupTimeAvailability: formData.pickupTimes,
         instructions: formData.pickupInstructions,
         locationName: formData.location,

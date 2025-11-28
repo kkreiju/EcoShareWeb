@@ -32,6 +32,7 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
   const {
     selectedTags,
     uploadedImage,
+    selectedUnit,
     currentLocation,
     currentLatitude,
     currentLongitude,
@@ -42,6 +43,7 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
     userDataLoading,
     setSelectedTags,
     setUploadedImage,
+    setSelectedUnit,
     setCurrentLocation,
     setCurrentLatitude,
     setCurrentLongitude,
@@ -94,6 +96,7 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
       tags: selectedTags,
       price: listingType === "sale" ? formData.price : undefined,
       quantity: formData.quantity,
+      unit: selectedUnit,
       pickupTimeAvailability: formData.pickupTimes,
       instructions: formData.pickupInstructions,
       locationName: currentLocation,
@@ -300,6 +303,8 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
               errors={errors}
               listingType={listingType}
               mode="add"
+              selectedUnit={selectedUnit}
+              onUnitChange={setSelectedUnit}
             />
 
             <PickupInfoSection

@@ -15,6 +15,7 @@ interface Listing {
   list_tags: string;
   list_price: number;
   list_quantity: number;
+  list_unit?: string;
   list_pickupTimeAvailability: string;
   list_pickupInstructions: string;
   list_locationName: string;

@@ -7,6 +7,7 @@ export const baseListingSchema = {
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   quantity: z.number().min(1, "Quantity must be at least 1"),
+  unit: z.enum(["kg", "g", "bgs", "sks"], { required_error: "Please select a unit" }),
   pickupTimes: z.string().min(1, "Please specify pickup times"),
   pickupInstructions: z.string().min(1, "Please provide pickup instructions"),
   tags: z.array(z.string()).min(1, "Please select at least one tag"),
@@ -23,6 +24,7 @@ export const baseEditListingSchema = {
   title: z.string().optional(), // Read-only field, no validation needed
   description: z.string().min(1, "Description is required"),
   quantity: z.number().min(1, "Quantity must be at least 1"),
+  unit: z.enum(["kg", "g", "bgs", "sks"], { required_error: "Please select a unit" }),
   pickupTimes: z.string().min(1, "Please specify pickup times"),
   pickupInstructions: z.string().min(1, "Please provide pickup instructions"),
   tags: z.array(z.string()).optional(),
