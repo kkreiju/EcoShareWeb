@@ -10,13 +10,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Image as ImageIcon, X, AlertCircle, Loader2 } from "lucide-react";
+import { Image as ImageIcon, X, AlertCircle, Loader2, CheckCircle } from "lucide-react";
 
 interface ViewTransactionImageModalProps {
   isOpen: boolean;
   onClose: () => void;
   transactionId: string;
   listingTitle: string;
+  onComplete?: (transactionId: string) => Promise<void>;
+  onReturn?: (transactionId: string) => Promise<void>;
+  isBuyer?: boolean;
+  transactionStatus?: string;
 }
 
 export function ViewTransactionImageModal({
@@ -24,9 +28,14 @@ export function ViewTransactionImageModal({
   onClose,
   transactionId,
   listingTitle,
+  onComplete,
+  onReturn,
+  isBuyer,
+  transactionStatus,
 }: ViewTransactionImageModalProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,6 +45,7 @@ export function ViewTransactionImageModal({
       // Reset state when modal closes
       setImageUrl(null);
       setError(null);
+      setIsProcessing(false);
     }
   }, [isOpen, transactionId]);
 
@@ -72,16 +82,46 @@ export function ViewTransactionImageModal({
     }
   };
 
+  const handleComplete = async () => {
+    if (!onComplete) return;
+    setIsProcessing(true);
+    try {
+      await onComplete(transactionId);
+      onClose();
+    } catch (error) {
+      // Error is handled in the hook
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReturn = async () => {
+    if (!onReturn) return;
+    setIsProcessing(true);
+    try {
+      await onReturn(transactionId);
+      onClose();
+    } catch (error) {
+      // Error is handled in the hook
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const showActions = isBuyer && transactionStatus?.toLowerCase() === "ongoing" && imageUrl;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] w-[95vw] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ImageIcon className="h-5 w-5" />
-            Transaction Completion Image
+            Transaction Verification
           </DialogTitle>
           <DialogDescription>
-            Completion photo for "{listingTitle}"
+            {showActions
+              ? "Review the verification image from the seller before completing the transaction."
+              : `Verification photo for "${listingTitle}"`}
           </DialogDescription>
         </DialogHeader>
 
@@ -93,7 +133,7 @@ export function ViewTransactionImageModal({
             </Alert>
           )}
 
-          <div className="relative aspect-video bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden">
+          <div className="relative aspect-video bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden border">
             {isLoading ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
@@ -104,7 +144,7 @@ export function ViewTransactionImageModal({
             ) : imageUrl ? (
               <img
                 src={imageUrl}
-                alt="Transaction completion photo"
+                alt="Transaction verification photo"
                 className="w-full h-full object-contain"
                 onError={() => {
                   setError("Failed to load image. The image may have been deleted.");
@@ -116,27 +156,54 @@ export function ViewTransactionImageModal({
                   <ImageIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">Image Not Available</p>
                   <p className="text-sm opacity-75">
-                    Unable to load the transaction image
+                    The seller hasn't uploaded a verification image yet.
                   </p>
                 </div>
               </div>
             ) : null}
           </div>
 
-          <div className="flex justify-end gap-2">
-            {imageUrl && (
-              <Button
-                onClick={() => window.open(imageUrl, "_blank")}
-                variant="outline"
-              >
-                <ImageIcon className="h-4 w-4 mr-2" />
-                Open in New Tab
-              </Button>
-            )}
-            <Button onClick={onClose} variant="default">
-              <X className="h-4 w-4 mr-2" />
-              Close
-            </Button>
+          <div className="flex flex-col sm:flex-row justify-between gap-4 pt-2">
+            <div className="flex gap-2">
+              {imageUrl && (
+                <Button
+                  onClick={() => window.open(imageUrl, "_blank")}
+                  variant="outline"
+                  size="sm"
+                >
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Open Full Size
+                </Button>
+              )}
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              {showActions ? (
+                <>
+                  <Button
+                    onClick={handleReturn}
+                    variant="destructive"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Return Item
+                  </Button>
+                  <Button
+                    onClick={handleComplete}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                    Complete Transaction
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={onClose} variant="default">
+                  <X className="h-4 w-4 mr-2" />
+                  Close
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

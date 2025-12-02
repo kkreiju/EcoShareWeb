@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package } from "lucide-react";
 import { TransactionManagementTable } from "./transaction-management-table";
@@ -52,7 +52,9 @@ interface TransactionTabsProps {
   onTabChange: (value: "contributor" | "receiver") => void;
   transactionData: TransactionData | null;
   isLoading: boolean;
-  onComplete: (transactionId: string, imageBase64: string) => void;
+  onUploadImage?: (transactionId: string, imageBase64: string) => void;
+  onComplete?: (transactionId: string) => Promise<void>;
+  onReturn?: (transactionId: string) => Promise<void>;
   onCancel: (transactionId: string) => void;
   onViewDetails?: (listingId: string) => void;
 }
@@ -62,20 +64,14 @@ export function TransactionTabs({
   onTabChange,
   transactionData,
   isLoading,
+  onUploadImage,
   onComplete,
+  onReturn,
   onCancel,
   onViewDetails,
 }: TransactionTabsProps) {
   return (
     <Card className="border border-border/50 bg-gradient-to-br from-background to-muted/20 shadow-lg hover:shadow-xl transition-all duration-200">
-      <CardHeader className="border-b border-border/50 bg-gradient-to-r from-muted/30 to-muted/10">
-        <CardTitle className="flex items-center gap-3 text-xl">
-          <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
-            <Package className="h-6 w-6 text-primary" />
-          </div>
-          Transaction History
-        </CardTitle>
-      </CardHeader>
       <CardContent className="p-6">
         <Tabs
           value={activeTab}
@@ -93,8 +89,8 @@ export function TransactionTabs({
               </div>
               Items Sold
             </TabsTrigger>
-            <TabsTrigger 
-              value="receiver" 
+            <TabsTrigger
+              value="receiver"
               className="flex items-center gap-2 h-9 text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 data-[state=active]:border data-[state=active]:border-blue-200 dark:data-[state=active]:bg-blue-900/30 dark:data-[state=active]:text-blue-300 transition-all duration-200"
             >
               <div className="p-1 bg-blue-500/10 rounded border border-blue-200/50 dark:border-blue-700/50">
@@ -119,7 +115,9 @@ export function TransactionTabs({
               <TransactionManagementTable
                 transactions={transactionData?.contributor || []}
                 type="contributor"
+                onUploadImage={onUploadImage}
                 onComplete={onComplete}
+                onReturn={onReturn}
                 onCancel={onCancel}
                 onViewDetails={onViewDetails}
               />
@@ -141,6 +139,9 @@ export function TransactionTabs({
               <TransactionManagementTable
                 transactions={transactionData?.receiver || []}
                 type="receiver"
+                onUploadImage={onUploadImage}
+                onComplete={onComplete}
+                onReturn={onReturn}
                 onCancel={onCancel}
                 onViewDetails={onViewDetails}
               />

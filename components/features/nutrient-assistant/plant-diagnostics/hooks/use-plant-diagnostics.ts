@@ -17,6 +17,7 @@ export interface DiagnosisResult {
   nutrientNeeds?: string;
   compostSuggestions?: string;
   capturedImage?: string;
+  status?: string;
 }
 
 interface UsePlantDiagnosticsReturn {
@@ -108,7 +109,8 @@ export function usePlantDiagnostics(): UsePlantDiagnosticsReturn {
             finalMix: result.data.combined_analysis?.final_mix,
             matchQuality: result.data.combined_analysis?.match_quality,
             matchesPlantNeeds: result.data.combined_analysis?.matches_plant_needs,
-            assessment: result.data.combined_analysis?.assessment,
+            assessment: result.exg_analysis?.description || result.data.combined_analysis?.assessment,
+            status: result.exg_analysis?.status,
             recommendations: result.data.recommendations,
             listings: result.data.listings,
             nutrientNeeds: result.diagnosis?.nutrientNeeds || '',

@@ -64,8 +64,13 @@ export function Notifications() {
       const data = await response.json();
 
       if (data.success) {
-        // Sort notifications by date descending (newest first)
+        // Sort notifications: Unread first, then by date descending (newest first)
         const sortedNotifications = (data.data || []).sort((a: Notification, b: Notification) => {
+          // First compare by read status (unread comes first)
+          if (a.notif_isRead !== b.notif_isRead) {
+            return a.notif_isRead ? 1 : -1;
+          }
+          // Then compare by date
           return new Date(b.notif_dateTime).getTime() - new Date(a.notif_dateTime).getTime();
         });
         setNotifications(sortedNotifications);
@@ -199,7 +204,7 @@ export function Notifications() {
       <div className="space-y-6">
         <NotificationHeader
           unreadCount={0}
-          onMarkAllAsRead={() => {}}
+          onMarkAllAsRead={() => { }}
         />
 
         <NotificationTableSkeleton />

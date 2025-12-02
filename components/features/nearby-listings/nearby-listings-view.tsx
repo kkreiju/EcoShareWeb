@@ -6,16 +6,16 @@ import { GoogleMapsProvider } from "../listings/shared/google-maps-provider";
 import { useNearbyListings } from "./use-nearby-listings";
 
 // Google Maps API Key
-const GOOGLE_MAPS_API_KEY = "AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA";
+const GOOGLE_MAPS_API_KEY = "AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg";
 
 export function NearbyListingsView() {
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  const { 
-    listings, 
-    isLoading, 
-    error, 
+  const {
+    listings,
+    isLoading,
+    error,
     totalCount,
     isOwner,
     formatDistance,

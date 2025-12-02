@@ -160,7 +160,7 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
     }
 
     setIsLoadingLocation(true);
-    const apiKey = "AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA";
+    const apiKey = "AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg";
 
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -266,78 +266,77 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
   };
 
   return (
-    <GoogleMapsProvider apiKey="AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA">
+    <GoogleMapsProvider apiKey="AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg">
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0">
           <ScrollArea className="max-h-[80vh] px-6">
             <div className="space-y-6 py-6">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Upload className={`h-5 w-5 ${
-                    listingType === "sale" ? "text-red-600" :
-                    listingType === "wanted" ? "text-yellow-600" :
-                    "text-green-600"
-                  }`} />
+                  <Upload className={`h-5 w-5 ${listingType === "sale" ? "text-red-600" :
+                      listingType === "wanted" ? "text-yellow-600" :
+                        "text-green-600"
+                    }`} />
                   Create {listingType === "sale" ? "Sale" : listingType === "wanted" ? "Wanted" : "Free"} Listing
                 </DialogTitle>
                 <DialogDescription>
                   {listingType === "sale"
                     ? "Sell your eco-friendly items and services to interested buyers"
                     : listingType === "wanted"
-                    ? "Post what you're looking for and connect with people who can help"
-                    : "Share items you no longer need with the community"
+                      ? "Post what you're looking for and connect with people who can help"
+                      : "Share items you no longer need with the community"
                   }
                 </DialogDescription>
               </DialogHeader>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-w-0">
-            <PhotoUploadSection
-              uploadedImage={uploadedImage}
-              onImageUpload={handleImageUpload}
-              onRemoveImage={handleRemoveImage}
-              error={errors.image?.message}
-            />
+                <PhotoUploadSection
+                  uploadedImage={uploadedImage}
+                  onImageUpload={handleImageUpload}
+                  onRemoveImage={handleRemoveImage}
+                  error={errors.image?.message}
+                />
 
-            <BasicInfoSection
-              register={register}
-              errors={errors}
-              listingType={listingType}
-              mode="add"
-              selectedUnit={selectedUnit}
-              onUnitChange={setSelectedUnit}
-            />
+                <BasicInfoSection
+                  register={register}
+                  errors={errors}
+                  listingType={listingType}
+                  mode="add"
+                  selectedUnit={selectedUnit}
+                  onUnitChange={setSelectedUnit}
+                />
 
-            <PickupInfoSection
-              register={register}
-              errors={errors}
-              mode="add"
-            />
+                <PickupInfoSection
+                  register={register}
+                  errors={errors}
+                  mode="add"
+                />
 
-            <TagsSelectionSection
-              selectedTags={selectedTags}
-              onTagSelect={handleTagSelect}
-              error={errors.tags?.message}
-              mode="add"
-            />
+                <TagsSelectionSection
+                  selectedTags={selectedTags}
+                  onTagSelect={handleTagSelect}
+                  error={errors.tags?.message}
+                  mode="add"
+                />
 
-            <LocationSelectionSection
-              register={register}
-              setValue={setValue}
-              errors={errors}
-              currentLocation={currentLocation}
-              currentLatitude={currentLatitude}
-              currentLongitude={currentLongitude}
-              isLoadingLocation={isLoadingLocation}
-              onLocationUpdate={handleLocationUpdate}
-              onGetCurrentLocation={handleGetCurrentLocation}
-            />
+                <LocationSelectionSection
+                  register={register}
+                  setValue={setValue}
+                  errors={errors}
+                  currentLocation={currentLocation}
+                  currentLatitude={currentLatitude}
+                  currentLongitude={currentLongitude}
+                  isLoadingLocation={isLoadingLocation}
+                  onLocationUpdate={handleLocationUpdate}
+                  onGetCurrentLocation={handleGetCurrentLocation}
+                />
 
-            <FormActions
-              onCancel={handleCancel}
-              listingType={listingType}
-              isSubmitting={isSubmitting}
-              mode="add"
-            />
+                <FormActions
+                  onCancel={handleCancel}
+                  listingType={listingType}
+                  isSubmitting={isSubmitting}
+                  mode="add"
+                />
               </form>
             </div>
           </ScrollArea>

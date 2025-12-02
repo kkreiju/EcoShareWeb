@@ -17,7 +17,8 @@ import {
   MapPin,
   Clock,
   DollarSign,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 
 interface NutrientMatch {
@@ -85,6 +86,7 @@ export interface DiagnosisResult {
   nutrientNeeds?: string;
   compostSuggestions?: string;
   capturedImage?: string;
+  status?: string;
 }
 
 interface PlantDiagnosticsResultModalProps {
@@ -102,10 +104,7 @@ export function PlantDiagnosticsResultModal({
 
   if (!result) return null;
 
-  // Parse nutrient needs data
-  const nutrientNeeds = result.nutrientNeeds
-    ? result.nutrientNeeds.split(",").map((item) => item.trim()).filter((item) => item.length > 0)
-    : [];
+
 
   // Parse compost suggestions
   const compostSuggestions = result.compostSuggestions
@@ -124,7 +123,7 @@ export function PlantDiagnosticsResultModal({
           <div className="space-y-6 py-6">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                  <Leaf className="h-5 w-5 text-green-600" />
+                <Leaf className="h-5 w-5 text-green-600" />
                 Plant Analysis Results
               </DialogTitle>
               <DialogDescription>
@@ -138,9 +137,9 @@ export function PlantDiagnosticsResultModal({
               <div className="lg:col-span-1">
                 {result.capturedImage ? (
                   <div className="rounded-lg overflow-hidden border h-48 lg:h-full">
-                <img
-                  src={result.capturedImage}
-                  alt="Captured plant"
+                    <img
+                      src={result.capturedImage}
+                      alt="Captured plant"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -191,8 +190,30 @@ export function PlantDiagnosticsResultModal({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column - Plant Analysis */}
               <div className="space-y-6">
+                {/* Health Status Highlight */}
+                {result.status && (
+                  <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white shadow-lg">
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+                    <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+
+                    <div className="relative z-10 flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                        <Sparkles className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium uppercase tracking-wider text-blue-100">
+                          Health Status
+                        </p>
+                        <h3 className="text-2xl font-bold tracking-tight">
+                          {result.status}
+                        </h3>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Assessment Summary */}
-            {result.assessment && (
+                {result.assessment && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Target className="h-4 w-4" style={{ color: "#4D96FF" }} />
@@ -202,112 +223,13 @@ export function PlantDiagnosticsResultModal({
                   </div>
                 )}
 
-                {/* Nutrient Needs */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Droplets className="h-4 w-4" style={{ color: "#4D96FF" }} />
-                    <span className="text-sm font-medium">Nutrient Needs</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {nutrientNeeds.map((nutrient, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="outline"
-                        className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800"
-                      >
-                        {nutrient}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Plant Needs vs Current Mix */}
-            {result.plantNeeds && result.finalMix && result.matchesPlantNeeds && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <TrendingUp className="h-4 w-4" style={{ color: "#6BCB77" }} />
-                      <span className="text-sm font-medium">Plant Needs vs Current Mix</span>
-                    </div>
-
-                    <div className="space-y-3">
-                      {/* Nitrogen */}
-                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">Nitrogen</p>
-                          <p className="text-xs text-muted-foreground">{result.plantNeeds.nitrogen}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-lg font-bold ${
-                              result.matchesPlantNeeds.nitrogen ? "text-green-600" : "text-red-600"
-                            }`}
-                          >
-                            {result.finalMix.nitrogen.toFixed(1)}
-                          </span>
-                          {result.matchesPlantNeeds.nitrogen ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <AlertTriangle className="h-4 w-4 text-red-600" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Phosphorus */}
-                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">Phosphorus</p>
-                          <p className="text-xs text-muted-foreground">{result.plantNeeds.phosphorus}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-lg font-bold ${
-                              result.matchesPlantNeeds.phosphorus ? "text-green-600" : "text-red-600"
-                            }`}
-                          >
-                            {result.finalMix.phosphorus.toFixed(1)}
-                          </span>
-                          {result.matchesPlantNeeds.phosphorus ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <AlertTriangle className="h-4 w-4 text-red-600" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Potassium */}
-                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">Potassium</p>
-                          <p className="text-xs text-muted-foreground">{result.plantNeeds.potassium}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-lg font-bold ${
-                              result.matchesPlantNeeds.potassium ? "text-green-600" : "text-red-600"
-                            }`}
-                          >
-                            {result.finalMix.potassium.toFixed(1)}
-                          </span>
-                          {result.matchesPlantNeeds.potassium ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <AlertTriangle className="h-4 w-4 text-red-600" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {result.matchQuality && (
-                      <p className="text-xs text-muted-foreground">Match Quality: {result.matchQuality}</p>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Right Column - Recommendations */}
               <div className="space-y-6">
                 {/* Compost Recommendations */}
-            {result.recommendations && result.recommendations.length > 0 && (
+                {result.recommendations && result.recommendations.length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Leaf className="h-4 w-4" style={{ color: "#6BCB77" }} />
@@ -317,42 +239,42 @@ export function PlantDiagnosticsResultModal({
                     <div className="space-y-3">
                       {result.recommendations.map((rec, idx) => (
                         <div key={idx} className="p-4 bg-muted/30 rounded-lg border">
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <h4 className="font-semibold text-base">{rec.compostable}</h4>
-                              </div>
-
-                              <p className="text-sm text-muted-foreground">{rec.explanation}</p>
-
-                              <div className="flex items-center gap-3 text-xs">
-                                <span className="text-muted-foreground">Nutrients:</span>
-                                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30">
-                                  N: {rec.nutrients.Nitrogen}
-                                </Badge>
-                                <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30">
-                                  P: {rec.nutrients.Phosphorus}
-                                </Badge>
-                                <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30">
-                                  K: {rec.nutrients.Potassium}
-                                </Badge>
-                              </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-base">{rec.compostable}</h4>
                             </div>
+
+                            <p className="text-sm text-muted-foreground">{rec.explanation}</p>
+
+                            <div className="flex items-center gap-3 text-xs">
+                              <span className="text-muted-foreground">Nutrients:</span>
+                              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30">
+                                N: {rec.nutrients.Nitrogen}
+                              </Badge>
+                              <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30">
+                                P: {rec.nutrients.Phosphorus}
+                              </Badge>
+                              <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30">
+                                K: {rec.nutrients.Potassium}
+                              </Badge>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-                    </div>
-                  </div>
+              </div>
+            </div>
 
 
             {/* Available Compost Listings */}
             {result.listings && result.listings.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4" style={{ color: "#FF6B6B" }} />
-                      <span className="text-sm font-medium">Available Compost Listings</span>
-                    </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" style={{ color: "#FF6B6B" }} />
+                  <span className="text-sm font-medium">Available Compost Listings</span>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {result.listings.map((listing, idx) => (
@@ -361,7 +283,7 @@ export function PlantDiagnosticsResultModal({
                       onClick={() => handleListingClick(listing)}
                       className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors h-full"
                     >
-                    <div className="space-y-3">
+                      <div className="space-y-3">
                         {/* Listing Image */}
                         {listing.list_imageURL && (
                           <div className="rounded-lg overflow-hidden border h-32">
@@ -439,8 +361,8 @@ export function PlantDiagnosticsResultModal({
                       </div>
                     </div>
                   ))}
-                    </div>
-                  </div>
+                </div>
+              </div>
             )}
 
           </div>

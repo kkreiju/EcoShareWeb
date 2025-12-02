@@ -86,7 +86,7 @@ export interface Conversation extends ConversationResponse {
     senderId: string;
     content: string;
     timestamp: string;
-    status?: "sent" | "delivered" | "read";
+    status?: "sent" | "delivered" | "read" | "sending";
   }[];
 }
 

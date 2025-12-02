@@ -185,11 +185,10 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
           <div className="space-y-6 py-6">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Upload className={`h-5 w-5 ${
-                  listing.type?.toLowerCase() === "sale" ? "text-red-600" :
-                  listing.type?.toLowerCase() === "wanted" ? "text-yellow-600" :
-                  "text-green-600"
-                }`} />
+                <Upload className={`h-5 w-5 ${listing.type?.toLowerCase() === "sale" ? "text-red-600" :
+                    listing.type?.toLowerCase() === "wanted" ? "text-yellow-600" :
+                      "text-green-600"
+                  }`} />
                 Edit {listing.type === "sale" ? "Sale" : listing.type === "wanted" ? "Wanted" : "Free"} Listing
               </DialogTitle>
               <DialogDescription>
@@ -199,103 +198,103 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
 
             <GoogleMapsProvider>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 min-w-0">
-            <PhotoUploadSection
-              onImageUpload={handleImageUpload}
-              uploadedImage={uploadedImage}
-              existingImageUrl={existingImageUrl}
-              error={errors.image?.message as string}
-              disabled={true}
-            />
+                <PhotoUploadSection
+                  onImageUpload={handleImageUpload}
+                  uploadedImage={uploadedImage}
+                  existingImageUrl={existingImageUrl}
+                  error={errors.image?.message as string}
+                  disabled={true}
+                />
 
-            <BasicInfoSection
-              register={register}
-              errors={errors}
-              listingType={listing.type as "free" | "wanted" | "sale"}
-              mode="add"
-              selectedUnit={selectedUnit}
-              onUnitChange={setSelectedUnit}
-            />
+                <BasicInfoSection
+                  register={register}
+                  errors={errors}
+                  listingType={listing.type as "free" | "wanted" | "sale"}
+                  mode="add"
+                  selectedUnit={selectedUnit}
+                  onUnitChange={setSelectedUnit}
+                />
 
-            <PickupInfoSection
-              register={register}
-              errors={errors}
-              mode="add"
-            />
+                <PickupInfoSection
+                  register={register}
+                  errors={errors}
+                  mode="add"
+                />
 
-            <TagsSelectionSection
-              selectedTags={selectedTags}
-              onTagsChange={handleTagsChange}
-              error={errors.tags?.message}
-              mode="add"
-              required={false}
-            />
+                <TagsSelectionSection
+                  selectedTags={selectedTags}
+                  onTagsChange={handleTagsChange}
+                  error={errors.tags?.message}
+                  mode="add"
+                  required={false}
+                />
 
-            <LocationSelectionSection
-              register={register}
-              setValue={setValue}
-              errors={errors}
-              currentLocation={currentLocation}
-              currentLatitude={currentLatitude}
-              currentLongitude={currentLongitude}
-              isLoadingLocation={isLoadingLocation}
-              onLocationUpdate={handleLocationSelect}
-              onGetCurrentLocation={() => {
-                if (!navigator.geolocation) {
-                  alert("Geolocation is not supported by this browser.");
-                  return;
-                }
-
-                setIsLoadingLocation(true);
-
-                navigator.geolocation.getCurrentPosition(
-                  async (position) => {
-                    const { latitude, longitude } = position.coords;
-
-                    try {
-                      // Reverse geocoding using Google Maps API
-                      const response = await fetch(
-                        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA`
-                      );
-
-                      if (response.ok) {
-                        const data = await response.json();
-                        if (data.results && data.results.length > 0) {
-                          const address = data.results[0].formatted_address;
-                          handleLocationSelect(address, latitude, longitude);
-                        } else {
-                          handleLocationSelect(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, latitude, longitude);
-                        }
-                      } else {
-                        handleLocationSelect(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, latitude, longitude);
-                      }
-                    } catch (error) {
-                      console.error("Error with reverse geocoding:", error);
-                      handleLocationSelect(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, latitude, longitude);
-                    } finally {
-                      setIsLoadingLocation(false);
+                <LocationSelectionSection
+                  register={register}
+                  setValue={setValue}
+                  errors={errors}
+                  currentLocation={currentLocation}
+                  currentLatitude={currentLatitude}
+                  currentLongitude={currentLongitude}
+                  isLoadingLocation={isLoadingLocation}
+                  onLocationUpdate={handleLocationSelect}
+                  onGetCurrentLocation={() => {
+                    if (!navigator.geolocation) {
+                      alert("Geolocation is not supported by this browser.");
+                      return;
                     }
-                  },
-                  (error) => {
-                    console.error("Error getting location:", error);
-                    setIsLoadingLocation(false);
-                    alert("Unable to get your current location. Please try again or select location on map.");
-                  },
-                  {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 300000, // 5 minutes
-                  }
-                );
-              }}
-            />
 
-            <FormActions
-              onCancel={handleCancel}
-              isSubmitting={isSubmitting || isUpdating}
-              submitText="Update Listing"
-              cancelText="Cancel"
-              mode="edit"
-            />
+                    setIsLoadingLocation(true);
+
+                    navigator.geolocation.getCurrentPosition(
+                      async (position) => {
+                        const { latitude, longitude } = position.coords;
+
+                        try {
+                          // Reverse geocoding using Google Maps API
+                          const response = await fetch(
+                            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg`
+                          );
+
+                          if (response.ok) {
+                            const data = await response.json();
+                            if (data.results && data.results.length > 0) {
+                              const address = data.results[0].formatted_address;
+                              handleLocationSelect(address, latitude, longitude);
+                            } else {
+                              handleLocationSelect(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, latitude, longitude);
+                            }
+                          } else {
+                            handleLocationSelect(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, latitude, longitude);
+                          }
+                        } catch (error) {
+                          console.error("Error with reverse geocoding:", error);
+                          handleLocationSelect(`Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, latitude, longitude);
+                        } finally {
+                          setIsLoadingLocation(false);
+                        }
+                      },
+                      (error) => {
+                        console.error("Error getting location:", error);
+                        setIsLoadingLocation(false);
+                        alert("Unable to get your current location. Please try again or select location on map.");
+                      },
+                      {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 300000, // 5 minutes
+                      }
+                    );
+                  }}
+                />
+
+                <FormActions
+                  onCancel={handleCancel}
+                  isSubmitting={isSubmitting || isUpdating}
+                  submitText="Update Listing"
+                  cancelText="Cancel"
+                  mode="edit"
+                />
               </form>
             </GoogleMapsProvider>
           </div>

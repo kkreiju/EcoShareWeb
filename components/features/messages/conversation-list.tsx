@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Conversation } from "@/lib/services/conversationService";
+import { SearchX, MessageSquareOff } from "lucide-react";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -43,10 +44,10 @@ export function ConversationList({
               onClick={() => onSelect(c.id)}
             >
               <Avatar className="h-9 w-9 flex-shrink-0">
-                {c.user.avatar && 
-                 c.user.avatar !== "null" && 
-                 c.user.avatar !== "undefined" && 
-                 c.user.avatar.trim() !== "" ? (
+                {c.user.avatar &&
+                  c.user.avatar !== "null" &&
+                  c.user.avatar !== "undefined" &&
+                  c.user.avatar.trim() !== "" ? (
                   <AvatarImage src={c.user.avatar} />
                 ) : null}
                 <AvatarFallback>{c.user.name[0].toUpperCase()}</AvatarFallback>
@@ -69,15 +70,31 @@ export function ConversationList({
                     ) : null}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground truncate mt-1">
+                <p className="text-xs text-muted-foreground line-clamp-2 mt-1 break-all">
                   {c.lastMessage}
                 </p>
               </div>
             </button>
           ))}
           {conversations.length === 0 && (
-            <div className="px-3 py-8 text-sm text-muted-foreground">
-              No conversations
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center text-muted-foreground">
+              {query ? (
+                <>
+                  <SearchX className="h-12 w-12 mb-3 opacity-20" />
+                  <p className="text-sm font-medium">No results found</p>
+                  <p className="text-xs mt-1 opacity-70">
+                    We couldn't find any conversations matching "{query}"
+                  </p>
+                </>
+              ) : (
+                <>
+                  <MessageSquareOff className="h-12 w-12 mb-3 opacity-20" />
+                  <p className="text-sm font-medium">No conversations yet</p>
+                  <p className="text-xs mt-1 opacity-70">
+                    Start a new conversation to connect with others
+                  </p>
+                </>
+              )}
             </div>
           )}
         </div>

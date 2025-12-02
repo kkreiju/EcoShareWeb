@@ -29,9 +29,9 @@ interface GoogleMapsProviderProps {
  * Google Maps Provider - Shared component for loading Google Maps API
  * Supports both required and optional apiKey props
  */
-export function GoogleMapsProvider({ 
-  children, 
-  apiKey = "AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA" 
+export function GoogleMapsProvider({
+  children,
+  apiKey = "AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg"
 }: GoogleMapsProviderProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);

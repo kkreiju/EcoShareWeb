@@ -22,7 +22,9 @@ export function TransactionManagementView() {
   } = useTransactionManagement();
 
   const {
+    handleUploadImage,
     handleComplete,
+    handleReturn,
     handleCancel,
     handleViewDetails,
   } = useTransactionActions({
@@ -33,7 +35,7 @@ export function TransactionManagementView() {
 
   return (
     <div className="space-y-4">
-      <TransactionHeader 
+      <TransactionHeader
         stats={stats}
         isLoading={isLoading}
         onRefresh={fetchTransactions}
@@ -46,7 +48,9 @@ export function TransactionManagementView() {
         onTabChange={setActiveTab}
         transactionData={transactionData}
         isLoading={isLoading}
+        onUploadImage={handleUploadImage}
         onComplete={handleComplete}
+        onReturn={handleReturn}
         onCancel={handleCancel}
         onViewDetails={handleViewDetails}
       />

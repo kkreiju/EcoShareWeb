@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, X, Eye, Camera, Image as ImageIcon, Star, CheckCircle } from "lucide-react";
+import { MoreHorizontal, X, Eye, Camera, Image as ImageIcon, Star, CheckCircle, Loader2 } from "lucide-react";
 import { CameraCaptureModal } from "./camera-capture-modal";
 import { ViewTransactionImageModal } from "./view-transaction-image-modal";
 import { TransactionRatingModal } from "./transaction-rating-modal";
@@ -20,7 +20,9 @@ interface TransactionActionsProps {
   transactionStatus: string;
   listingTitle: string;
   listingId: string;
-  onComplete?: (transactionId: string, imageBase64: string) => void;
+  onUploadImage?: (transactionId: string, imageBase64: string) => void;
+  onComplete?: (transactionId: string) => Promise<void>;
+  onReturn?: (transactionId: string) => Promise<void>;
   onCancel?: (transactionId: string) => void;
   onViewDetails?: (listingId: string) => void;
 }
@@ -31,7 +33,9 @@ export function TransactionActions({
   transactionStatus,
   listingTitle,
   listingId,
+  onUploadImage,
   onComplete,
+  onReturn,
   onCancel,
   onViewDetails,
 }: TransactionActionsProps) {
@@ -41,6 +45,8 @@ export function TransactionActions({
   const [isUploading, setIsUploading] = useState(false);
   const [hasRated, setHasRated] = useState(false);
   const [checkingRating, setCheckingRating] = useState(false);
+  const [hasVerificationImage, setHasVerificationImage] = useState<boolean | null>(null);
+  const [isCheckingImage, setIsCheckingImage] = useState(false);
 
   const status = transactionStatus.toLowerCase();
   const isOngoing = status === "ongoing";
@@ -60,7 +66,7 @@ export function TransactionActions({
       const response = await fetch(
         `/api/transaction/rating/check-rating?tran_id=${transactionId}`
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -74,15 +80,36 @@ export function TransactionActions({
     }
   };
 
-  const handleCompleteClick = () => {
+  const checkVerificationImage = async () => {
+    if (hasVerificationImage !== null) return;
+    setIsCheckingImage(true);
+    try {
+      const response = await fetch(
+        `/api/transaction/transaction-image?transactionId=${transactionId}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setHasVerificationImage(data.success);
+      } else {
+        setHasVerificationImage(false);
+      }
+    } catch (error) {
+      console.error("Error checking verification image:", error);
+      setHasVerificationImage(false);
+    } finally {
+      setIsCheckingImage(false);
+    }
+  };
+
+  const handleUploadClick = () => {
     setIsCameraModalOpen(true);
   };
 
   const handleImageCapture = async (imageBase64: string) => {
-    if (onComplete) {
+    if (onUploadImage) {
       setIsUploading(true);
       try {
-        await onComplete(transactionId, imageBase64);
+        await onUploadImage(transactionId, imageBase64);
       } finally {
         setIsUploading(false);
         setIsCameraModalOpen(false);
@@ -105,11 +132,15 @@ export function TransactionActions({
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={(open) => {
+        if (open && type === "receiver" && isOngoing) {
+          checkVerificationImage();
+        }
+      }}>
         <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="h-8 w-8 p-0 rounded-full border border-border/30 hover:border-border/60 bg-background/50 hover:bg-muted/80 transition-all duration-200"
           >
             <MoreHorizontal className="h-4 w-4" />
@@ -117,18 +148,48 @@ export function TransactionActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          {/* Show Complete button only for contributor (sold items) with Ongoing status */}
-          {type === "contributor" && isOngoing && onComplete && (
+          <DropdownMenuItem
+            onClick={handleViewDetails}
+            className="focus:bg-blue-50 dark:focus:bg-blue-950/20"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+
+          {/* Show Upload Verification button only for contributor (sold items) with Ongoing status */}
+          {type === "contributor" && isOngoing && onUploadImage && (
             <>
               <DropdownMenuItem
-                onClick={handleCompleteClick}
-                className="text-green-600 focus:text-green-600 focus:bg-green-50 dark:focus:bg-green-950/20"
+                onClick={handleUploadClick}
+                className="text-blue-600 focus:text-blue-600 focus:bg-blue-50 dark:focus:bg-blue-950/20"
                 disabled={isUploading}
               >
                 <Camera className="h-4 w-4 mr-2" />
-                Complete Transaction
+                Upload Verification
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+            </>
+          )}
+
+          {/* Show Review Transaction for receiver (buyer) with Ongoing status */}
+          {type === "receiver" && isOngoing && (
+            <>
+              {isCheckingImage ? (
+                <DropdownMenuItem disabled>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Checking status...
+                </DropdownMenuItem>
+              ) : hasVerificationImage ? (
+                <DropdownMenuItem
+                  onClick={() => setIsViewImageModalOpen(true)}
+                  className="text-green-600 focus:text-green-600 focus:bg-green-50 dark:focus:bg-green-950/20"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Review Transaction
+                </DropdownMenuItem>
+              ) : null}
+              {(hasVerificationImage || isCheckingImage) && <DropdownMenuSeparator />}
             </>
           )}
 
@@ -155,7 +216,7 @@ export function TransactionActions({
                 className="focus:bg-blue-50 dark:focus:bg-blue-950/20"
               >
                 <ImageIcon className="h-4 w-4 mr-2" />
-                View Completion Image
+                View Verification Image
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
@@ -186,14 +247,6 @@ export function TransactionActions({
               <DropdownMenuSeparator />
             </>
           )}
-
-          <DropdownMenuItem
-            onClick={handleViewDetails}
-            className="focus:bg-blue-50 dark:focus:bg-blue-950/20"
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            View Details
-          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -211,6 +264,10 @@ export function TransactionActions({
         onClose={() => setIsViewImageModalOpen(false)}
         transactionId={transactionId}
         listingTitle={listingTitle}
+        onComplete={onComplete}
+        onReturn={onReturn}
+        isBuyer={type === "receiver"}
+        transactionStatus={transactionStatus}
       />
 
       <TransactionRatingModal

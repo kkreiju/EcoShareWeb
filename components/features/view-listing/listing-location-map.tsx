@@ -27,7 +27,7 @@ export function ListingLocationMap({ listing }: ListingLocationMapProps) {
       <CardContent>
         <div className="w-full aspect-[4/2] rounded-lg overflow-hidden border border-border relative">
           <iframe
-            src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyDLA0gcMkbfwlw2vRmN0gnM414Oq4IG4aA&q=${listing.latitude},${listing.longitude}&zoom=15`}
+            src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg&q=${listing.latitude},${listing.longitude}&zoom=15`}
             width="100%"
             height="100%"
             style={{ border: 0 }}
@@ -36,7 +36,7 @@ export function ListingLocationMap({ listing }: ListingLocationMapProps) {
             referrerPolicy="no-referrer-when-downgrade"
             title={`Location of ${listing.locationName?.replace(/^[A-Z0-9+]+\+\w+,?\s*/, '')}`}
           />
-          
+
           {/* Get Directions Button */}
           <div className="absolute top-2 right-2">
             <Button
@@ -50,7 +50,7 @@ export function ListingLocationMap({ listing }: ListingLocationMapProps) {
             </Button>
           </div>
         </div>
-        
+
         <div className="mt-2 text-xs text-muted-foreground">
           Coordinates: {listing.latitude.toFixed(6)} {listing.longitude.toFixed(6)}
         </div>

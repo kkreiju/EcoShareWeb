@@ -200,13 +200,7 @@ export function MessagesView() {
                   {sendError}
                 </div>
               )}
-              <MessageInput onSend={handleSend} disabled={sendingMessage} />
-              {sendingMessage && (
-                <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Sending message...
-                </div>
-              )}
+              <MessageInput onSend={handleSend} disabled={false} />
             </div>
           </div>
         ) : (

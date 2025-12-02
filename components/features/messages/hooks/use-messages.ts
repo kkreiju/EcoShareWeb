@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { ConversationService, Conversation } from "@/lib/services/conversationService";
+import { createClient } from "@/lib/supabase/client";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export interface Message {
   id: string;
   senderId: string;
   content: string;
   timestamp: string; // ISO
-  status?: "sent" | "delivered" | "read";
+  status?: "sent" | "delivered" | "read" | "sending";
 }
 
 interface UseMessagesReturn {
@@ -125,6 +127,106 @@ export function useMessages(userId: string, isAuthenticated: boolean): UseMessag
     }
   }, [currentUserId]);
 
+  // Use a ref to access the latest fetchConversations without triggering re-renders
+  const fetchConversationsRef = useRef(fetchConversations);
+  useEffect(() => {
+    fetchConversationsRef.current = fetchConversations;
+  }, [fetchConversations]);
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const supabase = createClient();
+    const channelName = `messages-${currentUserId}`; // Removed Date.now() to keep channel stable
+    console.log("Setting up real-time subscription:", channelName);
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'Message',
+        },
+        (payload: RealtimePostgresChangesPayload<any>) => {
+          console.log("Real-time event received:", payload);
+          const newMessage = payload.new as any;
+
+          // Only process if it belongs to one of our conversations
+          setConversations((prev) => {
+            // Find which conversation this message belongs to
+            const conversationIndex = prev.findIndex(c => c.id === newMessage.conv_id);
+
+            if (conversationIndex === -1) {
+              console.log("Conversation not found, fetching conversations...");
+              fetchConversationsRef.current(); // Use ref here
+              return prev;
+            }
+
+            const updatedConversations = [...prev];
+            const conversation = updatedConversations[conversationIndex];
+
+            // Check if message already exists (deduplication)
+            if (conversation.messages.some(m => m.id === newMessage.id)) {
+              console.log("Message already exists, skipping:", newMessage.id);
+              return prev;
+            }
+
+            // Format timestamp to match API format (e.g., "2:30 PM")
+            const formatTime = (isoString: string) => {
+              const date = new Date(isoString);
+              return date.toLocaleTimeString('en-US', {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              });
+            };
+
+            // Transform raw DB message to our Message interface
+            const formattedMessage: Message = {
+              id: newMessage.id,
+              senderId: newMessage.mess_senderId,
+              content: newMessage.mess_content,
+              timestamp: formatTime(newMessage.mess_sentAt || new Date().toISOString()),
+              status: newMessage.mess_senderId === currentUserId ? 'sent' : 'read'
+            };
+
+            console.log("Adding new message to conversation:", formattedMessage);
+
+            // Add message to conversation
+            const updatedConversation = {
+              ...conversation,
+              messages: [...conversation.messages, formattedMessage],
+              lastMessage: formattedMessage.content,
+              lastTimestamp: formattedMessage.timestamp,
+            };
+
+            updatedConversations[conversationIndex] = updatedConversation;
+
+            // Move updated conversation to top
+            updatedConversations.sort((a, b) => {
+              const timeA = new Date(a.lastTimestamp).getTime();
+              const timeB = new Date(b.lastTimestamp).getTime();
+              return timeB - timeA;
+            });
+
+            return updatedConversations;
+          });
+        }
+      )
+      .subscribe((status: string) => {
+        console.log("Subscription status:", status);
+      });
+
+    return () => {
+      console.log("Cleaning up subscription:", channelName);
+      supabase.removeChannel(channel);
+    };
+  }, [currentUserId]); // Removed fetchConversations from dependencies
+
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeId) || null,
     [conversations, activeId]
@@ -150,7 +252,7 @@ export function useMessages(userId: string, isAuthenticated: boolean): UseMessag
     const tempId = `temp_${Date.now()}_${Math.random()
       .toString(36)
       .slice(2, 9)}`;
-    
+
     // Format timestamp to match API format (e.g., "2:30 PM")
     const now = new Date();
     const formattedTime = now.toLocaleTimeString('en-US', {
@@ -158,13 +260,13 @@ export function useMessages(userId: string, isAuthenticated: boolean): UseMessag
       minute: "2-digit",
       hour12: true,
     });
-    
+
     const optimisticMsg: Message = {
       id: tempId,
       senderId: currentUserId,
       content: text,
       timestamp: formattedTime,
-      status: "sent",
+      status: "sending",
     };
 
     setConversations((prev) => {
@@ -176,7 +278,7 @@ export function useMessages(userId: string, isAuthenticated: boolean): UseMessag
         updatedConv.lastTimestamp = new Date().toISOString();
         return updatedConv;
       });
-      
+
       // Sort conversations by most recent (move current conversation to top)
       return updated.sort((a, b) => {
         const timeA = new Date(a.lastTimestamp).getTime();
@@ -200,7 +302,7 @@ export function useMessages(userId: string, isAuthenticated: boolean): UseMessag
           updatedConv.messages = c.messages.filter((msg) => msg.id !== tempId);
           return updatedConv;
         });
-        
+
         // Sort conversations by most recent (move current conversation to top)
         return updated.sort((a, b) => {
           const timeA = new Date(a.lastTimestamp).getTime();
@@ -251,4 +353,3 @@ export function useMessages(userId: string, isAuthenticated: boolean): UseMessag
     handleSend,
   };
 }
-

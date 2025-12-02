@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     if (!error && data?.user?.email) {
       // Get redirect URL from params or determine based on user role
       let next = searchParams.get("next");
-      
+
       // If no explicit next param or invalid path, determine dashboard based on user role
       if (!next || !next.startsWith("/")) {
         next = await getDashboardUrl(data.user.email);
@@ -23,7 +23,12 @@ export async function GET(request: Request) {
       const isLocalEnv = process.env.NODE_ENV === "development";
 
       if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
+        // Fix for 0.0.0.0 issue in local development
+        let redirectOrigin = origin;
+        if (redirectOrigin.includes("0.0.0.0")) {
+          redirectOrigin = redirectOrigin.replace("0.0.0.0", "localhost");
+        }
+        return NextResponse.redirect(`${redirectOrigin}${next}`);
       } else if (forwardedHost) {
         return NextResponse.redirect(`https://${forwardedHost}${next}`);
       } else {

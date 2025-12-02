@@ -43,7 +43,9 @@ interface TransactionRowProps {
   transaction: Transaction;
   index: number;
   type: "contributor" | "receiver";
-  onComplete?: (transactionId: string, imageBase64: string) => void;
+  onUploadImage?: (transactionId: string, imageBase64: string) => void;
+  onComplete?: (transactionId: string) => Promise<void>;
+  onReturn?: (transactionId: string) => Promise<void>;
   onCancel?: (transactionId: string) => void;
   onViewDetails?: (listingId: string) => void;
 }
@@ -52,7 +54,9 @@ export function TransactionRow({
   transaction,
   index,
   type,
+  onUploadImage,
   onComplete,
+  onReturn,
   onCancel,
   onViewDetails,
 }: TransactionRowProps) {
@@ -74,9 +78,8 @@ export function TransactionRow({
 
   return (
     <TableRow
-      className={`border-border/50 hover:bg-muted/30 transition-all duration-200 ${
-        index % 2 === 0 ? 'bg-background/50' : 'bg-muted/5'
-      }`}
+      className={`border-border/50 hover:bg-muted/30 transition-all duration-200 ${index % 2 === 0 ? 'bg-background/50' : 'bg-muted/5'
+        }`}
     >
       <TableCell className="text-center">
         <div className="flex items-center justify-center">
@@ -150,7 +153,7 @@ export function TransactionRow({
                 transaction.buyer_name || transaction.tran_userId
               ) : (
                 transaction.listing.user_firstName &&
-                transaction.listing.user_lastName
+                  transaction.listing.user_lastName
                   ? `${transaction.listing.user_firstName} ${transaction.listing.user_lastName}`.trim()
                   : transaction.listing.user_id
               )}
@@ -165,9 +168,9 @@ export function TransactionRow({
             <span>{formatDate(transaction.tran_dateTime)}</span>
           </div>
           <div className="text-xs text-muted-foreground">
-            {new Date(transaction.tran_dateTime).toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
+            {new Date(transaction.tran_dateTime).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit'
             })}
           </div>
         </div>
@@ -178,8 +181,10 @@ export function TransactionRow({
           transactionId={transaction.tran_id}
           transactionStatus={transaction.tran_status}
           listingTitle={transaction.listing.list_title}
-          listingId={transaction.list_id}
+          listingId={transaction.listing.list_id}
+          onUploadImage={onUploadImage}
           onComplete={onComplete}
+          onReturn={onReturn}
           onCancel={onCancel}
           onViewDetails={onViewDetails}
         />

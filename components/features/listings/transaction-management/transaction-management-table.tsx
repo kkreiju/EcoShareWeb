@@ -42,7 +42,9 @@ interface Transaction {
 interface TransactionManagementTableProps {
   transactions: Transaction[];
   type: "contributor" | "receiver";
-  onComplete?: (transactionId: string, imageBase64: string) => void;
+  onUploadImage?: (transactionId: string, imageBase64: string) => void;
+  onComplete?: (transactionId: string) => Promise<void>;
+  onReturn?: (transactionId: string) => Promise<void>;
   onCancel?: (transactionId: string) => void;
   onViewDetails?: (listingId: string) => void;
 }
@@ -50,7 +52,9 @@ interface TransactionManagementTableProps {
 export function TransactionManagementTable({
   transactions,
   type,
+  onUploadImage,
   onComplete,
+  onReturn,
   onCancel,
   onViewDetails,
 }: TransactionManagementTableProps) {
@@ -69,7 +73,9 @@ export function TransactionManagementTable({
               transaction={transaction}
               index={index}
               type={type}
+              onUploadImage={onUploadImage}
               onComplete={onComplete}
+              onReturn={onReturn}
               onCancel={onCancel}
               onViewDetails={onViewDetails}
             />

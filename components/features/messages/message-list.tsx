@@ -36,7 +36,8 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
               <div
                 className={cn(
                   "max-w-[80%] rounded-lg px-3 py-2 text-sm shadow-sm",
-                  isMe ? "bg-primary text-primary-foreground" : "bg-muted"
+                  isMe ? "bg-primary text-primary-foreground" : "bg-muted",
+                  m.status === 'sending' && "opacity-70"
                 )}
               >
                 <p className="break-words whitespace-pre-wrap">{m.content}</p>
@@ -47,7 +48,13 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
                   )}
                 >
                   {/* API returns formatted time like "2:30 PM", display as-is */}
-                  {m.timestamp}
+                  {m.status === 'sending' ? (
+                    <span className="flex items-center gap-1">
+                      Sending...
+                    </span>
+                  ) : (
+                    m.timestamp
+                  )}
                 </p>
               </div>
             </div>
