@@ -6,7 +6,7 @@ import { GoogleMapsProvider } from "../listings/shared/google-maps-provider";
 import { useNearbyListings } from "./use-nearby-listings";
 
 // Google Maps API Key
-const GOOGLE_MAPS_API_KEY = "AIzaSyDgXPEns32daYp9WblngrXGvO_tJeOaxfM";
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 export function NearbyListingsView() {
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);

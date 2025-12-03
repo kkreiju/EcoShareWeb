@@ -253,7 +253,7 @@ export function EditListingForm({ open, onOpenChange, listing, onSave, isUpdatin
                         try {
                           // Reverse geocoding using Google Maps API
                           const response = await fetch(
-                            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyDgXPEns32daYp9WblngrXGvO_tJeOaxfM`
+                            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
                           );
 
                           if (response.ok) {

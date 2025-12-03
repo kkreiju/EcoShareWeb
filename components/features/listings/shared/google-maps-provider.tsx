@@ -31,7 +31,7 @@ interface GoogleMapsProviderProps {
  */
 export function GoogleMapsProvider({
   children,
-  apiKey = "AIzaSyDgXPEns32daYp9WblngrXGvO_tJeOaxfM"
+  apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
 }: GoogleMapsProviderProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
