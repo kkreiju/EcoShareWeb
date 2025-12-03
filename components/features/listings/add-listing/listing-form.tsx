@@ -160,7 +160,7 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
     }
 
     setIsLoadingLocation(true);
-    const apiKey = "AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg";
+    const apiKey = "AIzaSyDgXPEns32daYp9WblngrXGvO_tJeOaxfM";
 
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -266,7 +266,7 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
   };
 
   return (
-    <GoogleMapsProvider apiKey="AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg">
+    <GoogleMapsProvider apiKey="AIzaSyDgXPEns32daYp9WblngrXGvO_tJeOaxfM">
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0">
           <ScrollArea className="max-h-[80vh] px-6">

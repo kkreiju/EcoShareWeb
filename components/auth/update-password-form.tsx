@@ -22,7 +22,7 @@ export function UpdatePasswordForm({
     const supabase = createClient();
 
     // 1. Check for an existing session (mobile or already authenticated)
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(async ({ data }: { data: any }) => {
       if (data.session) {
         setSessionReady(true);
       } else {
@@ -52,7 +52,7 @@ export function UpdatePasswordForm({
         const url = window.location.href;
         const hasCode = url.includes("code=");
         if (hasCode) {
-          supabase.auth.exchangeCodeForSession(url).then(({ error }) => {
+          supabase.auth.exchangeCodeForSession(url).then(({ error }: { error: any }) => {
             if (error) {
               setError(
                 "Invalid or expired link. Please request a new password reset."

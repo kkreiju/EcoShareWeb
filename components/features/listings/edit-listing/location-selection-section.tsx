@@ -44,7 +44,7 @@ export function LocationSelectionSection({
         try {
           // Reverse geocoding using Google Maps API
           const response = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg`
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyDgXPEns32daYp9WblngrXGvO_tJeOaxfM`
           );
 
           if (response.ok) {
@@ -150,7 +150,7 @@ export function LocationSelectionSection({
         {showMap && (
           <GoogleMap
             onLocationSelect={handleMapSelection}
-            apiKey="AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg"
+            apiKey="AIzaSyDgXPEns32daYp9WblngrXGvO_tJeOaxfM"
             className="w-full"
             initialLat={currentLatitude}
             initialLng={currentLongitude}

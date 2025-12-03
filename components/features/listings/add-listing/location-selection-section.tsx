@@ -107,7 +107,7 @@ export function LocationSelectionSection({
           {showMap && (
             <GoogleMap
               onLocationSelect={handleMapSelection}
-              apiKey="AIzaSyAi4Cf5WpMqLHTKr-Lf8dNATHYHVA-_Fjg"
+              apiKey="AIzaSyDgXPEns32daYp9WblngrXGvO_tJeOaxfM"
               className="w-full"
             />
           )}
