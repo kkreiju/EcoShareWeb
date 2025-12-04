@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Target, Heart, Lightbulb } from "lucide-react";
+import { Target, Heart, Lightbulb, Users, Leaf } from "lucide-react";
 import Image from "next/image";
 
 const values = [
@@ -11,22 +11,22 @@ const values = [
       "To empower individuals and communities through responsible food waste sharing — turning everyday waste into opportunities for growth.",
   },
   {
-    icon: Heart,
-    title: "Our Values",
-    description:
-      "We stand for sustainability, collaboration, and local impact — believing small actions create big change.",
-  },
-  {
     icon: Lightbulb,
     title: "Our Vision",
     description:
       "To become the leading platform connecting people and places in the movement for zero-waste, community-driven agriculture.",
   },
+  {
+    icon: Users,
+    title: "Who We Serve",
+    description:
+      "We connect Homeowners, Restaurant Owners, and Livestock Farmers with Gardeners and Farmers to create a sustainable ecosystem.",
+  },
 ];
 
 export function AboutSection() {
   return (
-    <section className="relative overflow-hidden py-20 sm:py-32 bg-gradient-to-br from-background-secondary via-background-secondary to-primary/5">
+    <section className="relative overflow-hidden py-16 sm:py-24 bg-gradient-to-br from-background-secondary via-background-secondary to-primary/5">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Floating geometric shapes */}
@@ -39,7 +39,7 @@ export function AboutSection() {
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <pattern id="grid-about" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid-about)" />
@@ -64,10 +64,7 @@ export function AboutSection() {
                 <span className="text-primary">Together</span>
               </h2>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Since launching in 2020, EcoShare has been committed to
-                transforming how communities handle food waste. With over 10,000
-                eco-conscious users and growing, we&apos;re proud to lead the
-                way in sustainable, community-powered solutions.
+                EcoShare is designed to address the challenges of waste disposal and soil degradation. By facilitating the exchange of compostable materials, we help reduce landfill waste and support organic farming practices.
               </p>
             </div>
             <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-1">

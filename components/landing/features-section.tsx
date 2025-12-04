@@ -7,55 +7,55 @@ import {
 } from "@/components/ui/card";
 import {
   MapPin,
-  Shield,
-  MessageCircle,
+  Bot,
+  Sprout,
   BarChart3,
-  Smartphone,
-  Clock,
+  Leaf,
+  Recycle,
 } from "lucide-react";
 
 const features = [
   {
-    icon: MapPin,
-    title: "Smart Matching",
+    icon: Bot,
+    title: "AI-Powered Chatbot",
     description:
-      "Connect with nearby gardeners or farmers based on location, compost type, and needs.",
+      "Get instant guidance on composting and platform usage with our intelligent assistant.",
   },
   {
-    icon: Shield,
-    title: "Secure and Verified",
+    icon: Sprout,
+    title: "Plant Nutrient Diagnostics",
     description:
-      "Every user is authenticated to ensure trustworthy exchanges and secure interactions.",
+      "Analyze plant health and identify deficiencies using advanced deep learning (CNN) technology.",
   },
   {
-    icon: MessageCircle,
-    title: "Built-In Messaging",
+    icon: Leaf,
+    title: "Plant Nutrient Builder",
     description:
-      "Coordinate pickups, ask questions, and build community with real-time chat features.",
+      "Receive personalized compost mix suggestions tailored to your plants using machine learning.",
   },
   {
     icon: BarChart3,
-    title: "Compost Insights",
+    title: "Listing Analytics",
     description:
-      "Track nutrient value and compost quality with AI-powered analytics and diagnostics.",
+      "Gain insights into the nutrient content and quality of listed compostable materials.",
   },
   {
-    icon: Smartphone,
-    title: "Mobile Friendly",
+    icon: MapPin,
+    title: "Smart Matching",
     description:
-      "Access EcoShare on the go — manage listings and chat anytime, anywhere.",
+      "Connect with nearby users based on your specific compost needs and location.",
   },
   {
-    icon: Clock,
-    title: "24/7 Support",
+    icon: Recycle,
+    title: "Listing Creation",
     description:
-      "Get help when you need it with responsive support from our dedicated EcoShare team.",
+      "Easily list food scraps and compostable materials to share with your local community.",
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section className="relative overflow-hidden py-20 sm:py-32 bg-gradient-to-br from-background-secondary via-background-secondary to-primary/5">
+    <section className="relative overflow-hidden py-16 sm:py-24 bg-gradient-to-br from-background-secondary via-background-secondary to-primary/5">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Floating geometric shapes */}
@@ -68,7 +68,7 @@ export function FeaturesSection() {
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <pattern id="grid-features" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid-features)" />
