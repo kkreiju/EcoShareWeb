@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden min-h-screen flex items-center justify-center pt-16 lg:pt-20 bg-gradient-to-br from-background via-background to-primary/5">
+    <section className="relative overflow-hidden min-h-screen flex items-center justify-center pt-16 lg:pt-20 pb-12 bg-gradient-to-br from-background via-background to-primary/5">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Floating geometric shapes */}
@@ -19,7 +19,7 @@ export function HeroSection() {
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
@@ -36,17 +36,11 @@ export function HeroSection() {
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="flex flex-col space-y-8">
             <div className="space-y-4">
-              <div className="inline-flex items-center rounded-full border bg-card/50 px-3 py-1 text-sm font-medium backdrop-blur-sm">
-                ♻️ Turn Waste Into Worth
-              </div>
               <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
                 Give Waste a<span className="text-primary"> New Life</span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                EcoShare bridges households, restaurants, and farmers—making it
-                easy to share compostable food waste and support organic
-                farming. Help reduce landfill waste and grow a greener future,
-                together.
+                EcoShare bridges the gap between homeowners, restaurant owners, and livestock farmers with gardeners and farmers to repurpose waste into organic fertilizer.
               </p>
             </div>
             <div className="flex flex-col gap-4 sm:flex-row">
@@ -59,36 +53,6 @@ export function HeroSection() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button
-                variant="outline"
-                size="lg"
-                className="text-lg bg-transparent"
-              >
-                <Play className="mr-2 h-5 w-5" />
-                Watch Demo
-              </Button>
-            </div>
-            <div className="flex items-center space-x-8 text-sm text-muted-foreground">
-              <div className="flex items-center space-x-2">
-                <div className="flex -space-x-2">
-                  <Avatar>
-                    <AvatarFallback className="text-primary-foreground bg-primary">
-                      MC
-                    </AvatarFallback>
-                  </Avatar>
-                  <Avatar>
-                    <AvatarFallback className="text-destructive-foreground bg-destructive">
-                      BM
-                    </AvatarFallback>
-                  </Avatar>
-                  <Avatar>
-                    <AvatarFallback className="text-white bg-chart-1">
-                      CR
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <span>🌍 Trusted by 10,000+ eco-conscious users</span>
-              </div>
             </div>
           </div>
           <div className="relative">

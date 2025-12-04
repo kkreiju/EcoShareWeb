@@ -7,40 +7,35 @@ import {
 
 const faqs = [
   {
-    question: "How does EcoShare work?",
+    question: "How does EcoShare connect the community?",
     answer:
-      "EcoShare connects people with compostable waste to those who can use it. Simply sign up, post a listing, or browse what's available in your area.",
+      "EcoShare bridges the gap between homeowners, restaurant owners, and livestock farmers (who have waste) with gardeners and farmers (who need organic fertilizer), facilitating a circular agricultural economy.",
   },
   {
-    question: "Who can use EcoShare?",
+    question: "Does EcoShare handle delivery?",
     answer:
-      "Anyone! Whether you're a homeowner with food scraps, a restaurant with kitchen waste, or a farmer looking for compostable material — EcoShare is for you.",
+      "No, EcoShare does not include a built-in logistics or delivery service. Users are responsible for arranging how to send or receive items with their match.",
   },
   {
-    question: "What kinds of materials can I share?",
+    question: "How accurate are the AI recommendations?",
     answer:
-      "You can share compostable food scraps, vegetable waste, animal manure, yard trimmings, and other biodegradable materials suitable for composting.",
+      "Our AI tools (Chatbot, Nutrient Diagnostics, Nutrient Builder) are trained on specific datasets. While helpful, they may not always be 100% accurate for unfamiliar plant species or complex scenarios and should not replace expert advice.",
   },
   {
-    question: "How do I find people near me?",
+    question: "Is user verification required?",
     answer:
-      "EcoShare uses location-based matching to help you find nearby users who are either offering or requesting compostable materials.",
+      "Yes, all users must provide accurate information for verification to ensure trustworthy exchanges and a safe community environment.",
   },
   {
-    question: "Is it safe to meet up with other users?",
+    question: "Can I be both a provider and a receiver?",
     answer:
-      "Yes, user verification and in-app messaging help ensure safe and clear communication. Always coordinate exchanges in safe, public locations when possible.",
-  },
-  {
-    question: "Can I switch roles from giver to receiver?",
-    answer:
-      "Yes, you can switch roles at any time through your account settings — whether you want to donate waste or request compostables.",
+      "Absolutely! Users can switch roles at any time through their settings, allowing you to both donate waste and request compostable materials as needed.",
   },
 ];
 
 export function FaqSection() {
   return (
-    <section className="py-20 sm:py-32 bg-background-secondary">
+    <section className="py-16 sm:py-24 bg-background-secondary">
       <div className="mx-auto px-4 md:px-12 max-w-7xl">
         <div className="text-center space-y-4 mb-16">
           <div className="inline-flex items-center rounded-full border bg-background px-3 py-1 text-sm font-medium">
