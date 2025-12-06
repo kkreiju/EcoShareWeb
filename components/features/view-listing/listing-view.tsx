@@ -23,7 +23,7 @@ interface ListingViewProps {
 
 export function ListingView({ listingId }: ListingViewProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, userId } = useAuth();
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -185,6 +185,38 @@ export function ListingView({ listingId }: ListingViewProps) {
     setIsContactDialogOpen(true);
   };
 
+  const handleSendMessage = async () => {
+    if (!userId) return;
+
+    try {
+      // Create conversation with initial message
+      const response = await fetch("/api/conversation/create-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id1: listing?.user_id,
+          user_id2: userId,
+          text: `Hi! I'm interested in your "${listing?.title}" listing.`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create conversation");
+      }
+
+      const data = await response.json();
+
+      if (data.conv_id) {
+        // Navigate to messages with the conversation ID
+        router.push(`/user/messages?conversationId=${data.conv_id}`);
+      }
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+    }
+  };
+
   const handleReport = () => {
     setIsReportDialogOpen(true);
   };
@@ -261,6 +293,7 @@ export function ListingView({ listingId }: ListingViewProps) {
             formatDate={formatDate}
             isOwner={isOwner()}
             onContact={handleContact}
+            onSendMessage={handleSendMessage}
             onReport={handleReport}
           />
         </div>

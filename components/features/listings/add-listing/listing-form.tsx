@@ -71,6 +71,7 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
       longitude: undefined,
       price: undefined,
       image: undefined,
+      unit: "kg",
     },
   });
 
@@ -146,11 +147,13 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
     const file = event.target.files?.[0];
     if (file) {
       setUploadedImage(file);
+      setValue("image", file, { shouldValidate: true });
     }
   };
 
   const handleRemoveImage = () => {
     setUploadedImage(null);
+    setValue("image", undefined, { shouldValidate: true });
   };
 
   const handleGetCurrentLocation = async () => {
@@ -303,7 +306,10 @@ export function ListingForm({ open, onOpenChange, listingType, onListingCreated 
                   listingType={listingType}
                   mode="add"
                   selectedUnit={selectedUnit}
-                  onUnitChange={setSelectedUnit}
+                  onUnitChange={(unit) => {
+                    setSelectedUnit(unit);
+                    setValue("unit", unit, { shouldValidate: true });
+                  }}
                 />
 
                 <PickupInfoSection

@@ -149,9 +149,26 @@ export function useTransactionManagement(): UseTransactionManagementReturn {
           userId
         );
 
+        // Sort transactions: Ongoing first, then others
+        const sortTransactions = (transactions: Transaction[]) => {
+          return [...transactions].sort((a, b) => {
+            const isOngoingA = a.tran_status.toLowerCase() === "ongoing";
+            const isOngoingB = b.tran_status.toLowerCase() === "ongoing";
+
+            if (isOngoingA && !isOngoingB) return -1;
+            if (!isOngoingA && isOngoingB) return 1;
+
+            // Secondary sort by date (newest first)
+            return (
+              new Date(b.tran_dateTime).getTime() -
+              new Date(a.tran_dateTime).getTime()
+            );
+          });
+        };
+
         setTransactionData({
-          contributor: contributorWithNames,
-          receiver: receiverWithNames,
+          contributor: sortTransactions(contributorWithNames),
+          receiver: sortTransactions(receiverWithNames),
           contributor_count: data.contributor_count || 0,
           receiver_count: data.receiver_count || 0,
         });

@@ -15,10 +15,11 @@ interface ListingImageProps {
   formatDate: (dateString: string) => string;
   isOwner: boolean;
   onContact: () => void;
+  onSendMessage: () => void;
   onReport: () => void;
 }
 
-export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatDate, isOwner, onContact, onReport }: ListingImageProps) {
+export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatDate, isOwner, onContact, onSendMessage, onReport }: ListingImageProps) {
   return (
     <Card className="py-0 min-h-[300px]">
       <CardContent className="p-0 rounded-xl overflow-hidden">
@@ -237,6 +238,16 @@ export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatD
                       <MessageCircle className="w-4 h-4 mr-2" />
                       {listing.type === "Wanted" ? "Offer Item" : "Request Item"}
                       <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full"
+                      onClick={onSendMessage}
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Send Message
                     </Button>
 
                     <Button

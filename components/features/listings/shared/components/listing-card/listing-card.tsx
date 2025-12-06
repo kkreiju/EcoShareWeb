@@ -17,7 +17,14 @@ import {
   Share2,
   Star,
   Heart,
+  AlertTriangle,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatPrice, formatDate, getTypeColor, getStatusColor } from "../../utils";
 import { parseTags } from "../../form-utils/helpers";
 import { cn } from "@/lib/utils";
@@ -351,6 +358,29 @@ export function ListingCard({
         >
           {listing.type}
         </Badge>
+
+        {/* Out of Stock Badge */}
+        {listing.quantity === 0 && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="destructive"
+                  className={cn(
+                    "absolute font-medium flex items-center gap-1 bg-red-500/90 hover:bg-red-600/90 backdrop-blur-sm",
+                    compact ? "bottom-2 right-2 text-[10px] px-1.5 py-0.5" : "bottom-3 right-3"
+                  )}
+                >
+                  <AlertTriangle className={cn("h-3 w-3", compact && "h-2.5 w-2.5")} />
+                  Out of Stock
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This listing is out of stock.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
 
         {/* Status badge - only for manage variant */}
         {variant === "manage" && (

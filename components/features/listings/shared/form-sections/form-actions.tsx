@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 
 interface FormActionsProps {
   onCancel: () => void;
@@ -22,25 +22,25 @@ export function FormActions({
 }: FormActionsProps) {
   const getButtonStyles = () => {
     if (mode === "edit") {
-      return "bg-blue-600 hover:bg-blue-700";
+      return "bg-blue-600 hover:bg-blue-700 text-white";
     }
     
     switch (listingType) {
       case "sale":
-        return "bg-red-600 hover:bg-red-700";
+        return "bg-red-600 hover:bg-red-700 text-white";
       case "wanted":
-        return "bg-yellow-600 hover:bg-yellow-700";
+        return "bg-yellow-600 hover:bg-yellow-700 text-white";
       default:
-        return "bg-green-600 hover:bg-green-700";
+        return "bg-green-600 hover:bg-green-700 text-white";
     }
   };
 
   const getButtonText = () => {
     if (mode === "edit") {
-      return submitText || (isSubmitting ? "Updating..." : "Update Listing");
+      return submitText || "Update Listing";
     }
 
-    const action = isSubmitting ? "Creating" : "Create";
+    const action = "Create";
     switch (listingType) {
       case "sale":
         return `${action} Sale Listing`;
@@ -59,7 +59,6 @@ export function FormActions({
         onClick={onCancel}
         disabled={isSubmitting}
         className="w-full sm:w-auto order-2 sm:order-1 touch-manipulation"
-        size="sm"
       >
         {cancelText || "Cancel"}
       </Button>
@@ -67,9 +66,12 @@ export function FormActions({
         type="submit"
         className={`${getButtonStyles()} w-full sm:w-auto order-1 sm:order-2 touch-manipulation`}
         disabled={isSubmitting}
-        size="sm"
       >
-        <Save className="w-4 h-4 mr-2 flex-shrink-0" />
+        {isSubmitting ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
+        ) : (
+          <Save className="w-4 h-4 mr-2 flex-shrink-0" />
+        )}
         <span className="truncate">{getButtonText()}</span>
       </Button>
     </div>

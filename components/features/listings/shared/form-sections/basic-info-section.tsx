@@ -101,6 +101,9 @@ export function BasicInfoSection({
               ))}
             </SelectContent>
           </Select>
+          {errors.unit && (
+            <p className="text-sm text-red-500">{errors.unit.message as string}</p>
+          )}
         </div>
       </div>
 

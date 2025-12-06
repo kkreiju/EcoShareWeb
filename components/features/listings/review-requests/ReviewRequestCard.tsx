@@ -107,9 +107,7 @@ export function ReviewRequestCard({ request, onAccept, onDecline, showActions = 
               onClick={() => onAccept(request.id)}
               size="sm"
               disabled={processingAction === 'accept'}
-              className={`flex-1 bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${
-                processingAction === 'accept' ? 'animate-pulse scale-105 shadow-lg' : ''
-              }`}
+              className="flex-1"
             >
               {processingAction === 'accept' ? (
                 <>
@@ -126,10 +124,9 @@ export function ReviewRequestCard({ request, onAccept, onDecline, showActions = 
             <Button
               onClick={() => onDecline(request.id)}
               size="sm"
+              variant="destructive"
               disabled={processingAction === 'decline'}
-              className={`flex-1 bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${
-                processingAction === 'decline' ? 'animate-pulse scale-105 shadow-lg' : ''
-              }`}
+              className="flex-1"
             >
               {processingAction === 'decline' ? (
                 <>

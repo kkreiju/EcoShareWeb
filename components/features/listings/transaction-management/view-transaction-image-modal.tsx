@@ -35,7 +35,7 @@ export function ViewTransactionImageModal({
 }: ViewTransactionImageModalProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingAction, setProcessingAction] = useState<'complete' | 'return' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export function ViewTransactionImageModal({
       // Reset state when modal closes
       setImageUrl(null);
       setError(null);
-      setIsProcessing(false);
+      setProcessingAction(null);
     }
   }, [isOpen, transactionId]);
 
@@ -84,27 +84,27 @@ export function ViewTransactionImageModal({
 
   const handleComplete = async () => {
     if (!onComplete) return;
-    setIsProcessing(true);
+    setProcessingAction('complete');
     try {
       await onComplete(transactionId);
       onClose();
     } catch (error) {
       // Error is handled in the hook
     } finally {
-      setIsProcessing(false);
+      setProcessingAction(null);
     }
   };
 
   const handleReturn = async () => {
     if (!onReturn) return;
-    setIsProcessing(true);
+    setProcessingAction('return');
     try {
       await onReturn(transactionId);
       onClose();
     } catch (error) {
       // Error is handled in the hook
     } finally {
-      setIsProcessing(false);
+      setProcessingAction(null);
     }
   };
 
@@ -183,17 +183,17 @@ export function ViewTransactionImageModal({
                   <Button
                     onClick={handleReturn}
                     variant="destructive"
-                    disabled={isProcessing}
+                    disabled={processingAction !== null}
                   >
-                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {processingAction === 'return' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Return Item
                   </Button>
                   <Button
                     onClick={handleComplete}
                     className="bg-green-600 hover:bg-green-700 text-white"
-                    disabled={isProcessing}
+                    disabled={processingAction !== null}
                   >
-                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                    {processingAction === 'complete' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                     Complete Transaction
                   </Button>
                 </>

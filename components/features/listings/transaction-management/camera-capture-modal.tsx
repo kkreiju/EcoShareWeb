@@ -16,7 +16,8 @@ import {
   Check, 
   X, 
   AlertCircle,
-  Upload
+  Upload,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -124,17 +125,11 @@ export function CameraCaptureModal({
     if (!capturedImage) return;
 
     try {
-      setIsLoading(true);
-      // Pass the base64 image data directly - API handles upload internally
-      onImageCapture(capturedImage);
-      onClose();
-      toast.success("Photo captured successfully!", {
-        description: "Processing transaction completion...",
-      });
+      // We don't set isLoading here because the parent component handles the loading state
+      // via the isUploading prop which triggers the overlay
+      await onImageCapture(capturedImage);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process image");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -162,7 +157,25 @@ export function CameraCaptureModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh]">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-hidden">
+        {isUploading && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-4 p-6 text-center animate-in fade-in zoom-in duration-300">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
+                <div className="relative bg-primary/10 p-4 rounded-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Processing Verification</h3>
+                <p className="text-sm text-muted-foreground max-w-[250px]">
+                  Please wait while we verify and upload your image...
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5" />

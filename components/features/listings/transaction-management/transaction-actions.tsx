@@ -9,6 +9,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { MoreHorizontal, X, Eye, Camera, Image as ImageIcon, Star, CheckCircle, Loader2 } from "lucide-react";
 import { CameraCaptureModal } from "./camera-capture-modal";
 import { ViewTransactionImageModal } from "./view-transaction-image-modal";
@@ -42,6 +52,7 @@ export function TransactionActions({
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [isViewImageModalOpen, setIsViewImageModalOpen] = useState(false);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [hasRated, setHasRated] = useState(false);
   const [checkingRating, setCheckingRating] = useState(false);
@@ -52,6 +63,13 @@ export function TransactionActions({
   const isOngoing = status === "ongoing";
   const isCompleted = status === "completed";
   const isCancelled = status === "cancelled";
+
+  const showUpload = type === "contributor" && isOngoing && !!onUploadImage;
+  const showReview = type === "receiver" && isOngoing && (isCheckingImage || hasVerificationImage);
+  const showCancel = isOngoing && !!onCancel;
+  const showViewCompleted = isCompleted;
+  const showRate = isCompleted && type === "receiver";
+  const hasAfterViewItems = showUpload || showReview || showCancel || showViewCompleted || showRate;
 
   // Check if transaction has been rated (only for completed receiver transactions)
   useEffect(() => {
@@ -121,6 +139,16 @@ export function TransactionActions({
     setHasRated(true);
   };
 
+  const handleTransactionComplete = async (tid: string) => {
+    if (onComplete) {
+      await onComplete(tid);
+      // If user is receiver (buyer), open rating modal automatically after completion
+      if (type === "receiver") {
+        setIsRatingModalOpen(true);
+      }
+    }
+  };
+
   const handleViewDetails = () => {
     if (onViewDetails) {
       onViewDetails(listingId);
@@ -133,7 +161,7 @@ export function TransactionActions({
   return (
     <>
       <DropdownMenu onOpenChange={(open) => {
-        if (open && type === "receiver" && isOngoing) {
+        if (open && isOngoing) {
           checkVerificationImage();
         }
       }}>
@@ -155,19 +183,34 @@ export function TransactionActions({
             <Eye className="h-4 w-4 mr-2" />
             View Details
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          {hasAfterViewItems && <DropdownMenuSeparator />}
 
           {/* Show Upload Verification button only for contributor (sold items) with Ongoing status */}
           {type === "contributor" && isOngoing && onUploadImage && (
             <>
-              <DropdownMenuItem
-                onClick={handleUploadClick}
-                className="text-blue-600 focus:text-blue-600 focus:bg-blue-50 dark:focus:bg-blue-950/20"
-                disabled={isUploading}
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Upload Verification
-              </DropdownMenuItem>
+              {isCheckingImage ? (
+                <DropdownMenuItem disabled>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Checking status...
+                </DropdownMenuItem>
+              ) : hasVerificationImage ? (
+                <DropdownMenuItem
+                  onClick={() => setIsViewImageModalOpen(true)}
+                  className="focus:bg-blue-50 dark:focus:bg-blue-950/20"
+                >
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  View Verification Image
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={handleUploadClick}
+                  className="text-blue-600 focus:text-blue-600 focus:bg-blue-50 dark:focus:bg-blue-950/20"
+                  disabled={isUploading}
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  Upload Verification
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
             </>
           )}
@@ -197,14 +240,14 @@ export function TransactionActions({
           {isOngoing && onCancel && (
             <>
               <DropdownMenuItem
-                onClick={() => onCancel(transactionId)}
+                onClick={() => setIsCancelDialogOpen(true)}
                 className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20"
                 disabled={isUploading}
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancel Transaction
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {isCompleted && <DropdownMenuSeparator />}
             </>
           )}
 
@@ -218,7 +261,7 @@ export function TransactionActions({
                 <ImageIcon className="h-4 w-4 mr-2" />
                 View Verification Image
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {type === "receiver" && <DropdownMenuSeparator />}
             </>
           )}
 
@@ -244,7 +287,6 @@ export function TransactionActions({
                   Rate Transaction
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
             </>
           )}
         </DropdownMenuContent>
@@ -264,7 +306,7 @@ export function TransactionActions({
         onClose={() => setIsViewImageModalOpen(false)}
         transactionId={transactionId}
         listingTitle={listingTitle}
-        onComplete={onComplete}
+        onComplete={handleTransactionComplete}
         onReturn={onReturn}
         isBuyer={type === "receiver"}
         transactionStatus={transactionStatus}
@@ -277,6 +319,31 @@ export function TransactionActions({
         listingTitle={listingTitle}
         onRatingSubmitted={handleRatingSubmitted}
       />
+
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Transaction</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this transaction? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Transaction</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (onCancel) {
+                  onCancel(transactionId);
+                }
+                setIsCancelDialogOpen(false);
+              }}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Yes, Cancel Transaction
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
