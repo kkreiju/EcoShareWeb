@@ -10,40 +10,7 @@ import { AdminReportsSkeleton } from "./loading-skeleton";
 import { getAdminId, getReports, type BackendReport } from "@/lib/services/adminService";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-
-interface ReportedUser {
-  report_id: string;
-  reported_user_id: string;
-  reported_user_email: string;
-  reported_user_name: string;
-  reporter_id: string;
-  reporter_email: string;
-  reporter_name: string;
-  reason: string;
-  description: string;
-  report_date: string;
-  status: "pending" | "investigating" | "resolved" | "dismissed";
-  type: "user";
-}
-
-interface ReportedListing {
-  report_id: string;
-  reported_listing_id: string;
-  reported_listing_title: string;
-  reported_listing_type: string;
-  reported_owner_id: string;
-  reported_owner_name: string;
-  reporter_id: string;
-  reporter_email: string;
-  reporter_name: string;
-  reason: string;
-  description: string;
-  report_date: string;
-  status: "pending" | "investigating" | "resolved" | "dismissed";
-  type: "listing";
-}
-
-type Report = ReportedUser | ReportedListing;
+import type { Report } from "./types";
 
 // Map backend report status to frontend status
 function mapReportStatus(status: string): "pending" | "investigating" | "resolved" | "dismissed" {
@@ -78,12 +45,27 @@ async function fetchUserDetails(userId: string): Promise<{ name: string; email: 
 }
 
 // Fetch listing details by ID
-async function fetchListingDetails(listingId: string): Promise<{ title: string; type: string; ownerId: string } | null> {
+async function fetchListingDetails(
+  listingId: string
+): Promise<{
+  title: string;
+  type: string;
+  ownerId: string;
+  imageURL?: string | null;
+  description?: string | null;
+  price?: number | null;
+  quantity?: number | null;
+  unit?: string | null;
+  pickupInstructions?: string | null;
+  locationName?: string | null;
+} | null> {
   try {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("Listing")
-      .select("list_title, list_type, user_id")
+      .select(
+        "list_title, list_type, user_id, list_imageURL, list_description, list_price, list_quantity, list_unit, list_pickupInstructions, list_locationName"
+      )
       .eq("list_id", listingId)
       .single();
 
@@ -93,6 +75,13 @@ async function fetchListingDetails(listingId: string): Promise<{ title: string; 
       title: data.list_title || "Unknown Listing",
       type: data.list_type || "unknown",
       ownerId: data.user_id || "",
+      imageURL: data.list_imageURL || null,
+      description: data.list_description || null,
+      price: typeof data.list_price === "number" ? data.list_price : null,
+      quantity: typeof data.list_quantity === "number" ? data.list_quantity : null,
+      unit: data.list_unit || null,
+      pickupInstructions: data.list_pickupInstructions || null,
+      locationName: data.list_locationName || null,
     };
   } catch (error) {
     console.error("Error fetching listing details:", error);
@@ -102,6 +91,17 @@ async function fetchListingDetails(listingId: string): Promise<{ title: string; 
 
 // Map backend report to frontend report
 async function mapBackendReportToFrontend(report: BackendReport): Promise<Report> {
+  const rawRepId = (report as Record<string, unknown>).rep_id;
+  const rawId = (report as Record<string, unknown>).id;
+  const normalizedReportId =
+    (typeof report.report_id === "string" && report.report_id.length > 0
+      ? report.report_id
+      : rawRepId !== undefined && rawRepId !== null
+      ? String(rawRepId)
+      : rawId !== undefined && rawId !== null
+      ? String(rawId)
+      : "").trim();
+
   const hasListId = report.list_id || report.reported_listing_id;
   const type: "user" | "listing" = hasListId ? "listing" : "user";
 
@@ -119,7 +119,7 @@ async function mapBackendReportToFrontend(report: BackendReport): Promise<Report
     const ownerDetails = listingDetails?.ownerId ? await fetchUserDetails(listingDetails.ownerId) : null;
 
     return {
-      report_id: report.report_id,
+      report_id: normalizedReportId,
       reported_listing_id: listingId,
       reported_listing_title: listingDetails?.title || "Unknown Listing",
       reported_listing_type: listingDetails?.type || "unknown",
@@ -133,13 +133,20 @@ async function mapBackendReportToFrontend(report: BackendReport): Promise<Report
       report_date,
       status,
       type: "listing",
+      reported_listing_image: listingDetails?.imageURL || null,
+      reported_listing_description: listingDetails?.description || null,
+      reported_listing_price: listingDetails?.price ?? null,
+      reported_listing_quantity: listingDetails?.quantity ?? null,
+      reported_listing_unit: listingDetails?.unit || null,
+      reported_listing_pickup_instructions: listingDetails?.pickupInstructions || null,
+      reported_listing_location_name: listingDetails?.locationName || null,
     };
   } else {
     const reportedUserId = report.reported_user_id || "";
     const reportedUserDetails = reportedUserId ? await fetchUserDetails(reportedUserId) : null;
 
     return {
-      report_id: report.report_id,
+      report_id: normalizedReportId,
       reported_user_id: reportedUserId,
       reported_user_email: reportedUserDetails?.email || "",
       reported_user_name: reportedUserDetails?.name || "Unknown User",
@@ -159,6 +166,7 @@ export function AdminReportsView() {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [adminId, setAdminId] = useState<string | null>(null);
 
   const fetchReports = async () => {
     try {
@@ -166,13 +174,14 @@ export function AdminReportsView() {
       setError(null);
 
       // Get admin ID
-      const adminId = await getAdminId();
-      if (!adminId) {
+      const adminIdentifier = await getAdminId();
+      if (!adminIdentifier) {
         throw new Error("Admin access required. Please log in as an admin.");
       }
+      setAdminId(adminIdentifier);
 
       // Fetch reports from API
-      const response = await getReports(adminId);
+      const response = await getReports(adminIdentifier);
 
       // Map backend reports to frontend format (with user/listing details)
       const mappedReports = await Promise.all(
@@ -200,33 +209,131 @@ export function AdminReportsView() {
     fetchReports();
   };
 
-  const handleStatusChange = async (
+  const updateReportStatus = async (
     reportId: string,
-    newStatus: Report["status"]
+    status: Report["status"]
+  ): Promise<void> => {
+    if (!adminId) {
+      throw new Error("Admin session expired. Refresh and sign in again.");
+    }
+
+    const response = await fetch("/api/admin/update-report-status", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        admin_id: adminId,
+        report_id: reportId,
+        status,
+      }),
+    });
+
+    const rawBody = await response.text();
+
+    if (!response.ok) {
+      let message = `Failed to update report status (HTTP ${response.status}).`;
+      if (rawBody) {
+        try {
+          const data = JSON.parse(rawBody);
+          message = data.error || message;
+        } catch (parseError) {
+          console.error("Failed to parse report status response:", parseError);
+        }
+      }
+      throw new Error(message);
+    }
+
+    if (rawBody) {
+      try {
+        const data = JSON.parse(rawBody);
+        if (!data?.success) {
+          throw new Error("Unexpected response while updating report status.");
+        }
+      } catch (parseError) {
+        console.error("Failed to parse successful report status response:", parseError);
+      }
+    }
+  };
+
+  const handleReportAction = async (
+    report: Report,
+    action: "ban" | "dismiss"
   ) => {
     try {
-      // NOTE: Backend doesn't have a report status update endpoint yet
-      // For now, we'll update local state only and show a toast
-      // TODO: Implement backend endpoint for updating report status
+      if (!adminId) {
+        throw new Error("Admin session required. Please refresh and sign in again.");
+      }
 
-      // Update local state
-      setReports((prev) =>
-        prev.map((report) =>
-          report.report_id === reportId
-            ? { ...report, status: newStatus }
-            : report
-        )
-      );
+      if (!report.report_id) {
+        throw new Error("Report identifier is missing. Please refresh the reports list and try again.");
+      }
 
-      toast.info("Report status updated locally", {
-        description: "Note: Backend API for updating report status is not yet available. Changes are local only.",
-      });
+      if (action === "ban") {
+        if (report.type !== "listing" || !report.reported_listing_id) {
+          toast.error("Unable to mark listing as unavailable.", {
+            description: "Listing information is missing for this report.",
+          });
+          return;
+        }
+
+        const response = await fetch("/api/admin/update-listing", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            admin_id: adminId,
+            list_id: report.reported_listing_id,
+          }),
+        });
+
+        if (!response.ok) {
+          let errorMessage = "Failed to mark listing as unavailable.";
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (parseError) {
+            console.error("Error parsing ban response:", parseError);
+          }
+          throw new Error(errorMessage);
+        }
+
+        await updateReportStatus(report.report_id, "resolved");
+
+        toast.success("Listing marked as unavailable", {
+          description: "The report has been resolved.",
+        });
+
+        setReports((prev) =>
+          prev.map((item) =>
+            item.report_id === report.report_id
+              ? { ...item, status: "resolved" }
+              : item
+          )
+        );
+      } else {
+        await updateReportStatus(report.report_id, "dismissed");
+
+        setReports((prev) =>
+          prev.map((item) =>
+            item.report_id === report.report_id
+              ? { ...item, status: "dismissed" }
+              : item
+          )
+        );
+
+        toast.success("Report dismissed", {
+          description: "The report has been archived.",
+        });
+      }
     } catch (err) {
-      console.error("Error updating report status:", err);
-      setError("Failed to update report status");
-      toast.error("Failed to update report status", {
+      console.error("Error handling report action:", err);
+      setError("Failed to process report action");
+      toast.error("Unable to complete request", {
         description: err instanceof Error ? err.message : "Unknown error",
       });
+      throw err instanceof Error ? err : new Error("Failed to process report action");
     }
   };
 
@@ -365,7 +472,7 @@ export function AdminReportsView() {
       ) : (
         <AdminReportsTable
           reports={reports}
-          onStatusChange={handleStatusChange}
+          onAction={handleReportAction}
         />
       )}
     </div>

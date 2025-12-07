@@ -225,26 +225,38 @@ export function ListingNutrientAnalytics({
 
           {/* Right Column - Pie Chart */}
           <div className="flex flex-col items-center justify-center">
-            <ChartContainer
-              config={chartConfig}
-              className="aspect-square max-h-[280px] min-h-[250px] w-full"
-            >
-              <PieChart width={280} height={280}>
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                <Pie
-                  data={chartData}
-                  dataKey="percentage"
-                  nameKey="nutrient"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  innerRadius={40}
-                  paddingAngle={2}
-                  label={({ percentage }) => `${percentage}%`}
-                  labelLine={true}
-                />
-              </PieChart>
-            </ChartContainer>
+            <div className="relative">
+              <ChartContainer
+                config={chartConfig}
+                className="aspect-square max-h-[280px] min-h-[250px] w-full"
+              >
+                <PieChart width={280} height={280}>
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                  <Pie
+                    data={chartData}
+                    dataKey="percentage"
+                    nameKey="nutrient"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={90}
+                    innerRadius={40}
+                    paddingAngle={2}
+                    label={({ percentage }) => `${percentage}%`}
+                    labelLine={true}
+                  />
+                </PieChart>
+              </ChartContainer>
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Per
+                </span>
+                <span className="text-sm font-semibold text-foreground">
+                  100g
+                </span>
+              </div>
+            </div>
+
             <div className="text-xs text-muted-foreground mt-2 text-center">
               Nutrient composition
             </div>

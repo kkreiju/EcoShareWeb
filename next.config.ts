@@ -14,3 +14,4 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 
 // `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,
+// `https://api-ecoshare.vercel.app/api/:path*`,

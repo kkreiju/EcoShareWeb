@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   RefreshCw,
@@ -32,10 +31,8 @@ interface RecentReport {
   type: "user" | "listing";
   reason: string;
   reported_content: string;
-  reporter_name: string;
   report_date: string;
   status: "pending" | "investigating" | "resolved" | "dismissed";
-  priority: "high" | "medium" | "low";
 }
 
 // Map backend report status to frontend status
@@ -60,8 +57,6 @@ function mapBackendReportToFrontend(report: BackendReport): RecentReport {
   // Extract reported content
   const reported_content = report.reported_user_id || report.list_id || report.report_id || "Unknown";
 
-  // Extract reporter name (may need to fetch separately, for now use ID)
-  const reporter_name = report.reporter_id || report.user_id || "Unknown Reporter";
 
   // Extract date
   const report_date = report.report_date || report.created_at || new Date().toISOString();
@@ -69,18 +64,13 @@ function mapBackendReportToFrontend(report: BackendReport): RecentReport {
   // Map status
   const status = mapReportStatus(report.rep_status || report.report_status || "Pending");
 
-  // Determine priority (default to medium if not available)
-  const priority: "high" | "medium" | "low" = "medium";
-
   return {
     report_id: report.report_id,
     type,
     reason,
     reported_content,
-    reporter_name,
     report_date,
     status,
-    priority,
   };
 }
 
@@ -177,34 +167,12 @@ export function AdminDashboardView() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-800";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800";
-      case "low":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   const getReportTypeIcon = (type: string) => {
     return type === "user" ? (
       <User className="h-4 w-4 text-blue-600" />
     ) : (
       <Package className="h-4 w-4 text-green-600" />
     );
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   return (
@@ -364,29 +332,10 @@ export function AdminDashboardView() {
                           >
                             {report.type}
                           </Badge>
-                          <Badge
-                            variant="secondary"
-                            className={getPriorityColor(report.priority)}
-                          >
-                            {report.priority}
-                          </Badge>
                         </div>
                         <h4 className="font-medium text-sm mb-1">
                           {report.reason}
                         </h4>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {report.reported_content}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-5 w-5">
-                            <AvatarFallback className="text-xs">
-                              {getInitials(report.reporter_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs text-muted-foreground">
-                            Reported by {report.reporter_name}
-                          </span>
-                        </div>
                       </div>
 
                       <div className="flex-shrink-0 flex flex-col items-end gap-2">
