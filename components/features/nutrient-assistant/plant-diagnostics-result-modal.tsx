@@ -1,15 +1,11 @@
 "use client";
-
-import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import {
   Leaf,
-  Droplets,
   Target,
   TrendingUp,
   CheckCircle,
@@ -17,9 +13,26 @@ import {
   MapPin,
   Clock,
   DollarSign,
-  X,
   Sparkles
 } from "lucide-react";
+
+const severityStyles = {
+  severe: {
+    iconColor: "#FF6B6B",
+    background: "rgba(255, 107, 107, 0.2)",
+    text: "#FF6B6B",
+  },
+  healthy: {
+    iconColor: "#6BCB77",
+    background: "rgba(107, 203, 119, 0.2)",
+    text: "#6BCB77",
+  },
+  warning: {
+    iconColor: "#FFD93D",
+    background: "rgba(255, 217, 61, 0.2)",
+    text: "#FFD93D",
+  },
+} as const;
 
 interface NutrientMatch {
   nitrogen: boolean;
@@ -40,8 +53,9 @@ interface PlantNeeds {
 }
 
 interface CompostRecommendation {
-  compostable: string;
-  explanation: string;
+  material: string;
+  score?: number;
+  summary?: string;
   nutrients: {
     Nitrogen: number;
     Phosphorus: number;
@@ -87,6 +101,12 @@ export interface DiagnosisResult {
   compostSuggestions?: string;
   capturedImage?: string;
   status?: string;
+  diagnosis?: {
+    severity?: string;
+    status?: string;
+    description?: string;
+    recommended_action?: string;
+  };
 }
 
 interface PlantDiagnosticsResultModalProps {
@@ -103,6 +123,17 @@ export function PlantDiagnosticsResultModal({
   const router = useRouter();
 
   if (!result) return null;
+
+  const severityKey = (result.diagnosis?.severity || "warning").toLowerCase();
+  const severityVariant =
+    severityStyles[severityKey as keyof typeof severityStyles] ?? severityStyles.warning;
+  const hasDiagnosisContent =
+    Boolean(result.diagnosis?.description || result.diagnosis?.recommended_action || result.status || result.assessment);
+  const StatusIcon = severityKey === "severe" ? AlertTriangle : CheckCircle;
+  const diagnosisStatus = result.diagnosis?.status || result.status || "Unknown";
+  const recommendationNames =
+    result.recommendations?.map((rec) => rec.material).filter(Boolean) ?? [];
+  const showRecommendationList = recommendationNames.length > 0;
 
 
 
@@ -152,7 +183,6 @@ export function PlantDiagnosticsResultModal({
 
               {/* Plant Info and Confidence */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Plant Detection */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Leaf className="h-4 w-4" />
@@ -163,7 +193,22 @@ export function PlantDiagnosticsResultModal({
                   </h3>
                 </div>
 
-                {/* Compost Suggestions */}
+                {showRecommendationList && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Leaf className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium">Compost Recommendations</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {recommendationNames.map((name, idx) => (
+                        <div key={idx} className="text-sm font-medium px-3 py-1 rounded-full bg-muted/70 border border-border/50">
+                          {name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {compostSuggestions.length > 0 && compostSuggestions[0] !== "" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -186,86 +231,60 @@ export function PlantDiagnosticsResultModal({
               </div>
             </div>
 
-            {/* Main Content - Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column - Plant Analysis */}
-              <div className="space-y-6">
-                {/* Health Status Highlight */}
+            {hasDiagnosisContent && (
+              <div className="rounded-2xl border border-border/60 bg-card/90 p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                    <TrendingUp size={18} />
+                    Deficiency Overview
+                  </div>
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold"
+                    style={{
+                      backgroundColor: severityVariant.background,
+                      color: severityVariant.text,
+                      borderColor: severityVariant.background,
+                    }}
+                  >
+                    <StatusIcon size={14} color={severityVariant.iconColor} />
+                    {diagnosisStatus}
+                  </span>
+                </div>
+
                 {result.status && (
-                  <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white shadow-lg">
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-                    <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-
-                    <div className="relative z-10 flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                        <Sparkles className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium uppercase tracking-wider text-blue-100">
-                          Health Status
-                        </p>
-                        <h3 className="text-2xl font-bold tracking-tight">
-                          {result.status}
-                        </h3>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Sparkles className="h-4 w-4 text-sky-300" />
+                    <span>Health: {result.status}</span>
                   </div>
                 )}
 
-                {/* Assessment Summary */}
+                {result.diagnosis?.description && (
+                  <p className="text-sm text-muted-foreground">
+                    {result.diagnosis.description}
+                  </p>
+                )}
+
                 {result.assessment && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Target className="h-4 w-4" style={{ color: "#4D96FF" }} />
-                      <span className="text-sm font-medium">Assessment Summary</span>
-                    </div>
-                    <p className="text-base leading-relaxed text-foreground">{result.assessment}</p>
+                  <div className="flex items-start gap-2 text-sm text-foreground">
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <span>{result.assessment}</span>
                   </div>
                 )}
 
-
-              </div>
-
-              {/* Right Column - Recommendations */}
-              <div className="space-y-6">
-                {/* Compost Recommendations */}
-                {result.recommendations && result.recommendations.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Leaf className="h-4 w-4" style={{ color: "#6BCB77" }} />
-                      <span className="text-sm font-medium">Compost Recommendations</span>
+                {result.diagnosis?.recommended_action && (
+                  <div className="rounded-xl border border-border/50 bg-muted/60 p-3">
+                    <div className="flex items-center gap-2 text-[0.625rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <StatusIcon size={12} color={severityVariant.iconColor} />
+                      Recommended Action
                     </div>
-
-                    <div className="space-y-3">
-                      {result.recommendations.map((rec, idx) => (
-                        <div key={idx} className="p-4 bg-muted/30 rounded-lg border">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-semibold text-base">{rec.compostable}</h4>
-                            </div>
-
-                            <p className="text-sm text-muted-foreground">{rec.explanation}</p>
-
-                            <div className="flex items-center gap-3 text-xs">
-                              <span className="text-muted-foreground">Nutrients:</span>
-                              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30">
-                                N: {rec.nutrients.Nitrogen}
-                              </Badge>
-                              <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30">
-                                P: {rec.nutrients.Phosphorus}
-                              </Badge>
-                              <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30">
-                                K: {rec.nutrients.Potassium}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="mt-1 text-sm text-foreground">
+                      {result.diagnosis.recommended_action}
+                    </p>
                   </div>
                 )}
               </div>
-            </div>
+            )}
+
 
 
             {/* Available Compost Listings */}
@@ -375,4 +394,3 @@ export function PlantDiagnosticsResultModal({
     </Dialog>
   );
 }
-

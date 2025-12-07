@@ -17,7 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 const CHAT_MESSAGES_KEY = "ecoshare_chatbot_messages";
 
 export function Chatbot() {
-  const { user, userId, isAuthenticated } = useAuth();
+  const { user, userId } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -25,22 +25,22 @@ export function Chatbot() {
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [messagesLoaded, setMessagesLoaded] = useState(false);
+  const sessionIdentifier = userId || user?.id || "anonymous";
+  const storageKey = `${CHAT_MESSAGES_KEY}-${sessionIdentifier}`;
 
   // Load saved messages from localStorage on mount
   useEffect(() => {
     const loadMessages = () => {
       try {
-        const savedMessages = localStorage.getItem(CHAT_MESSAGES_KEY);
+        const savedMessages = localStorage.getItem(storageKey);
         if (savedMessages) {
           const parsedMessages = JSON.parse(savedMessages);
-          // Convert timestamp strings back to Date objects
           const messagesWithDates = parsedMessages.map((msg: any) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
           }));
           setMessages(messagesWithDates);
         } else {
-          // No saved messages, show default welcome message
           setMessages([
             {
               id: "welcome",
@@ -52,7 +52,6 @@ export function Chatbot() {
         }
       } catch (error) {
         console.error("Error loading chat messages:", error);
-        // Fallback to default message on error
         setMessages([
           {
             id: "welcome",
@@ -66,19 +65,22 @@ export function Chatbot() {
       }
     };
 
+    setMessagesLoaded(false);
     loadMessages();
-  }, []);
+  }, [storageKey]);
 
   // Save messages to localStorage whenever they change (but not on initial load)
   useEffect(() => {
-    if (messagesLoaded && messages.length > 0) {
-      try {
-        localStorage.setItem(CHAT_MESSAGES_KEY, JSON.stringify(messages));
-      } catch (error) {
-        console.error("Error saving chat messages:", error);
-      }
+    if (!messagesLoaded) {
+      return;
     }
-  }, [messages, messagesLoaded]);
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(messages));
+    } catch (error) {
+      console.error("Error saving chat messages:", error);
+    }
+  }, [messages, messagesLoaded, storageKey]);
 
   // Fetch user data including membership status
   useEffect(() => {
@@ -160,12 +162,12 @@ export function Chatbot() {
     setError(null);
 
     try {
-      // Use userId or "anonymous" as sessionId
-      const sessionId = userId || user?.id || "anonymous";
+      const sessionId = sessionIdentifier;
+      const resolvedUserId = userId || user?.id || "anonymous";
       const response = await ChatbotService.sendMessage(
         trimmed,
         sessionId,
-        userId
+        resolvedUserId
       );
 
       const botMsg: ChatMessage = {
@@ -269,9 +271,9 @@ export function Chatbot() {
     };
     setMessages([welcomeMessage]);
     
-    // Clear localStorage
+    // Clear localStorage for the current user
     try {
-      localStorage.removeItem(CHAT_MESSAGES_KEY);
+      localStorage.removeItem(storageKey);
       toast.success("Chat history cleared", {
         description: "Your conversation history has been cleared.",
         duration: 2000,

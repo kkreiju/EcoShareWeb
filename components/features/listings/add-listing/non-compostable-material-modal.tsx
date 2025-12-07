@@ -23,10 +23,10 @@ export function NonCompostableMaterialModal({
             <AlertTriangle className="h-8 w-8 text-red-600" />
           </div>
           <DialogTitle className="text-center text-xl font-semibold">
-            Non-Compostable Material Detected
+            Please Note
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            Our AI detected that this item is not suitable for composting. EcoShare focuses on plant-based materials only.
+            Please post real compostable materials. EcoShare is designed for sharing food waste and organic materials that can be composted. Only genuine compostable items are permitted on our platform.
           </DialogDescription>
         </DialogHeader>
 

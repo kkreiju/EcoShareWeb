@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TransactionHeader } from "./transaction-header";
 import { TransactionError } from "./transaction-error";
 import { TransactionTabs } from "./transaction-tabs";
@@ -11,6 +11,12 @@ export function TransactionManagementView() {
   const [activeTab, setActiveTab] = useState<"contributor" | "receiver">(
     "contributor"
   );
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  // Reset filters when tab changes
+  useEffect(() => {
+    setFilterStatus("all");
+  }, [activeTab]);
 
   const {
     transactionData,
@@ -21,6 +27,21 @@ export function TransactionManagementView() {
     updateTransactionStatus,
   } = useTransactionManagement();
 
+  // Filter data based on selected status filters
+  const filteredData = transactionData
+    ? {
+        ...transactionData,
+        contributor: transactionData.contributor.filter(
+          (t) =>
+            filterStatus === "all" || t.tran_status === filterStatus
+        ),
+        receiver: transactionData.receiver.filter(
+          (t) =>
+            filterStatus === "all" || t.tran_status === filterStatus
+        ),
+      }
+    : null;
+
   const {
     handleUploadImage,
     handleComplete,
@@ -28,7 +49,7 @@ export function TransactionManagementView() {
     handleCancel,
     handleViewDetails,
   } = useTransactionActions({
-    transactionData,
+    transactionData: filteredData,
     updateTransactionStatus,
     onRefresh: fetchTransactions,
   });
@@ -39,6 +60,9 @@ export function TransactionManagementView() {
         stats={stats}
         isLoading={isLoading}
         onRefresh={fetchTransactions}
+        activeTab={activeTab}
+        filterStatus={filterStatus}
+        onFilterChange={setFilterStatus}
       />
 
       <TransactionError error={error} />
@@ -46,7 +70,7 @@ export function TransactionManagementView() {
       <TransactionTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        transactionData={transactionData}
+        transactionData={filteredData}
         isLoading={isLoading}
         onUploadImage={handleUploadImage}
         onComplete={handleComplete}

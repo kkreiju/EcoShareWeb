@@ -141,7 +141,7 @@ export function ListingsTable({
                   {listing.quantity > 0 && (
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
                       <Package className="w-3 h-3" />
-                      {listing.quantity}
+                      {listing.quantity} {listing.unit ? listing.unit : listing.quantity === 1 ? "item" : "items"}
                     </div>
                   )}
                 </TableCell>

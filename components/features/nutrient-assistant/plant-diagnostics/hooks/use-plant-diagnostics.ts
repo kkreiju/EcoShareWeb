@@ -18,6 +18,12 @@ export interface DiagnosisResult {
   compostSuggestions?: string;
   capturedImage?: string;
   status?: string;
+  diagnosis?: {
+    severity?: string;
+    status?: string;
+    description?: string;
+    recommended_action?: string;
+  };
 }
 
 interface UsePlantDiagnosticsReturn {
@@ -105,17 +111,27 @@ export function usePlantDiagnostics(): UsePlantDiagnosticsReturn {
           setDiagnosisResult({
             plantName: result.data.prediction,
             confidence: result.data.confidence,
-            plantNeeds: result.data.plant_needs,
+            plantNeeds: result.data.plant_needs || result.data.nutrient_targets,
             finalMix: result.data.combined_analysis?.final_mix,
             matchQuality: result.data.combined_analysis?.match_quality,
             matchesPlantNeeds: result.data.combined_analysis?.matches_plant_needs,
             assessment: result.exg_analysis?.description || result.data.combined_analysis?.assessment,
-            status: result.exg_analysis?.status,
+            status: result.data?.diagnosis?.status || result.exg_analysis?.status,
             recommendations: result.data.recommendations,
             listings: result.data.listings,
             nutrientNeeds: result.diagnosis?.nutrientNeeds || '',
             compostSuggestions: result.diagnosis?.compostSuggestions || '',
             capturedImage: imageBase64,
+            diagnosis: {
+              severity: result.data?.diagnosis?.severity || result.exg_analysis?.severity || result.data?.combined_analysis?.severity,
+              status: result.data?.diagnosis?.status || result.exg_analysis?.status,
+              description: result.data?.diagnosis?.description || result.exg_analysis?.description || result.data?.combined_analysis?.summary,
+              recommended_action:
+                result.data?.diagnosis?.recommended_action ||
+                result.exg_analysis?.recommended_action ||
+                result.exg_analysis?.recommendation ||
+                result.data?.combined_analysis?.recommended_action,
+            },
           });
 
           // Show results dialog
@@ -158,4 +174,3 @@ export function usePlantDiagnostics(): UsePlantDiagnosticsReturn {
     resetDiagnosis,
   };
 }
-

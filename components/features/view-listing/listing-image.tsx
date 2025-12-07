@@ -91,11 +91,11 @@ export function ListingImage({ listing, getTypeColor, formatPrice, tags, formatD
                 
                 <div className="flex items-center gap-2">
                   {listing.quantity > 0 && (
-                    <Badge variant="secondary" className="text-sm px-3 py-1">
-                      <Package className="h-4 w-4 mr-2" />
-                      {listing.quantity} available
-                    </Badge>
-                  )}
+                      <Badge variant="secondary" className="text-sm px-3 py-1">
+                        <Package className="h-4 w-4 mr-2" />
+                        {listing.quantity} {listing.unit ? listing.unit : listing.quantity === 1 ? "item" : "items"} available
+                      </Badge>
+                    )}
                 </div>
               </div>
 

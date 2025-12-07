@@ -29,7 +29,7 @@ export function useAuth(): AuthState {
           data: { session },
         } = await supabase.auth.getSession();
 
-        const { data: userData, error: userError } = await supabase
+        const { data: userData } = await supabase
           .from("User")
           .select("user_id")
           .eq("user_email", session?.user?.email ?? null)
@@ -60,7 +60,6 @@ export function useAuth(): AuthState {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-
       setAuthState({
         user: session?.user ?? null,
         userId: null, // Will be fetched if needed

@@ -7,6 +7,7 @@ import {
   AlertCircle,
   Package,
   DollarSign,
+  RotateCcw,
 } from "lucide-react";
 
 export const getStatusColor = (status: string) => {
@@ -22,6 +23,8 @@ export const getStatusColor = (status: string) => {
     case "cancelled":
     case "declined":
       return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700";
+    case "returned":
+      return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-700";
   }
@@ -40,6 +43,8 @@ export const getStatusIcon = (status: string) => {
     case "cancelled":
     case "declined":
       return <XCircle className="h-4 w-4 text-red-600" />;
+    case "returned":
+      return <RotateCcw className="h-4 w-4 text-purple-600" />;
     default:
       return <AlertCircle className="h-4 w-4 text-gray-600" />;
   }
