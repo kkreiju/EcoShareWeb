@@ -19,39 +19,32 @@ import {
   X
 } from "lucide-react";
 
-interface NutrientMatch {
-  nitrogen: boolean;
-  phosphorus: boolean;
-  potassium: boolean;
+interface NutrientValues {
+  Nitrogen: number;
+  Phosphorus: number;
+  Potassium: number;
 }
 
-interface NutrientMix {
-  nitrogen: number;
-  phosphorus: number;
-  potassium: number;
+interface AvailableMaterial {
+  compostable: string;
+  grams_needed: number;
+  is_recommended: boolean;
+  match_score: number;
+  nutrients: NutrientValues;
 }
 
 interface PlantNeeds {
-  nitrogen: string;
-  phosphorus: string;
-  potassium: string;
-}
-
-interface CombinedAnalysis {
-  assessment: string;
-  match_quality: string;
-  matches_plant_needs: NutrientMatch;
-  final_mix: NutrientMix;
+  K: number;
+  N: number;
+  P: number;
 }
 
 interface CompostRecommendation {
   compostable: string;
-  explanation: string;
-  nutrients: {
-    Nitrogen: number;
-    Phosphorus: number;
-    Potassium: number;
-  };
+  grams_needed: number;
+  match_score: number;
+  nutrients: NutrientValues;
+  explanation?: string;
 }
 
 interface CompostListing {
@@ -79,13 +72,13 @@ interface CompostListing {
 }
 
 interface CompostData {
+  available_materials: AvailableMaterial[];
+  count: number;
+  listings: CompostListing[];
   plant: string;
   plant_needs: PlantNeeds;
-  available_materials_provided: string[];
-  count: number;
-  combined_analysis: CombinedAnalysis;
   recommendations: CompostRecommendation[];
-  listings: CompostListing[];
+  stage: string;
 }
 
 interface PlantNutrientBuilderResultModalProps {
@@ -97,28 +90,24 @@ interface PlantNutrientBuilderResultModalProps {
 const getNutrientColor = (nutrient: string): string => {
   switch (nutrient.toLowerCase()) {
     case "nitrogen":
+    case "n":
       return "#FF6B6B";
     case "phosphorus":
+    case "p":
       return "#FFD93D";
     case "potassium":
+    case "k":
       return "#6BCB77";
     default:
       return "#4D96FF";
   }
 };
 
-const getQualityColor = (quality: string) => {
-  switch (quality.toLowerCase()) {
-    case "perfect match":
-      return "#6BCB77";
-    case "good match":
-      return "#FFD93D";
-    case "partial match":
-    case "needs adjustment":
-      return "#FF9F4D";
-    default:
-      return "#9CA3AF";
+const formatWeight = (grams: number) => {
+  if (grams >= 1000) {
+    return `${(grams / 1000).toFixed(1)}kg`;
   }
+  return `${grams.toFixed(1)}g`;
 };
 
 export function PlantNutrientBuilderResultModal({
@@ -133,13 +122,11 @@ export function PlantNutrientBuilderResultModal({
   const {
     plant,
     plant_needs,
-    available_materials_provided,
-    combined_analysis,
+    available_materials,
     recommendations,
     listings,
+    stage
   } = compostData;
-
-  const { matches_plant_needs, final_mix, match_quality, assessment } = combined_analysis;
 
   const handleListingClick = (listing: CompostListing) => {
     window.open(`/user/listing/${listing.list_id}`, '_blank');
@@ -160,170 +147,154 @@ export function PlantNutrientBuilderResultModal({
               </DialogDescription>
             </DialogHeader>
 
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column */}
-              <div className="space-y-6">
-                {/* Selected Plant */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Sprout className="h-4 w-4" style={{ color: "#03EF62" }} />
-                    <span className="text-sm font-medium">Selected Plant</span>
+            {/* Main Content Stack */}
+            <div className="space-y-8">
+              {/* Plant & Nutrient Target Section */}
+              <div className="bg-muted/30 p-6 rounded-xl border space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Sprout className="h-4 w-4" style={{ color: "#03EF62" }} />
+                      <span className="text-sm font-medium">Selected Plant</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-2xl font-bold text-foreground">{plant}</h3>
+                      <Badge variant="secondary" className="text-sm">
+                        {stage} Stage
+                      </Badge>
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-foreground">{plant}</h3>
-                </div>
 
-                <Separator />
-
-                {/* Plant Nutrient Needs */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Droplets className="h-4 w-4" style={{ color: "#4D96FF" }} />
-                    <span className="text-sm font-medium">Plant Nutrient Needs</span>
-                  </div>
                   <div className="space-y-2">
-                    {["nitrogen", "phosphorus", "potassium"].map((nutrient) => (
-                      <div key={nutrient} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-muted-foreground md:justify-end">
+                      <Droplets className="h-4 w-4" style={{ color: "#4D96FF" }} />
+                      <span className="text-sm font-medium">Nutrient Needs</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(['N', 'P', 'K'] as const).map((nutrient) => (
+                        <Badge
+                          key={nutrient}
+                          variant="outline"
+                          className="px-3 py-1.5 gap-2 text-sm font-normal bg-background"
+                          style={{
+                            borderColor: `${getNutrientColor(nutrient)}40`,
+                          }}
+                        >
                           <div
                             className="w-2 h-2 rounded-full"
                             style={{ backgroundColor: getNutrientColor(nutrient) }}
                           />
-                          <span className="text-sm font-medium capitalize">{nutrient} ({nutrient[0].toUpperCase()})</span>
-                        </div>
-                        <span className="text-sm font-semibold">
-                          {plant_needs[nutrient as keyof PlantNeeds]}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Selected Materials */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Leaf className="h-4 w-4" style={{ color: "#6BCB77" }} />
-                    <span className="text-sm font-medium">
-                      Selected Materials ({available_materials_provided.length})
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {available_materials_provided.map((material, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-2 p-2 rounded-lg"
-                        style={{ backgroundColor: "rgba(3, 239, 98, 0.1)" }}
-                      >
-                        <div
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: "#03EF62" }}
-                        />
-                        <span className="text-sm text-foreground">{material}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div className="space-y-6">
-                {/* Final Mix Analysis */}
-                <div
-                  className="space-y-4 p-4 rounded-lg border-2"
-                  style={{ borderColor: getQualityColor(match_quality) }}
-                >
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <TrendingUp className="h-4 w-4" style={{ color: getQualityColor(match_quality) }} />
-                    <span className="text-sm font-medium">Final Mix Analysis</span>
-                  </div>
-
-                  {/* Match Quality */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-medium text-muted-foreground uppercase">Match Quality</span>
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <span
-                        className="font-semibold capitalize"
-                        style={{ color: getQualityColor(match_quality) }}
-                      >
-                        {match_quality}
-                      </span>
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: getQualityColor(match_quality) }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Assessment */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-medium text-muted-foreground uppercase">Assessment</span>
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm leading-relaxed text-foreground">{assessment}</p>
-                    </div>
-                  </div>
-
-                  {/* Nutrient Match */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-medium text-muted-foreground uppercase">Nutrient Match</span>
-                    <div className="space-y-2">
-                      {["nitrogen", "phosphorus", "potassium"].map((nutrient) => (
-                        <div key={nutrient} className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                          {matches_plant_needs[nutrient as keyof NutrientMatch] ? (
-                            <CheckCircle className="h-4 w-4" style={{ color: "#6BCB77" }} />
-                          ) : (
-                            <AlertCircle className="h-4 w-4" style={{ color: "#FF6B6B" }} />
-                          )}
-                          <span className="text-sm font-medium capitalize">
-                            {nutrient}: {final_mix[nutrient as keyof NutrientMix].toFixed(1)}
+                          <span className="font-medium text-muted-foreground">
+                            {nutrient}
                           </span>
-                        </div>
+                          <span className="font-bold text-foreground">
+                            {plant_needs[nutrient]}g
+                          </span>
+                        </Badge>
                       ))}
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <Separator />
-
-            {/* Compost Recommendations */}
-            {recommendations && recommendations.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Leaf className="h-4 w-4" style={{ color: "#6BCB77" }} />
-                  <span className="text-sm font-medium">Compost Recommendations</span>
-                </div>
-
-                <div className="space-y-3">
-                  {recommendations.map((rec, idx) => (
-                    <div key={idx} className="p-4 bg-muted/30 rounded-lg border">
-                      <div className="space-y-3">
+              {/* Analysis & Recommendations Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Selected Materials Analysis */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Leaf className="h-4 w-4" style={{ color: "#6BCB77" }} />
+                    <span className="text-sm font-medium">
+                      Selected Materials Analysis ({available_materials.length})
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {available_materials.map((material, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-lg border space-y-3 ${
+                          material.is_recommended 
+                            ? "bg-muted/30" 
+                            : "bg-red-50/30 border-red-100 dark:bg-red-900/10 dark:border-red-900/50"
+                        }`}
+                      >
                         <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-base">{rec.compostable}</h4>
+                          <h4 className="font-semibold text-foreground">
+                            {material.compostable}
+                          </h4>
+                          
+                          {material.is_recommended ? (
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                              <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Amount Needed</span>
+                              <span className="font-mono font-bold">{formatWeight(material.grams_needed)}</span>
+                            </div>
+                          ) : (
+                            <Badge variant="destructive">
+                              Not Recommended
+                            </Badge>
+                          )}
                         </div>
-
-                        <p className="text-sm text-muted-foreground">{rec.explanation}</p>
 
                         <div className="flex items-center gap-3 text-xs">
                           <span className="text-muted-foreground">Nutrients:</span>
                           <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30">
-                            N: {rec.nutrients.Nitrogen}
+                            N: {material.nutrients.Nitrogen}g
                           </Badge>
                           <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30">
-                            P: {rec.nutrients.Phosphorus}
+                            P: {material.nutrients.Phosphorus}g
                           </Badge>
                           <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30">
-                            K: {rec.nutrients.Potassium}
+                            K: {material.nutrients.Potassium}g
                           </Badge>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+
+                {/* Compost Recommendations */}
+                {recommendations && recommendations.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Leaf className="h-4 w-4" style={{ color: "#6BCB77" }} />
+                      <span className="text-sm font-medium">Additional Recommendations</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      {recommendations.map((rec, idx) => (
+                        <div key={idx} className="p-4 bg-muted/30 rounded-lg border space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-foreground">{rec.compostable}</h4>
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                              <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Amount Needed</span>
+                              <span className="font-mono font-bold">{formatWeight(rec.grams_needed)}</span>
+                            </div>
+                          </div>
+                          
+                          {rec.explanation && (
+                            <p className="text-sm text-muted-foreground">{rec.explanation}</p>
+                          )}
+
+                          <div className="flex items-center gap-3 text-xs">
+                              <span className="text-muted-foreground">Nutrients:</span>
+                              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30">
+                                N: {rec.nutrients.Nitrogen}g
+                              </Badge>
+                              <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30">
+                                P: {rec.nutrients.Phosphorus}g
+                              </Badge>
+                              <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30">
+                                K: {rec.nutrients.Potassium}g
+                              </Badge>
+                            </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
+            {listings && listings.length > 0 && <Separator />}
 
             {/* Available Compost Listings */}
             {listings && listings.length > 0 && (

@@ -3,23 +3,25 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, Check } from "lucide-react";
 import { PlantNutrientBuilderResultModal } from "./plant-nutrient-builder-result-modal";
-import { useNutrientBuilder, PLANT_OPTIONS, COMPOSTABLE_MATERIALS } from "./plant-nutrient-builder/hooks/use-nutrient-builder";
+import { useNutrientBuilder, PLANT_OPTIONS, COMPOSTABLE_MATERIALS, PLANT_STAGES } from "./plant-nutrient-builder/hooks/use-nutrient-builder";
 
 export function PlantNutrientBuilderTab() {
   const {
     selectedPlant,
+    selectedStage,
     selectedCompostMaterials,
     isGenerating,
     compostPlan,
     showPlanDialog,
     setSelectedPlant,
+    setSelectedStage,
     handleCompostToggle,
     handleGenerate,
     setShowPlanDialog,
   } = useNutrientBuilder();
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full mb-4">
@@ -36,7 +38,7 @@ export function PlantNutrientBuilderTab() {
       </div>
 
       {/* Form Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Plant Selection Card */}
         <div className="bg-card border rounded-lg p-6 shadow-sm">
           <div className="space-y-4">
@@ -70,12 +72,45 @@ export function PlantNutrientBuilderTab() {
           </div>
         </div>
 
+        {/* Stage Selection Card */}
+        <div className="bg-card border rounded-lg p-6 shadow-sm">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="inline-flex items-center justify-center w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+                <span className="text-sm font-semibold text-purple-600">2</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Select Stage</h2>
+                <p className="text-sm text-muted-foreground">Select the growth stage of your plant</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {PLANT_STAGES.map((stage) => (
+                <button
+                  key={stage}
+                  onClick={() => setSelectedStage(stage)}
+                  disabled={isGenerating}
+                  className={`px-4 py-2 rounded-full border flex items-center gap-2 transition-all duration-200 ${
+                    selectedStage === stage
+                      ? "bg-purple-500 border-purple-500 text-white shadow-md"
+                      : "bg-muted border-border text-foreground hover:bg-muted/80 hover:shadow-sm"
+                  }`}
+                >
+                  <span className="text-sm font-medium">{stage}</span>
+                  {selectedStage === stage && <Check className="h-3.5 w-3.5" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Materials Selection Card */}
         <div className="bg-card border rounded-lg p-6 shadow-sm">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="inline-flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                <span className="text-sm font-semibold text-blue-600">2</span>
+                <span className="text-sm font-semibold text-blue-600">3</span>
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">

@@ -39,14 +39,23 @@ export const COMPOSTABLE_MATERIALS = [
   "Vegetable Scraps",
 ] as const;
 
+export const PLANT_STAGES = [
+  "Seedling",
+  "Vegetative",
+  "Flowering",
+  "Fruiting",
+] as const;
+
 interface UseNutrientBuilderReturn {
   userData: any;
   selectedPlant: string;
+  selectedStage: string;
   selectedCompostMaterials: string[];
   isGenerating: boolean;
   compostPlan: any;
   showPlanDialog: boolean;
   setSelectedPlant: (plant: string) => void;
+  setSelectedStage: (stage: string) => void;
   handleCompostToggle: (material: string) => void;
   removeCompostMaterial: (material: string) => void;
   handleGenerate: () => Promise<void>;
@@ -60,6 +69,7 @@ export function useNutrientBuilder(): UseNutrientBuilderReturn {
   const { user } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [selectedPlant, setSelectedPlant] = useState<string>("");
+  const [selectedStage, setSelectedStage] = useState<string>("");
   const [selectedCompostMaterials, setSelectedCompostMaterials] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [compostPlan, setCompostPlan] = useState<any>(null);
@@ -112,6 +122,10 @@ export function useNutrientBuilder(): UseNutrientBuilderReturn {
       toast.error("Please select a plant");
       return;
     }
+    if (!selectedStage) {
+      toast.error("Please select a growth stage");
+      return;
+    }
 
     setIsGenerating(true);
 
@@ -123,6 +137,7 @@ export function useNutrientBuilder(): UseNutrientBuilderReturn {
         },
         body: JSON.stringify({
           plant: selectedPlant,
+          stage: selectedStage,
           available_materials: selectedCompostMaterials.length === 0 ? ["N/A"] : selectedCompostMaterials,
           userId: userData?.user_id || "",
         }),
@@ -151,11 +166,13 @@ export function useNutrientBuilder(): UseNutrientBuilderReturn {
   return {
     userData,
     selectedPlant,
+    selectedStage,
     selectedCompostMaterials,
     isGenerating,
     compostPlan,
     showPlanDialog,
     setSelectedPlant,
+    setSelectedStage,
     handleCompostToggle,
     removeCompostMaterial,
     handleGenerate,
