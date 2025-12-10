@@ -195,6 +195,36 @@ export function PlantNutrientBuilderResultModal({
                     </div>
                   </div>
                 </div>
+
+                {(() => {
+                  if (!stage) return null;
+                  
+                  const getGrowthStageSchedule = (stageName: string) => {
+                    const s = stageName.toLowerCase();
+                    if (s.includes('seedling')) return { stage: 'Seedling', schedule: 'Every 1 week' };
+                    if (s.includes('vegetative')) return { stage: 'Vegetative', schedule: 'Every 1-2 weeks' };
+                    if (s.includes('flowering')) return { stage: 'Flowering', schedule: 'About every 2 weeks' };
+                    if (s.includes('fruiting')) return { stage: 'Fruiting', schedule: 'Every 1-2 weeks' };
+                    return null;
+                  };
+
+                  const scheduleInfo = getGrowthStageSchedule(stage);
+
+                  if (scheduleInfo) {
+                    return (
+                      <div className="pt-4 border-t border-border/50">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-1">
+                          <Clock className="h-4 w-4" />
+                          <span>Recommended Schedule</span>
+                        </div>
+                        <p className="text-sm text-foreground font-medium">
+                          {scheduleInfo.schedule}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               {/* Analysis & Recommendations Grid */}

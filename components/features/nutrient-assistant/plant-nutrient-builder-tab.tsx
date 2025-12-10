@@ -158,7 +158,7 @@ export function PlantNutrientBuilderTab() {
       </div>
 
       {/* Generate Button */}
-      <div className="text-center py-8">
+      <div className="text-center py-8 space-y-4">
         <Button
           onClick={handleGenerate}
           disabled={!selectedPlant || isGenerating}
@@ -177,6 +177,9 @@ export function PlantNutrientBuilderTab() {
             </div>
           )}
         </Button>
+        <p className="text-xs text-muted-foreground italic">
+          Note: AI-generated results may not be fully accurate. Please use your best judgment.
+        </p>
       </div>
 
       {/* Instructions */}

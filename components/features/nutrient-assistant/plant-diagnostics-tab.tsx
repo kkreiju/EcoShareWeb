@@ -81,6 +81,9 @@ export function PlantDiagnosticsTab() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Take a photo of your plant to get instant AI-powered nutrient analysis and personalized recommendations
           </p>
+          <p className="text-xs text-muted-foreground italic">
+            Note: AI-generated results may not be fully accurate. Please use your best judgment.
+          </p>
         </div>
       </div>
 

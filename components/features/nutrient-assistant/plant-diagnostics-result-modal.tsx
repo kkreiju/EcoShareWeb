@@ -124,13 +124,16 @@ export function PlantDiagnosticsResultModal({
 
   if (!result) return null;
 
-  const severityKey = (result.diagnosis?.severity || "warning").toLowerCase();
+  const diagnosisStatus = result.diagnosis?.status || result.status || "Unknown";
+  const isHealthy = (result.diagnosis?.severity?.toLowerCase() === 'healthy') || 
+                    (diagnosisStatus.toLowerCase().includes('healthy'));
+
+  const severityKey = isHealthy ? 'healthy' : (result.diagnosis?.severity || "warning").toLowerCase();
   const severityVariant =
     severityStyles[severityKey as keyof typeof severityStyles] ?? severityStyles.warning;
   const hasDiagnosisContent =
     Boolean(result.diagnosis?.description || result.diagnosis?.recommended_action || result.status || result.assessment);
   const StatusIcon = severityKey === "severe" ? AlertTriangle : CheckCircle;
-  const diagnosisStatus = result.diagnosis?.status || result.status || "Unknown";
   const recommendationNames =
     result.recommendations?.map((rec) => rec.material).filter(Boolean) ?? [];
   const showRecommendationList = recommendationNames.length > 0;
@@ -247,14 +250,14 @@ export function PlantDiagnosticsResultModal({
                     }}
                   >
                     <StatusIcon size={14} color={severityVariant.iconColor} />
-                    {diagnosisStatus}
+                    {diagnosisStatus.replace(/\s*\(.*?\)\s*/g, '')}
                   </span>
                 </div>
 
                 {result.status && (
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Sparkles className="h-4 w-4 text-sky-300" />
-                    <span>Health: {result.status}</span>
+                    <span>Health: {result.status.replace(/\s*\(.*?\)\s*/g, '')}</span>
                   </div>
                 )}
 
@@ -282,6 +285,38 @@ export function PlantDiagnosticsResultModal({
                     </p>
                   </div>
                 )}
+
+                {(() => {
+                  const getGrowthStageSchedule = (status: string) => {
+                    const match = status.match(/\((.*?)\)/);
+                    if (!match) return null;
+                    
+                    const stage = match[1].toLowerCase();
+                    if (stage.includes('seedling')) return { stage: 'Seedling', schedule: 'Every 1 week' };
+                    if (stage.includes('vegetative')) return { stage: 'Vegetative', schedule: 'Every 1-2 weeks' };
+                    if (stage.includes('flowering')) return { stage: 'Flowering', schedule: 'About every 2 weeks' };
+                    if (stage.includes('fruiting')) return { stage: 'Fruiting', schedule: 'Every 1-2 weeks' };
+                    
+                    return null;
+                  };
+
+                  const scheduleInfo = result.diagnosis?.status ? getGrowthStageSchedule(result.diagnosis.status) : null;
+
+                  if (scheduleInfo) {
+                    return (
+                      <div className="rounded-xl border border-border/50 bg-muted/60 p-3">
+                        <div className="flex items-center gap-2 text-[0.625rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                          <Clock size={12} className="text-muted-foreground" />
+                          Recommended Schedule ({scheduleInfo.stage})
+                        </div>
+                        <p className="mt-1 text-sm text-foreground">
+                          {scheduleInfo.schedule}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             )}
 
