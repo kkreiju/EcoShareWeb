@@ -15,12 +15,12 @@ export function TransactionEmptyState({ type }: TransactionEmptyStateProps) {
         <Package className={`h-12 w-12 text-${emptyStateColor}-600 dark:text-${emptyStateColor}-400`} />
       </div>
       <h3 className={`text-lg font-semibold text-${emptyStateColor}-800 dark:text-${emptyStateColor}-300 mb-2`}>
-        No {type === "contributor" ? "sold items" : "purchased items"} found
+        {type === "contributor" ? "No listings posted yet" : "No orders yet"}
       </h3>
       <p className={`text-sm text-${emptyStateColor}-600/80 dark:text-${emptyStateColor}-400/80`}>
         {type === "contributor"
-          ? "You haven't sold any items yet. Start listing items to see your sales here."
-          : "You haven't purchased any items yet. Browse listings to make your first purchase."
+          ? "You haven't posted any listings yet. Start listing items to see them here."
+          : "You haven't made any orders yet. Browse listings to make your first order."
         }
       </p>
     </div>

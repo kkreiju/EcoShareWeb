@@ -81,12 +81,13 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
+  const displayStatus = status.toLowerCase() === "ongoing" ? "In Progress" : status;
   return (
     <Badge
       variant="outline"
       className={`${getStatusColor(status)} shadow-sm font-medium`}
     >
-      <span className="capitalize">{status}</span>
+      <span className="capitalize">{displayStatus}</span>
     </Badge>
   );
 }

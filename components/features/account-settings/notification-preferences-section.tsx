@@ -191,7 +191,7 @@ export function NotificationPreferencesSection({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium text-foreground">
-                Plant Material Preferences
+                Compostable Preferences
               </h3>
               <span className="text-xs text-muted-foreground">
                 {preferences.length} selected

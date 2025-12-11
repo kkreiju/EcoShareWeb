@@ -32,14 +32,19 @@ export function TransactionFilter({
   onFilterChange,
 }: TransactionFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const soldStatuses = ["Ongoing", "Completed", "Returned", "Cancelled"];
+  const soldStatuses = [
+    { label: "In Progress", value: "Ongoing" },
+    { label: "Completed", value: "Completed" },
+    { label: "Returned", value: "Returned" },
+    { label: "Cancelled", value: "Cancelled" },
+  ];
   const boughtStatuses = [
-    "Pending",
-    "Ongoing",
-    "Completed",
-    "Returned",
-    "Declined",
-    "Cancelled",
+    { label: "Pending", value: "Pending" },
+    { label: "In Progress", value: "Ongoing" },
+    { label: "Completed", value: "Completed" },
+    { label: "Returned", value: "Returned" },
+    { label: "Declined", value: "Declined" },
+    { label: "Cancelled", value: "Cancelled" },
   ];
 
   const currentStatuses =
@@ -101,14 +106,14 @@ export function TransactionFilter({
                 </div>
               </SelectItem>
               {currentStatuses.map((status) => (
-                <SelectItem key={status} value={status}>
+                <SelectItem key={status.value} value={status.value}>
                   <div className="flex items-center">
                     <div
                       className={`w-2 h-2 rounded-full mr-2 ${getStatusDotColor(
-                        status
+                        status.value
                       )}`}
                     ></div>
-                    {status}
+                    {status.label}
                   </div>
                 </SelectItem>
               ))}

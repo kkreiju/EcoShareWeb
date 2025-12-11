@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,7 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     user_firstName: userProfile.user_firstName || "",
     user_middleName: userProfile.user_middleName || "",
@@ -49,6 +50,7 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
     user_email: user?.email || "",
     user_phoneNumber: userProfile.user_phoneNumber || "",
     user_bio: userProfile.user_bio || "",
+    user_profileURL: userProfile.user_profileURL || "",
   });
 
   // Update form data when userProfile changes
@@ -60,11 +62,30 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
       user_email: user?.email || "",
       user_phoneNumber: userProfile.user_phoneNumber || "",
       user_bio: userProfile.user_bio || "",
+      user_profileURL: userProfile.user_profileURL || "",
     });
   }, [userProfile, user?.email]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (e.g., 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setFormData((prev) => ({ ...prev, user_profileURL: base64String }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSave = async () => {
@@ -97,6 +118,7 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
       user_email: user?.email || "",
       user_phoneNumber: userProfile.user_phoneNumber || "",
       user_bio: userProfile.user_bio || "",
+      user_profileURL: userProfile.user_profileURL || "",
     });
     setIsEditing(false);
   };
@@ -155,8 +177,15 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
         <CardContent className="space-y-6">
           {/* Avatar Section */}
           <div className="flex flex-col sm:flex-row items-center gap-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
+            />
             <Avatar className="h-20 w-20">
-              <AvatarImage src={userProfile.user_profileURL} />
+              <AvatarImage src={formData.user_profileURL || userProfile.user_profileURL} />
               <AvatarFallback className="text-lg bg-muted">
                 {formData.user_firstName?.[0]}
                 {formData.user_lastName?.[0]}
@@ -172,7 +201,12 @@ export function ProfileSection({ userProfile, onUpdate }: ProfileSectionProps) {
                 <span>{formData.user_email}</span>
               </div>
               {isEditing && (
-                <Button variant="outline" size="sm" className="mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   Change Avatar
                 </Button>

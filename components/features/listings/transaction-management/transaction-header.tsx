@@ -59,11 +59,11 @@ export function TransactionHeader({
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <div className="flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full border border-green-200/50 dark:border-green-700/50">
               <Package className="h-3 w-3" />
-              <span className="font-medium">{stats.contributorTotal} Sold</span>
+              <span className="font-medium">{stats.contributorTotal} Posted</span>
             </div>
             <div className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full border border-blue-200/50 dark:border-blue-700/50">
               <Package className="h-3 w-3" />
-              <span className="font-medium">{stats.receiverTotal} Bought</span>
+              <span className="font-medium">{stats.receiverTotal} Orders</span>
             </div>
             <div className="flex items-center gap-1 px-3 py-1.5 bg-muted/80 text-muted-foreground rounded-full border border-border/50">
               <Users className="h-3 w-3" />
