@@ -270,21 +270,21 @@ export function AdminReportsView() {
       }
 
       if (action === "ban") {
-        if (report.type !== "listing" || !report.reported_listing_id) {
+        if (report.type !== "listing") {
           toast.error("Unable to mark listing as unavailable.", {
-            description: "Listing information is missing for this report.",
+            description: "This action is only available for listing reports.",
           });
           return;
         }
 
-        const response = await fetch("/api/admin/update-listing", {
+        const response = await fetch("/api/admin/mark-unavailable", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             admin_id: adminId,
-            list_id: report.reported_listing_id,
+            report_id: report.report_id,
           }),
         });
 
@@ -299,10 +299,8 @@ export function AdminReportsView() {
           throw new Error(errorMessage);
         }
 
-        await updateReportStatus(report.report_id, "resolved");
-
         toast.success("Listing marked as unavailable", {
-          description: "The report has been resolved.",
+          description: "The report has been resolved and transactions cancelled.",
         });
 
         setReports((prev) =>
